@@ -110,6 +110,7 @@
 </nav>
 
 <div class="container checkout-container">
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
     <div class="row">
         <div class="col-lg-7">
             <div class="card mb-4">

@@ -5,6 +5,7 @@ import com.lapzone.lapzoneweb.model.entity.Order;
 import com.lapzone.lapzoneweb.model.entity.Product;
 import com.lapzone.lapzoneweb.model.entity.User;
 import com.lapzone.lapzoneweb.model.service.CartService;
+import com.lapzone.lapzoneweb.model.service.InsufficientStockException;
 import com.lapzone.lapzoneweb.model.service.OrderService;
 import com.lapzone.lapzoneweb.model.service.ProductService;
 import jakarta.servlet.http.HttpSession;
@@ -127,6 +128,13 @@ public class CheckoutController {
             redirectAttributes.addFlashAttribute("totalAmount", newOrder.getTotalAmount());
             
             return "redirect:/checkout/success";
+        } catch (InsufficientStockException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            if (selectedItemIds != null && !selectedItemIds.isEmpty()) {
+                redirectAttributes.addAttribute("selectedItems", selectedItemIds);
+                return "redirect:/checkout";
+            }
+            return "redirect:/checkout?mode=buynow";
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Có lỗi xảy ra: " + e.getMessage());
             return "redirect:/";

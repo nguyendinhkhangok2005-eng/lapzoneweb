@@ -3,10 +3,12 @@ package com.lapzone.lapzoneweb.model.service;
 import com.lapzone.lapzoneweb.model.entity.CartItem;
 import com.lapzone.lapzoneweb.model.entity.Order;
 import com.lapzone.lapzoneweb.model.entity.OrderDetail;
+import com.lapzone.lapzoneweb.model.entity.Product;
 import com.lapzone.lapzoneweb.model.entity.User;
 import com.lapzone.lapzoneweb.model.repository.CartItemRepository;
 import com.lapzone.lapzoneweb.model.repository.OrderDetailRepository;
 import com.lapzone.lapzoneweb.model.repository.OrderRepository;
+import com.lapzone.lapzoneweb.model.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +24,8 @@ import java.util.Optional;
 @Service
 public class OrderService {
 
+    private static final String CANCELLED_STATUS = "ĐÃ HỦY";
+
     @Autowired
     private OrderRepository orderRepository;
 
@@ -30,6 +34,9 @@ public class OrderService {
 
     @Autowired
     private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     // ====================================================================
     // CỔNG 1: DÀNH CHO LUỒNG THANH TOÁN TỪ GIỎ HÀNG (Sử dụng List ID)
@@ -58,6 +65,18 @@ public class OrderService {
     // HÀM LÕI: XỬ LÝ CHUNG CHO CẢ 2 LUỒNG
     // ====================================================================
     private Order createOrderCore(User user, String customerName, String customerPhone, String address, List<CartItem> items, String paymentMethod, boolean isFromCart) {
+        for (CartItem item : items) {
+            Product product = item.getProduct();
+            Integer quantity = item.getQuantity();
+            if (product == null || product.getId() == null || quantity == null || quantity <= 0) {
+                throw new IllegalArgumentException("Sản phẩm hoặc số lượng đặt hàng không hợp lệ.");
+            }
+            if (productRepository.decrementStockIfAvailable(product.getId(), quantity) == 0) {
+                throw new InsufficientStockException(
+                        "Sản phẩm \"" + product.getName() + "\" không đủ tồn kho cho số lượng yêu cầu (x" + quantity + ").");
+            }
+        }
+
         Order newOrder = new Order();
         newOrder.setUser(user); // Khách vãng lai user sẽ là null, DB tự hiểu
         newOrder.setCustomerName(customerName);
@@ -129,10 +148,27 @@ public class OrderService {
         // Hàm cập nhật trạng thái
         @Transactional
         public void updateOrderStatus(Long orderId, String newStatus) {
-            Order order = orderRepository.findById(orderId)
+            Order order = orderRepository.findByIdForUpdate(orderId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+            updateStatusAndRestock(order, newStatus);
+        }
+
+        private void updateStatusAndRestock(Order order, String newStatus) {
+            boolean shouldRestock = !CANCELLED_STATUS.equals(order.getStatus())
+                    && CANCELLED_STATUS.equals(newStatus);
             order.setStatus(newStatus);
             orderRepository.save(order);
+
+            if (shouldRestock) {
+                for (OrderDetail detail : orderDetailRepository.findByOrderId(order.getId())) {
+                    Product product = detail.getProduct();
+                    int updatedRows = productRepository.incrementStock(product.getId(), detail.getQuantity());
+                    if (updatedRows == 0) {
+                        throw new IllegalStateException(
+                                "Không thể hoàn tồn kho cho sản phẩm \"" + product.getName() + "\".");
+                    }
+                }
+            }
         }
         // [C\u0168 - gi\u1eef cho export/in b\u00e1o c\u00e1o]
         public List<Order> getValidInvoices(java.util.Date startDate, java.util.Date endDate) {
@@ -156,16 +192,14 @@ public class OrderService {
             // ====================================================================
             @Transactional
             public void updateInvoiceDetails(Long orderId, String name, String phone, String address, Double totalAmount, String status) {
-                Order order = orderRepository.findById(orderId)
+                Order order = orderRepository.findByIdForUpdate(orderId)
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn số #" + orderId));
                 
                 order.setCustomerName(name);
                 order.setCustomerPhone(phone);
                 order.setAddress(address);
                 order.setTotalAmount(totalAmount);
-                order.setStatus(status);
-                
-                orderRepository.save(order);
+                updateStatusAndRestock(order, status);
             }
 
             // ====================================================================

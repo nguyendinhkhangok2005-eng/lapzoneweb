@@ -1,5 +1,6 @@
 package com.lapzone.lapzoneweb.model.repository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import com.lapzone.lapzoneweb.model.entity.Product;
@@ -9,6 +10,14 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
+    @Modifying
+    @Query("UPDATE Product p SET p.stock = p.stock - :qty WHERE p.id = :id AND p.stock >= :qty")
+    int decrementStockIfAvailable(@Param("id") Long id, @Param("qty") Integer qty);
+
+    @Modifying
+    @Query("UPDATE Product p SET p.stock = p.stock + :qty WHERE p.id = :id")
+    int incrementStock(@Param("id") Long id, @Param("qty") Integer qty);
+
     List<Product> findTop8ByOrderByIdDesc();
     List<Product> findTop4ByOrderByIdDesc();
     List<Product> findByCategory_Name(String categoryName);
