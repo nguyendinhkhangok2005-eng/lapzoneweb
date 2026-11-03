@@ -28,9 +28,9 @@ Lapzone Web là một ứng dụng thương mại điện tử chuyên cung cấ
    ```
 3. Mở và chạy file script `lapzone_init_official.sql` (nằm ở thư mục gốc của dự án) vào database `lapzone_db` vừa tạo để tạo bảng và nạp dữ liệu mẫu.
 
-### Bước 2: Cấu hình kết nối Database
+### Bước 2: Cấu hình kết nối Database và email
 
-Nếu chưa có cấu hình cục bộ, sao chép `src/main/resources/application-example.properties` thành `src/main/resources/application.properties`. File cục bộ này đã được `.gitignore` loại trừ; không commit thông tin đăng nhập.
+Giữ nguyên cấu hình `src/main/resources/application.properties` hiện có. Cấu hình Gmail tùy chọn được nạp từ `application-local.properties` ở thư mục gốc; ứng dụng vẫn khởi động khi chưa có thông tin mail, nhưng không gửi được OTP.
 
 Đặt biến môi trường trong PowerShell trên Windows trước khi chạy ứng dụng:
 
@@ -41,6 +41,21 @@ $env:GEMINI_API_KEY = "<API key Gemini cục bộ của bạn>"
 ```
 
 Trong VS Code, mở **Terminal → New Terminal** (chọn PowerShell nếu cần), chạy các lệnh trên trong terminal đó, rồi chạy ứng dụng ở Bước 3. Các biến chỉ có hiệu lực với terminal/ứng dụng được mở từ terminal đó. Không lưu giá trị thật vào README, `launch.json` đã chia sẻ, hoặc Git.
+
+Để gửi OTP qua Gmail:
+
+1. Bật **Xác minh 2 bước (2-Step Verification)** cho tài khoản Google.
+2. Trong phần bảo mật Tài khoản Google, tạo **App Password** dành cho ứng dụng. Dùng mật khẩu ứng dụng này, không dùng mật khẩu đăng nhập Gmail.
+3. Sao chép `src/main/resources/application-example.properties` thành `application-local.properties` ở thư mục gốc dự án và thay các placeholder bằng thông tin thật:
+
+   ```properties
+   MAIL_USERNAME=your-email@gmail.com
+   MAIL_PASSWORD=YOUR_GMAIL_APP_PASSWORD
+   app.otp.log-to-console=false
+   ```
+
+   File gốc `application-local.properties` đã được `.gitignore` loại trừ. Không commit file này hoặc App Password. Có thể đặt `app.otp.log-to-console=true` riêng khi phát triển offline để in OTP vào console; tuyệt đối không bật ở môi trường dùng thật.
+
 ### Bước 3: Chạy ứng dụng
 
 Bạn có thể chạy dự án bằng một trong các cách sau:

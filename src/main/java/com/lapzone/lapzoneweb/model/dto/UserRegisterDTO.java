@@ -1,5 +1,6 @@
 package com.lapzone.lapzoneweb.model.dto;
 
+import com.lapzone.lapzoneweb.model.validation.PasswordPolicy;
 import jakarta.validation.constraints.*;
 
 public class UserRegisterDTO {
@@ -18,8 +19,8 @@ public class UserRegisterDTO {
     private String address;
 
     @NotBlank(message = "Mật khẩu không được để trống")
-    @Size(min = 6, message = "Mật khẩu phải có ít nhất 6 ký tự")
-    @Pattern(regexp = ".*[@$!%*?&].*", message = "Mật khẩu phải chứa ít nhất một ký tự đặc biệt (@, $, !, %, *, ?, &)")
+    @Pattern(regexp = PasswordPolicy.REGEX,
+            message = "Mật khẩu phải có ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt")
     private String password;
 
     @NotBlank(message = "Vui lòng xác nhận mật khẩu")

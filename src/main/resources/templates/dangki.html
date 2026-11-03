@@ -77,19 +77,19 @@
         <form th:action="@{/dangki}" method="post" id="registerForm" novalidate>
             <div class="form-group">
                 <label>Họ và tên</label>
-                <input type="text" name="fullName" id="name" placeholder="VD: Nguyễn Văn A">
+                <input type="text" name="fullName" id="name" th:value="${registerDTO.fullName}" placeholder="VD: Nguyễn Văn A">
                 <div class="error-message" id="nameError">Vui lòng nhập họ và tên!</div>
             </div>
             
             <div class="form-group">
                 <label>Số điện thoại</label>
-                <input type="text" name="phone" id="phone" placeholder="VD: 0912345678">
+                <input type="text" name="phone" id="phone" th:value="${registerDTO.phone}" placeholder="VD: 0912345678">
                 <div class="error-message" id="phoneError">Vui lòng nhập số điện thoại hợp lệ (10 chữ số)!</div>
             </div>
 
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" name="email" id="email" placeholder="VD: email@example.com">
+                <input type="email" name="email" id="email" th:value="${registerDTO.email}" placeholder="VD: email@example.com">
                 <div class="error-message" id="emailError">Vui lòng nhập email hợp lệ!</div>
             </div>
 

@@ -50,3 +50,4 @@ Thumbs.db
 .env.*.local
 src/main/resources/application-local.properties
 src/main/resources/application.properties
+/application-local.properties

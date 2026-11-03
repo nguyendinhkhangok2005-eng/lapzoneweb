@@ -13,6 +13,6 @@
 - Chỉ sửa đúng phạm vi được yêu cầu. Không refactor lan man, không đổi tên package/class không liên quan.
 - Trước khi sửa: đọc code liên quan và xác nhận vấn đề có thật. Nếu không có thật, nói rõ và dừng.
 - Trình bày kế hoạch ngắn (sửa file nào, vì sao) rồi mới sửa.
-- Thay đổi logic phải có test. Chạy `mvnw.cmd test` và báo kết quả thật, không nói "đã chạy" nếu chưa chạy.
+- Chạy test bằng VS Code Test Runner (JDK 25), không dùng .\mvnw.cmd trong terminal (terminal dùng Java 21 sẽ lỗi). Báo kết quả thật: tổng số test, số đạt, số lỗi.
 - Đảm bảo ứng dụng vẫn khởi động được với cấu hình hiện có sau khi sửa.
 - Cuối mỗi lượt: liệt kê file đã đổi, cách tự kiểm tra bằng tay trên web, rủi ro còn lại, và gợi ý commit message.
