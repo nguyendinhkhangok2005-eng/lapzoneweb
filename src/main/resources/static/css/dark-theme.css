@@ -1,0 +1,229 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+    --bg-main: #0b0f19;
+    --bg-secondary: #151a28;
+    --bg-glass: rgba(21, 26, 40, 0.7);
+    --bg-glass-hover: rgba(30, 38, 56, 0.8);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --accent-primary: #3b82f6;
+    --accent-secondary: #8b5cf6;
+    --accent-warning: #f97316;
+    --accent-danger: #ef4444;
+    --border-glass: rgba(255, 255, 255, 0.1);
+    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --glow-primary: 0 0 15px rgba(59, 130, 246, 0.5);
+    --glow-secondary: 0 0 15px rgba(139, 92, 246, 0.5);
+}
+
+/* Global Overrides */
+* {
+    font-family: 'Outfit', sans-serif !important;
+}
+
+body {
+    background-color: var(--bg-main) !important;
+    color: var(--text-primary) !important;
+}
+
+div, header, footer, nav, ul, li, a, span, p, h1, h2, h3, h4, h5, h6 {
+    background-color: transparent !important;
+}
+
+/* Typography & Headings */
+h1, h2, h3 {
+    color: var(--text-primary) !important;
+    font-weight: 700;
+}
+
+/* Glassmorphism Header */
+.header_lapzone_new > div {
+    background: var(--bg-glass) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-glass) !important;
+    box-shadow: var(--shadow-glass) !important;
+}
+
+.lapzone-nav-link, .lapzone-auth-link, .lapzone-icon-btn {
+    color: var(--text-primary) !important;
+}
+
+.lapzone-nav-link:hover, .lapzone-auth-link:hover {
+    color: var(--accent-primary) !important;
+    text-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+}
+
+/* Search Bar */
+.header_lapzone_new input[name="query"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--border-glass) !important;
+    color: var(--text-primary) !important;
+    backdrop-filter: blur(4px);
+}
+.header_lapzone_new input[name="query"]:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: var(--glow-primary);
+}
+.lapzone-search-btn {
+    color: var(--text-secondary) !important;
+}
+.lapzone-search-btn:hover {
+    color: var(--accent-primary) !important;
+}
+
+/* Menus & Dropdowns */
+.lapzone-dropdown-content, .menu3 ul, .menu3 ul li ul, .menu3>ul>li>ul>li>ul {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-glass) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-glass);
+}
+.menu3 ul li a, .lapzone-dropdown-content a {
+    color: var(--text-primary) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.menu3 ul li a:hover {
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)) !important;
+    color: #fff !important;
+    border-radius: 4px !important;
+    transform: translateX(5px);
+}
+
+/* Product Cards */
+.product_items, .product_item3, .product_items2, .product_item4, div[style*="width:280px"] {
+    background: var(--bg-glass) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-glass) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    overflow: hidden;
+}
+
+.product_items:hover, .product_item3:hover, .product_items2:hover, .product_item4:hover, div[style*="width:280px"]:hover {
+    transform: translateY(-10px) scale(1.02) !important;
+    border-color: var(--accent-primary) !important;
+    box-shadow: var(--glow-primary) !important;
+    background: var(--bg-glass-hover) !important;
+}
+
+.product_title {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+.product_price {
+    color: var(--accent-primary) !important;
+    text-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+    font-size: 1.2em;
+    font-weight: 700;
+}
+
+/* Badges */
+.badge_product3, .badge_product4 {
+    background: linear-gradient(135deg, var(--accent-danger), var(--accent-warning)) !important;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.5);
+    border: none !important;
+}
+
+/* Buttons */
+.btn-primary, .button_comparation, .buy_now {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4) !important;
+    transition: all 0.3s ease !important;
+}
+.btn-primary:hover, .button_comparation:hover, .buy_now:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6) !important;
+}
+
+/* Footer */
+footer, .footer_container, .service_footer_1 ul li, .desc_store_footer p {
+    background-color: #0a0e17 !important;
+    color: var(--text-secondary) !important;
+}
+.service_footer_1 ul li a {
+    color: var(--text-secondary) !important;
+}
+.service_footer_1 ul li a:hover {
+    color: var(--accent-primary) !important;
+}
+
+/* Sections Containers */
+.product1, .product2, .product3, .product4, .main_idea, .container_desc_of_store {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Custom specifics from index */
+.promise-items {
+    background: var(--bg-glass) !important;
+    border: 1px solid var(--border-glass) !important;
+    backdrop-filter: blur(5px);
+    transition: transform 0.3s;
+}
+.promise-items:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent-primary) !important;
+}
+
+.more_infor_product {
+    background: var(--bg-secondary) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-glass) !important;
+    backdrop-filter: blur(10px);
+}
+
+.reviewimage, .news {
+    background: transparent !important;
+}
+
+/* Detail page overrides */
+.detail_configuration, .rating_of_professional, .review-container {
+    background: var(--bg-glass) !important;
+    border: 1px solid var(--border-glass) !important;
+    color: var(--text-primary) !important;
+}
+table th {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-glass) !important;
+}
+table td, table tr {
+    background: transparent !important;
+    border-color: var(--border-glass) !important;
+    color: var(--text-primary) !important;
+}
+table tr:nth-child(even) {
+    background: rgba(255,255,255,0.02) !important;
+}
+table tr:hover {
+    background: rgba(255,255,255,0.05) !important;
+}
+.accessory_option {
+    background: var(--bg-glass) !important;
+    border-color: var(--border-glass) !important;
+}
+.accessory_option .checkbox-item {
+    background: var(--bg-secondary) !important;
+    border-color: var(--border-glass) !important;
+    color: var(--text-primary) !important;
+}
+.accessory_option .checkbox-item label {
+    color: var(--text-primary) !important;
+}
+
+/* Inline Styles Overrides */
+[style*="background:#fff"], [style*="background: white"], [style*="background-color:#fff"] {
+    background-color: transparent !important;
+}
+[style*="color: #333"], [style*="color:#333"], [style*="color: black"], [style*="color:black"] {
+    color: var(--text-primary) !important;
+}
+[style*="color: #666"], [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}

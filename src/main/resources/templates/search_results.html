@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Kết Quả Tìm Kiếm: ' + ${keyword}">Kết Quả Tìm Kiếm</title>
+
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .filter-sidebar {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-glass);
+            height: fit-content;
+        }
+        .filter-sidebar h3 { color: var(--accent-neon); margin-bottom: 20px; font-size: 1.2rem; }
+        .filter-group { margin-bottom: 20px; }
+        .filter-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary); }
+        .filter-group select, .filter-group input[type="text"], .filter-group input[type="number"] { 
+            width: 100%; 
+            padding: 10px; 
+            margin-bottom: 10px; 
+            background: rgba(0,0,0,0.05);
+            border: 1px solid var(--border-glass); 
+            border-radius: 8px;
+            color: var(--text-primary);
+        }
+        .filter-group select option { background: var(--bg-dark); color: var(--text-primary); }
+        .range-slider { position: relative; width: 100%; height: 35px; margin-top: 10px; margin-bottom: 25px; }
+        .range-slider input[type="range"] { position: absolute; width: 100%; height: 5px; top: 0; background: none; pointer-events: none; -webkit-appearance: none; -moz-appearance: none; z-index: 2; margin: 0; }
+        .range-slider input[type="range"]::-webkit-slider-thumb { pointer-events: auto; -webkit-appearance: none; width: 18px; height: 18px; background: var(--accent-neon); border-radius: 50%; cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 5px rgba(0,0,0,0.3); margin-top: -6.5px; }
+        .range-slider input[type="range"]::-moz-range-thumb { pointer-events: auto; width: 18px; height: 18px; background: var(--accent-neon); border-radius: 50%; cursor: pointer; border: 2px solid #fff; box-shadow: 0 0 5px rgba(0,0,0,0.3); }
+        .range-slider input[type="range"]::-webkit-slider-runnable-track { -webkit-appearance: none; height: 5px; }
+        .range-track { position: absolute; width: 100%; height: 5px; background: rgba(0,0,0,0.1); border-radius: 5px; top: 0; z-index: 1; }
+        .range-progress { position: absolute; height: 5px; background: var(--accent-neon); border-radius: 5px; top: 0; z-index: 1; }
+        .range-price-label { position: absolute; top: 20px; width: 100%; display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header_lapzone}"></div>
+
+    <main class="container" style="margin-top: 40px; margin-bottom: 60px;">
+        <!-- Breadcrumb -->
+        <div style="margin-bottom: 20px; font-size: 0.95rem; color: var(--text-secondary);">
+            <a th:href="@{/}" style="color: var(--text-secondary); text-decoration: none;"><i class="fas fa-home"></i> Trang chủ</a>
+            <span style="margin: 0 10px;">/</span>
+            <span th:if="${keyword != null and keyword != ''}">
+                <span th:if="${keyword == 'Laptop' or keyword == 'Mới' or keyword == 'Cũ' or keyword == 'Like New' or keyword == 'Gaming' or keyword == 'Văn Phòng' or keyword == 'Macbook'}">Laptop theo danh mục</span>
+                <span th:unless="${keyword == 'Laptop' or keyword == 'Mới' or keyword == 'Cũ' or keyword == 'Like New' or keyword == 'Gaming' or keyword == 'Văn Phòng' or keyword == 'Macbook'}">Laptop theo hãng</span>
+                <span style="margin: 0 10px;">/</span>
+                <span style="font-weight: 600; color: var(--text-primary);" th:text="${keyword}"></span>
+            </span>
+            <span th:if="${keyword == null or keyword == ''}">
+                <span style="font-weight: 600; color: var(--text-primary);">Tất cả sản phẩm</span>
+            </span>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 40px;">
+            <h1 class="section-title" th:text="'Sản Phẩm: ' + (${keyword != '' ? keyword : (selectedCategoryName != null ? selectedCategoryName : 'Tất cả')})">Kết Quả</h1>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 40px;">
+            <!-- Filter Sidebar -->
+            <aside class="filter-sidebar">
+                <h3><i class="fa fa-filter"></i> Lọc Sản Phẩm</h3>
+                <form id="filterForm" th:action="@{/search}" method="get">
+                    <input type="hidden" name="query" th:value="${keyword}">
+                    
+                    <div class="filter-group" th:if="${selectedCategoryName == null}">
+                        <label>Hãng sản xuất:</label>
+                        <select name="categoryId">
+                            <option value="">-- Tất cả các hãng --</option>
+                            <option th:each="cat : ${categories}" 
+                                    th:value="${cat.id}" 
+                                    th:text="${cat.name}"
+                                    th:selected="${cat.id == selectedCategoryId}"></option>
+                        </select>
+                    </div>
+                    
+                    <!-- Ẩn thẻ select nhưng vẫn giữ lại categoryId để bộ lọc khác (như Giá, RAM) hoạt động đúng -->
+                    <input type="hidden" name="categoryId" th:value="${selectedCategoryId}" th:if="${selectedCategoryName != null}">
+
+                    <div class="filter-group">
+                        <label>Mức giá (VNĐ):</label>
+                        <div class="range-slider">
+                            <span class="range-track"></span>
+                            <span class="range-progress"></span>
+                            <input type="range" class="min-val" min="0" max="200000000" value="0" step="500000">
+                            <input type="range" class="max-val" min="0" max="200000000" value="200000000" step="500000">
+                            <div class="range-price-label">
+                                <span id="minPriceLabel">0 đ</span>
+                                <span id="maxPriceLabel">200.000.000 đ</span>
+                            </div>
+                        </div>
+                        <input type="hidden" name="minPrice" id="minPriceInput" th:value="${selectedMinPrice}">
+                        <input type="hidden" name="maxPrice" id="maxPriceInput" th:value="${selectedMaxPrice}">
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Vi xử lý (CPU):</label>
+                        <select name="cpu">
+                            <option value="">-- Tất cả CPU --</option>
+                            <option value="Core i5" th:selected="${selectedCpu == 'Core i5'}">Intel Core i5</option>
+                            <option value="Core i7" th:selected="${selectedCpu == 'Core i7'}">Intel Core i7</option>
+                            <option value="Ryzen 5" th:selected="${selectedCpu == 'Ryzen 5'}">AMD Ryzen 5</option>
+                            <option value="Ryzen 7" th:selected="${selectedCpu == 'Ryzen 7'}">AMD Ryzen 7</option>
+                            <option value="Apple M" th:selected="${selectedCpu == 'Apple M'}">Apple M-Series</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Card đồ họa (GPU):</label>
+                        <select name="gpu">
+                            <option value="">-- Tất cả GPU --</option>
+                            <option value="RTX 3050" th:selected="${selectedGpu == 'RTX 3050'}">NVIDIA RTX 3050</option>
+                            <option value="RTX 4050" th:selected="${selectedGpu == 'RTX 4050'}">NVIDIA RTX 4050</option>
+                            <option value="RTX 4060" th:selected="${selectedGpu == 'RTX 4060'}">NVIDIA RTX 4060</option>
+                            <option value="RTX 4070" th:selected="${selectedGpu == 'RTX 4070'}">NVIDIA RTX 4070</option>
+                            <option value="Intel Iris" th:selected="${selectedGpu == 'Intel Iris'}">Card Onboard Intel</option>
+                            <option value="Radeon" th:selected="${selectedGpu == 'Radeon'}">Card Onboard AMD Radeon</option>
+                            <option value="Apple" th:selected="${selectedGpu == 'Apple'}">Apple GPU</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Dung lượng RAM:</label>
+                        <select name="ram">
+                            <option value="">-- Tất cả RAM --</option>
+                            <option value="8GB" th:selected="${selectedRam == '8GB'}">8 GB</option>
+                            <option value="16GB" th:selected="${selectedRam == '16GB'}">16 GB</option>
+                            <option value="32GB" th:selected="${selectedRam == '32GB'}">32 GB</option>
+                            <option value="64GB" th:selected="${selectedRam == '64GB'}">64 GB</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Ổ cứng (Storage):</label>
+                        <select name="storage">
+                            <option value="">-- Tất cả Ổ cứng --</option>
+                            <option value="256GB" th:selected="${selectedStorage == '256GB'}">256 GB</option>
+                            <option value="512GB" th:selected="${selectedStorage == '512GB'}">512 GB</option>
+                            <option value="1TB" th:selected="${selectedStorage == '1TB'}">1 TB</option>
+                            <option value="2TB" th:selected="${selectedStorage == '2TB'}">2 TB</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Kích thước màn hình:</label>
+                        <select name="screen">
+                            <option value="">-- Tất cả kích thước --</option>
+                            <option value="13" th:selected="${selectedScreen == '13'}">Khoảng 13 inch</option>
+                            <option value="14" th:selected="${selectedScreen == '14'}">Khoảng 14 inch</option>
+                            <option value="15" th:selected="${selectedScreen == '15'}">Khoảng 15 inch</option>
+                            <option value="16" th:selected="${selectedScreen == '16'}">Khoảng 16 inch</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="width: 100%;">Áp dụng bộ lọc</button>
+                </form>
+            </aside>
+
+            <!-- Results -->
+            <div>
+                <div th:if="${products == null or products.isEmpty()}" style="text-align: center; padding: 40px; background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-glass);">
+                    <p style="color: var(--accent-red); font-size: 1.2rem;" th:text="'Không tìm thấy sản phẩm nào phù hợp.'">Không tìm thấy</p>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;" th:if="${products != null and !products.isEmpty()}">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label style="color: var(--text-secondary); font-weight: 500;">Sắp xếp theo:</label>
+                        <select name="sort" form="filterForm" onchange="document.getElementById('filterForm').submit();" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-glass); background: rgba(0,0,0,0.05); color: var(--text-primary);">
+                            <option value="newest" th:selected="${selectedSort == 'newest'}">Sản phẩm mới nhất</option>
+                            <option value="price_asc" th:selected="${selectedSort == 'price_asc'}">Giá tăng dần</option>
+                            <option value="price_desc" th:selected="${selectedSort == 'price_desc'}">Giá giảm dần</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="product-grid" th:if="${products != null and !products.isEmpty()}">
+                    <article class="product-card" th:each="p : ${products}">
+                        <a th:href="@{/product_detail(id=${p.id})}">
+                            <div class="product-img-wrapper">
+                                <img loading="lazy" class="product-img" th:src="@{${p.image != null and p.image.startsWith('assets/') ? '/' + p.image : '/assets/' + p.image}}" th:alt="${p.name}">
+                            </div>
+                            <h3 class="product-title" th:text="${p.name}">Tên SP</h3>
+                            <div class="product-price" th:text="${#numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">Giá</div>
+                            
+                            <div class="product-meta" th:if="${p.productDetail != null}" th:text="'CPU: ' + ${p.productDetail.cpu} + ' / RAM: ' + ${p.productDetail.ram}" style="font-size: 0.8rem;">Cấu hình</div>
+                        </a>
+                    </article>
+                </div>
+
+                <!-- Phân trang -->
+                <div th:if="${totalPages > 1}" style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 40px; margin-bottom: 20px;">
+                    <a th:if="${currentPage > 0}" th:href="@{/search(query=${keyword}, categoryId=${selectedCategoryId}, minPrice=${selectedMinPrice}, maxPrice=${selectedMaxPrice}, cpu=${selectedCpu}, gpu=${selectedGpu}, ram=${selectedRam}, storage=${selectedStorage}, screen=${selectedScreen}, sort=${selectedSort}, page=${currentPage - 1})}" class="btn-page"><i class="fas fa-chevron-left"></i> Trước</a>
+                    
+                    <a th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                       th:href="@{/search(query=${keyword}, categoryId=${selectedCategoryId}, minPrice=${selectedMinPrice}, maxPrice=${selectedMaxPrice}, cpu=${selectedCpu}, gpu=${selectedGpu}, ram=${selectedRam}, storage=${selectedStorage}, screen=${selectedScreen}, sort=${selectedSort}, page=${i})}" 
+                       th:text="${i + 1}"
+                       th:class="${i == currentPage} ? 'btn-page active' : 'btn-page'">
+                    </a>
+                    
+                    <a th:if="${currentPage < totalPages - 1}" th:href="@{/search(query=${keyword}, categoryId=${selectedCategoryId}, minPrice=${selectedMinPrice}, maxPrice=${selectedMaxPrice}, cpu=${selectedCpu}, gpu=${selectedGpu}, ram=${selectedRam}, storage=${selectedStorage}, screen=${selectedScreen}, sort=${selectedSort}, page=${currentPage + 1})}" class="btn-page">Sau <i class="fas fa-chevron-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const minVal = document.querySelector('.min-val');
+        const maxVal = document.querySelector('.max-val');
+        const minPriceLabel = document.getElementById('minPriceLabel');
+        const maxPriceLabel = document.getElementById('maxPriceLabel');
+        const minPriceInput = document.getElementById('minPriceInput');
+        const maxPriceInput = document.getElementById('maxPriceInput');
+        const rangeProgress = document.querySelector('.range-progress');
+        const gap = 1000000; // Khoảng cách tối thiểu 1 triệu
+        const maxLimit = 200000000;
+
+        function formatCurrency(val) {
+            return Number(val).toLocaleString('vi-VN') + ' đ';
+        }
+
+        function setSliders(e) {
+            let min = Number(minVal.value);
+            let max = Number(maxVal.value);
+            
+            if (max - min < gap) {
+                if (e && e.target === minVal) {
+                    minVal.value = max - gap;
+                    min = Number(minVal.value);
+                } else {
+                    maxVal.value = min + gap;
+                    max = Number(maxVal.value);
+                }
+            }
+            
+            minPriceLabel.textContent = formatCurrency(min);
+            maxPriceLabel.textContent = formatCurrency(max);
+            
+            minPriceInput.value = (min === 0) ? "" : min;
+            maxPriceInput.value = (max === maxLimit) ? "" : max;
+
+            const percent1 = (min / maxLimit) * 100;
+            const percent2 = (max / maxLimit) * 100;
+            rangeProgress.style.left = percent1 + '%';
+            rangeProgress.style.width = (percent2 - percent1) + '%';
+        }
+
+        minVal.addEventListener('input', setSliders);
+        maxVal.addEventListener('input', setSliders);
+        
+        let initMin = minPriceInput.value ? Number(minPriceInput.value) : 0;
+        let initMax = maxPriceInput.value ? Number(maxPriceInput.value) : maxLimit;
+        
+        minVal.value = initMin;
+        maxVal.value = initMax;
+        
+        setSliders();
+    });
+    </script>
+</body>
+</html>

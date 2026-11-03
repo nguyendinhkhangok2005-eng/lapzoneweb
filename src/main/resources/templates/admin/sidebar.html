@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+</style>
+<body>
+
+  <div th:fragment="adminSidebar" class="sidebar">
+    <div class="sidebar-header">LAPZONE ADMIN</div>
+    
+    <a th:href="@{/admin/dashboard}" class="menu-item">
+        <i class="fas fa-chart-line"></i> Tổng quan
+    </a>
+    
+    <a th:href="@{/admin/products}" class="menu-item">
+        <i class="fas fa-laptop"></i> Quản lý sản phẩm
+    </a>
+    
+    <a th:href="@{/admin/users}" class="menu-item">
+        <i class="fas fa-users-cog"></i> Quản lý khách hàng
+    </a>
+    
+    <a th:href="@{/admin/orders}" class="menu-item">
+        <i class="fas fa-boxes"></i> Quản lý Đơn hàng
+    </a>
+
+    <a th:href="@{/admin/invoices}" class="menu-item">
+        <i class="fas fa-file-invoice-dollar"></i> Quản lý Hóa đơn
+    </a>
+    
+    <a th:href="@{/admin/categories}" class="menu-item">
+        <i class="fas fa-tags"></i> Quản lý Danh mục
+    </a>
+    
+    <a th:href="@{/}" class="menu-item" style="margin-top: 50px; color: #e74c3c; border-top: 1px solid #3e4f5f; padding-top: 20px;">
+        <i class="fas fa-sign-out-alt"></i> Thoát về trang chủ
+    </a>
+  </div>
+
+</body>
+</html>

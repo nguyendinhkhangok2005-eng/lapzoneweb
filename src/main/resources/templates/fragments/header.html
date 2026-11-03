@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<header th:fragment="header_lapzone" class="header">
+    <div class="container">
+        <!-- Top Bar: Logo + Search + Actions -->
+        <div class="header-top">
+            <a th:href="@{/}" class="header-logo">
+                <img loading="lazy" th:src="@{/assets/logo-lapzone.jpg}" alt="Lapzone Logo">
+            </a>
+
+            <div class="header-search">
+                <form th:action="@{/search}" method="get" onsubmit="if(this.query.value.trim() === '') { alert('Mời bạn nhập tên sản phẩm cần tìm!'); return false; }">
+                    <input type="text" name="query" placeholder="Tìm kiếm laptop gaming, văn phòng...">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
+            </div>
+
+            <div class="header-actions">
+                <th:block th:if="${session.currentUser == null}">
+                    <a th:href="@{/dangnhap}" class="btn-primary" style="padding: 8px 16px; font-size: 0.9rem; background: transparent; color: var(--text-primary); box-shadow: none; border: 1px solid var(--border-glass);">
+                        Đăng nhập
+                    </a>
+                    <a th:href="@{/dangki}" class="btn-primary" style="padding: 8px 16px; font-size: 0.9rem;">
+                        <i class="fas fa-user-plus"></i> Đăng ký
+                    </a>
+                </th:block>
+                <th:block th:unless="${session.currentUser == null}">
+                    <a th:if="${session.currentUser.role == 'ADMIN'}" th:href="@{/admin/dashboard}" class="header-action-icon" style="color: #11caa0 !important;" title="Trang quản trị">
+                        <i class="fas fa-user-shield"></i>
+                    </a>
+                    <a th:href="@{/logout}" class="header-action-icon" style="color: var(--accent-red) !important;" title="Đăng xuất">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                </th:block>
+
+                <a th:href="@{/tracuudonhang}" class="header-action-icon" title="Tra cứu đơn hàng">
+                    <i class="fas fa-file-invoice"></i>
+                </a>
+                
+                <a th:href="@{/cart}" class="header-action-icon" title="Giỏ hàng">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="cart-count" th:text="${cartItemCount}">0</span>
+                </a>
+                
+                <a th:href="@{/profile}" class="header-action-icon" title="Hồ sơ">
+                    <i class="fas fa-user"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Bar: Navigation -->
+    <nav class="nav-main">
+        <div class="container">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <a th:href="@{/}" class="nav-link"><i class="fas fa-laptop"></i> DANH MỤC SẢN PHẨM <i class="fas fa-chevron-down" style="font-size: 0.8em; margin-left: 5px;"></i></a>
+                    <div class="nav-dropdown">
+                        <div class="nav-dropdown-item">
+                            <a th:href="@{/search(query='Laptop')}">Máy Tính Xách Tay <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                            <div class="nav-dropdown-submenu">
+                                <a th:href="@{/search(query='Laptop')}" style="font-weight: 600; background: rgba(0,0,0,0.02);">Laptop theo hãng</a>
+                                <a th:each="cat : ${globalCategories}" th:href="@{/search(categoryId=${cat.id})}" th:text="${cat.name}">Tên Hãng</a>
+                                <a th:href="@{/search(query='Laptop')}" style="font-weight: 600; background: rgba(0,0,0,0.02); margin-top: 10px;">Tình Trạng</a>
+                                <a th:href="@{/search(query='Mới')}">Brand New 100%</a>
+                                <a th:href="@{/search(query='Cũ')}">Outlet/Refurbished</a>
+                                <a th:href="@{/search(query='Like New')}">Like New</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-dropdown-item">
+                            <a th:href="@{/search(query='Gaming')}">Laptop Gaming <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                            <div class="nav-dropdown-submenu">
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Gaming', categoryId=1)}">Laptop gaming Acer <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='Nitro')}">Acer Nitro</a>
+                                        <a th:href="@{/search(query='Predator')}">Acer Predator</a>
+                                    </div>
+                                </div>
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Gaming', categoryId=7)}">Laptop gaming Lenovo <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='Legion')}">Lenovo Legion</a>
+                                        <a th:href="@{/search(query='Ideapad Gaming')}">Lenovo Ideapad Gaming</a>
+                                        <a th:href="@{/search(query='LOQ')}">Lenovo LOQ</a>
+                                    </div>
+                                </div>
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Gaming', categoryId=6)}">Laptop gaming HP <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='Omen')}">HP Omen</a>
+                                        <a th:href="@{/search(query='Victus')}">HP Victus</a>
+                                    </div>
+                                </div>
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Gaming', categoryId=4)}">Laptop gaming ASUS <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='ROG')}">Asus ROG</a>
+                                        <a th:href="@{/search(query='TUF')}">Asus TUF</a>
+                                    </div>
+                                </div>
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Gaming', categoryId=5)}">Laptop gaming DELL <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='Alienware')}">Dell Alienware</a>
+                                        <a th:href="@{/search(query='Dell Gaming')}">Dell Gaming</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="nav-dropdown-item">
+                            <a th:href="@{/search(query='Văn Phòng')}">Laptop Văn Phòng <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                            <div class="nav-dropdown-submenu">
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Văn Phòng', categoryId=1)}">Acer <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='Acer Aspire')}">Acer Aspire</a>
+                                        <a th:href="@{/search(query='Acer Swift')}">Acer Swift</a>
+                                    </div>
+                                </div>
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Văn Phòng', categoryId=5)}">Dell <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='Dell Inspiron')}">Dell Inspiron</a>
+                                        <a th:href="@{/search(query='Dell Latitude')}">Dell Latitude</a>
+                                        <a th:href="@{/search(query='Dell Vostro')}">Dell Vostro</a>
+                                        <a th:href="@{/search(query='Dell XPS')}">Dell XPS</a>
+                                    </div>
+                                </div>
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Văn Phòng', categoryId=4)}">Asus <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='Zenbook')}">Asus Zenbook</a>
+                                        <a th:href="@{/search(query='Vivobook')}">Asus Vivobook</a>
+                                    </div>
+                                </div>
+                                <div class="nav-dropdown-item">
+                                    <a th:href="@{/search(query='Macbook')}">Apple <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                                    <div class="nav-dropdown-submenu">
+                                        <a th:href="@{/search(query='Macbook Air')}">Macbook Air</a>
+                                        <a th:href="@{/search(query='Macbook Pro')}">Macbook Pro</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <a th:href="@{/search(query='Lập Trình')}">Laptop Lập Trình</a>
+                        <a th:href="@{/search(query='Đồ Họa')}">Laptop Đồ Họa</a>
+                        <a th:href="@{/search(query='Macbook')}">Apple MacBook</a>
+                        <div class="nav-dropdown-item">
+                            <a th:href="@{/search(query='Phụ Kiện')}">Linh Kiện - Phụ Kiện <i class="fas fa-chevron-right" style="font-size: 0.7em;"></i></a>
+                            <div class="nav-dropdown-submenu">
+                                <a th:href="@{/search(query='Ram SSD')}">Ram - SSD</a>
+                                <a th:href="@{/search(query='Cổng Chuyển')}">Cổng Chuyển</a>
+                                <a th:href="@{/search(query='Tản Nhiệt')}">Tản Nhiệt Laptop</a>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item"><a th:href="@{/gioithieu}" class="nav-link">Giới thiệu</a></li>
+                <li class="nav-item"><a th:href="@{/khuyenmai}" class="nav-link">Khuyến mãi</a></li>
+                <li class="nav-item"><a th:href="@{/diachi}" class="nav-link">Hệ thống Showroom</a></li>
+                <li class="nav-item"><a th:href="@{/datlich}" class="nav-link" style="color: var(--accent-neon);">Đặt lịch hẹn hỗ trợ</a></li>
+            </ul>
+        </div>
+    </nav>
+</header>
+
+</body>
+</html>

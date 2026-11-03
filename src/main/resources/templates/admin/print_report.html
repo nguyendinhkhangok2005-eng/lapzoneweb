@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>In Báo Cáo Doanh Thu</title>
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; font-size: 14pt; color: #000; background: #f4f7f6; margin: 0; padding: 20px; }
+        .report-box { max-width: 900px; margin: auto; padding: 40px; background: #fff; border: 1px solid #ccc; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: center; }
+        .header-table td { padding: 5px; vertical-align: top; }
+        .header-left { width: 40%; }
+        .header-right { width: 60%; }
+        .company-name { font-weight: bold; font-size: 13pt; text-transform: uppercase; }
+        .motto-line1 { font-weight: bold; font-size: 13pt; text-transform: uppercase; }
+        .motto-line2 { font-weight: bold; font-size: 14pt; text-decoration: underline; margin-top: 5px; display: inline-block; }
+        
+        .report-title { text-align: center; margin: 40px 0; }
+        .report-title h2 { font-size: 20pt; font-weight: bold; margin: 0; text-transform: uppercase; }
+        .report-title p { font-style: italic; margin-top: 5px; }
+
+        .section-title { font-weight: bold; font-size: 14pt; margin-top: 30px; margin-bottom: 10px; text-transform: uppercase; }
+        
+        table.data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12pt; }
+        table.data-table th, table.data-table td { border: 1px solid #000; padding: 8px; }
+        table.data-table th { background-color: #f0f0f0; font-weight: bold; text-align: center; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-bold { font-weight: bold; }
+
+        .signature-section { width: 100%; margin-top: 50px; text-align: center; page-break-inside: avoid; }
+        .signature-table { width: 100%; }
+        
+        .no-print-btn { display: block; width: 150px; margin: 20px auto; padding: 10px; background: #198754; color: white; text-align: center; text-decoration: none; font-family: sans-serif; border-radius: 5px; cursor: pointer; border: none; }
+        .no-print-btn:hover { background: #157347; }
+        
+        @media print {
+            body { background: #fff; padding: 0; }
+            .report-box { border: none; box-shadow: none; padding: 0; max-width: 100%; }
+            .no-print-btn { display: none !important; }
+            @page { size: A4 portrait; margin: 20mm; }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="no-print-btn" onclick="window.print()">🖨️ IN BÁO CÁO</button>
+
+    <div class="report-box">
+        <!-- Header Hành chính -->
+        <table class="header-table">
+            <tr>
+                <td class="header-left">
+                    <div class="company-name">CÔNG TY TNHH CÔNG NGHỆ LAPZONE</div>
+                    <div>Số 3 Ngõ 117 Thái Hà, Đống Đa, HN</div>
+                    <div>Hotline: 093.669.3388</div>
+                </td>
+                <td class="header-right">
+                    <div class="motto-line1">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                    <div class="motto-line2">Độc lập - Tự do - Hạnh phúc</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Tiêu đề -->
+        <div class="report-title">
+            <h2>BÁO CÁO DOANH THU KINH DOANH</h2>
+            <p>(Kỳ báo cáo: Từ ngày <span th:text="${startDateStr}"></span> đến ngày <span th:text="${endDateStr}"></span>)</p>
+        </div>
+
+        <!-- Bảng 1: Thống kê chung -->
+        <div class="section-title">I. KẾT QUẢ KINH DOANH TỔNG HỢP</div>
+        <table class="data-table">
+            <tr>
+                <th style="width: 50%">Chỉ tiêu</th>
+                <th style="width: 50%">Kết quả</th>
+            </tr>
+            <tr>
+                <td>1. Tổng số đơn hàng thành công</td>
+                <td class="text-center text-bold" th:text="${totalOrders} + ' đơn'"></td>
+            </tr>
+            <tr>
+                <td>2. Tổng doanh thu thực tế</td>
+                <td class="text-center text-bold" style="color: #d32f2f;" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+            </tr>
+        </table>
+
+        <!-- Bảng 2: Thống kê theo hãng -->
+        <div class="section-title">II. DOANH THU THEO HÃNG SẢN XUẤT</div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%">STT</th>
+                    <th style="width: 40%">Hãng Sản Xuất</th>
+                    <th style="width: 20%">SL Máy Bán</th>
+                    <th style="width: 30%">Doanh Thu</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="entry, stat : ${brandRevenue}">
+                    <td class="text-center" th:text="${stat.count}">1</td>
+                    <td th:text="${entry.key}">Dell</td>
+                    <td class="text-center" th:text="${brandQuantity.get(entry.key)}">0</td>
+                    <td class="text-right" th:text="${#numbers.formatDecimal(entry.value, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</td>
+                </tr>
+                <tr th:if="${#maps.isEmpty(brandRevenue)}">
+                    <td colspan="4" class="text-center">Không có dữ liệu trong kỳ này</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Bảng 3: Chi tiết đơn hàng -->
+        <div class="section-title">III. CHI TIẾT CÁC ĐƠN HÀNG THÀNH CÔNG</div>
+        <table class="data-table" style="font-size: 11pt;">
+            <thead>
+                <tr>
+                    <th>Mã ĐH</th>
+                    <th>Ngày Bán</th>
+                    <th>Tên Khách Hàng</th>
+                    <th>Số Điện Thoại</th>
+                    <th style="width: 30%">Sản Phẩm Đã Mua</th>
+                    <th>Tổng Tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="invoice : ${invoices}">
+                    <td class="text-center" th:text="'#' + ${invoice.id}"></td>
+                    <td class="text-center" th:text="${#dates.format(invoice.orderDate, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${invoice.customerName}"></td>
+                    <td class="text-center" th:text="${invoice.customerPhone}"></td>
+                    <td>
+                        <ul style="margin: 0; padding-left: 15px; font-size: 10pt;">
+                            <li th:each="detail : ${invoice.orderDetails}" 
+                                th:text="${detail.product.name} + ' (x' + ${detail.quantity} + ')'">
+                            </li>
+                        </ul>
+                    </td>
+                    <td class="text-right" th:text="${#numbers.formatDecimal(invoice.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(invoices)}">
+                    <td colspan="6" class="text-center">Không có đơn hàng nào trong kỳ này</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Chữ ký -->
+        <div class="signature-section" style="margin-top: 50px;">
+            <table class="signature-table" style="width: 100%;">
+                <tr>
+                    <td style="width: 50%;"></td>
+                    <td style="width: 50%; text-align: center; vertical-align: top;">
+                        <div style="font-style: italic; font-size: 12pt;" th:text="'Hà Nội, ngày ' + ${#dates.format(#dates.createNow(), 'dd')} + ' tháng ' + ${#dates.format(#dates.createNow(), 'MM')} + ' năm ' + ${#dates.format(#dates.createNow(), 'yyyy')}"></div>
+                        <div class="text-bold" style="margin-top: 5px;">Người lập báo cáo</div>
+                        <div style="font-style: italic; font-size: 12pt;">(Ký, ghi rõ họ tên)</div>
+                        <br><br><br><br><br>
+                        <div class="text-bold" style="font-size: 14pt; text-transform: uppercase;" th:text="${session.currentUser != null ? session.currentUser.fullName : 'QUẢN TRỊ VIÊN'}"></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>

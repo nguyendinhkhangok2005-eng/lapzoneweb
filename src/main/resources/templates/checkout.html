@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thanh toán | Lapzone</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --hover-color: #0a58ca;
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .checkout-container {
+            margin-top: 50px;
+            margin-bottom: 50px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 2px solid var(--bg-light);
+            font-weight: bold;
+            font-size: 1.2rem;
+            padding: 20px;
+            border-radius: 15px 15px 0 0 !important;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        }
+
+        .btn-order {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            width: 100%;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-order:hover {
+            background-color: var(--hover-color);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.4);
+            transform: scale(1.02);
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .product-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-right: 15px;
+        }
+
+        .total-section {
+            font-size: 1.3rem;
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .badge-qty {
+            background-color: var(--bg-light);
+            color: #333;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark py-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">LAPZONE</a>
+    </div>
+</nav>
+
+<div class="container checkout-container">
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-shipping-fast me-2 text-primary"></i> Thông Tin Nhận Hàng
+                </div>
+                <div class="card-body p-4">
+                    <form th:action="@{/checkout/process}" method="POST">
+                        
+                     <th:block th:each="id : ${selectedItemIds}">
+                        <input type="hidden" name="selectedItemIds" th:value="${id}">
+                    </th:block>
+
+                    <div class="mb-3">
+                        <label class="form-label">Họ và tên người nhận</label>
+                        <input type="text" name="customerName" class="form-control" 
+                            th:value="${user != null ? user.fullName : ''}" required placeholder="Nhập tên người nhận">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Số điện thoại</label>
+                        <input type="tel" name="customerPhone" class="form-control" 
+                            th:value="${user != null ? user.phone : ''}" required placeholder="Nhập số điện thoại">
+                    </div>
+                        
+                      <div class="mb-3">
+                            <label class="form-label">Địa chỉ giao hàng</label>
+                            <textarea name="address" class="form-control" rows="3" 
+                                    th:text="${user != null ? user.address : ''}" required placeholder="Nhập địa chỉ giao hàng"></textarea>
+                        </div>
+
+                        <div class="mb-4 mt-4">
+                    <label class="form-label fw-bold"><i class="fas fa-credit-card me-2"></i> Phương thức thanh toán</label>
+                    
+                    <div class="payment-methods mt-2">
+                        <div class="form-check p-3 border rounded-3 mb-2 payment-item">
+                            <input class="form-check-input ms-0 me-3" type="radio" name="paymentMethod" id="payCod" value="COD" checked>
+                            <label class="form-check-label d-flex align-items-center" for="payCod">
+                                <i class="fas fa-money-bill-wave text-success me-2 fs-4"></i>
+                                <div>
+                                    <div class="fw-bold">Thanh toán khi nhận hàng (COD)</div>
+                                    <small class="text-muted">Bạn sẽ thanh toán tiền mặt khi shipper giao máy.</small>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="form-check p-3 border rounded-3 mb-2 payment-item">
+                            <input class="form-check-input ms-0 me-3" type="radio" name="paymentMethod" id="payVnpay" value="VNPAY">
+                            <label class="form-check-label d-flex align-items-center" for="payVnpay">
+                                <i class="fas fa-qrcode text-primary me-2 fs-4"></i>
+                                <div>
+                                    <div class="fw-bold">Thanh toán qua VNPAY-QR</div>
+                                    <small class="text-muted">Quét mã QR bằng ứng dụng Ngân hàng hoặc Ví VNPAY.</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    .payment-item { transition: all 0.3s; cursor: pointer; }
+                    .payment-item:hover { border-color: #0d6efd; background-color: #f8faff; }
+                    .form-check-input:checked + label { color: #0d6efd; }
+                </style>
+                        <button type="submit" class="btn btn-order mt-4">
+                            Xác Nhận Đặt Hàng <i class="fas fa-check-circle ms-2"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-shopping-bag me-2 text-primary"></i> Đơn Hàng Của Bạn
+                </div>
+                <div class="card-body">
+                    <div th:each="item : ${cartItems}" class="product-item">
+                       <img loading="lazy" th:src="${item.product.image}" alt="Product">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0" th:text="${item.product.name}">Tên sản phẩm</h6>
+                            <small class="text-muted" th:text="${#numbers.formatDecimal(item.product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
+                        </div>
+                        <span class="badge badge-qty">x[[${item.quantity}]]</span>
+                    </div>
+
+                    <div class="mt-4 pt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tạm tính:</span>
+                            <span th:text="${#numbers.formatDecimal(cartTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+                            <span>Phí vận chuyển:</span>
+                            <span class="text-success">Miễn phí</span>
+                        </div>
+                        <div class="d-flex justify-content-between total-section">
+                            <span>TỔNG CỘNG:</span>
+                            <span th:text="${#numbers.formatDecimal(cartTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <a href="/cart" class="btn btn-link mt-3 text-decoration-none text-muted">
+                <i class="fas fa-arrow-left me-2"></i> Quay lại giỏ hàng
+            </a>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-white py-4 mt-5">
+    <div class="container text-center">
+        <p class="mb-0">&copy; 2026 Lapzone - Chuyên Laptop Gaming & Văn Phòng</p>
+    </div>
+</footer>
+
+</body>
+</html>

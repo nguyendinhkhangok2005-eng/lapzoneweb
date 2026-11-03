@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Danh mục | Lapzone Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background-color: #2c3e50 !important;
+            color: #ffffff;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            padding: 25px 0;
+            letter-spacing: 1.5px;
+            color: #11caa0;
+            border-bottom: 1px solid #34495e;
+            background-color: #1a252f;
+        }
+
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 15px 25px; color: #ecf0f1; text-decoration: none; font-size: 15px; transition: all 0.3s ease; }
+        .menu-item i { width: 24px; font-size: 16px; text-align: center; }
+        .menu-item:hover, .menu-item:focus { background-color: #34495e; color: #11caa0; text-decoration: none; padding-left: 30px; }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 20px;
+            min-height: 100vh;
+            width: calc(100% - 260px);
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{admin/sidebar :: adminSidebar}"></div>
+
+    <div class="main-content">
+        <div class="container-fluid py-4">
+            
+            <div class="card shadow border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold text-primary"><i class="fas fa-tags me-2"></i> QUẢN LÝ DANH MỤC</h5>
+                    <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#categoryModal" onclick="clearModal()">
+                        <i class="fas fa-plus me-2"></i> Thêm Danh Mục Mới
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+                        <span th:text="${success}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                        <span th:text="${error}"></span><button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    
+                    <table class="table table-hover align-middle table-bordered">
+                        <thead class="table-light text-center">
+                            <tr>
+                                <th>ID</th>
+                                <th>Tên Danh Mục (Hãng)</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="cat : ${categories}" class="text-center">
+                                <td class="fw-bold">[[${cat.id}]]</td>
+                                <td class="text-start">[[${cat.name}]]</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning"
+                                            data-bs-toggle="modal" data-bs-target="#categoryModal"
+                                            th:data-id="${cat.id}" th:data-name="${cat.name}"
+                                            onclick="fillModal(this)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form th:action="@{/admin/categories/delete}" method="POST" class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục này?')">
+                                        <input type="hidden" name="id" th:value="${cat.id}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash-alt"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div> </div> <div class="modal fade" id="categoryModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form th:action="@{/admin/categories/save}" method="POST">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title fw-bold" id="modalTitle">Thêm Danh Mục Mới</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="id" id="catId">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tên Danh Mục</label>
+                                <input type="text" name="name" id="catName" class="form-control" required placeholder="VD: Dell, Asus, Apple...">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Lưu lại</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div> <script>
+        // Xóa dữ liệu khi bấm nút Thêm Mới
+        function clearModal() {
+            document.getElementById('modalTitle').innerText = "Thêm Danh Mục Mới";
+            document.getElementById('catId').value = "";
+            document.getElementById('catName').value = "";
+        }
+        
+        // Đổ dữ liệu khi bấm nút Sửa
+        function fillModal(button) {
+            document.getElementById('modalTitle').innerText = "Cập Nhật Danh Mục";
+            document.getElementById('catId').value = button.getAttribute('data-id');
+            document.getElementById('catName').value = button.getAttribute('data-name');
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

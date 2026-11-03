@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Trang chủ - LAPZONE</title>
+</head>
+<body>
+
+<!-- Header -->
+<div th:replace="~{fragments/header :: header_lapzone}"></div>
+
+<main>
+    <!-- Hero Section -->
+    <section class="container" style="margin-top: 40px; margin-bottom: 60px;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+            <!-- Main Banner -->
+            <div style="border-radius: var(--radius-lg); overflow: hidden; position: relative;">
+                <img loading="lazy" th:src="@{/assets/reviewimage.webp}" alt="Banner" style="width: 100%; height: 100%; object-fit: cover;">
+                <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 40px;">
+                    <h2 style="color: white; font-size: 2.5rem; margin-bottom: 10px;">Thế Hệ Laptop Mới</h2>
+                    <p style="color: rgba(255,255,255,0.8);">Trang bị card đồ họa RTX 40 Series mạnh mẽ</p>
+                </div>
+            </div>
+            
+            <!-- Side Banners/News -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                <div style="background: var(--bg-card); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-glass);">
+                    <h3 style="color: var(--accent-neon); margin-bottom: 16px;"><i class="fas fa-newspaper"></i> Tin Công Nghệ</h3>
+                    <ul style="display: flex; flex-direction: column; gap: 12px;">
+                        <li><a href="#" style="color: var(--text-secondary);">&bull; Tạm Ngưng Hỗ Trợ Kĩ Thuật, Bảo Dưỡng</a></li>
+                        <li><a href="#" style="color: var(--text-secondary);">&bull; Đặt Lịch Hẹn Trước Để Được Hỗ Trợ</a></li>
+                        <li><a href="#" style="color: var(--text-secondary);">&bull; Thông Báo Lịch Làm Việc Dịp Lễ</a></li>
+                    </ul>
+                </div>
+                <div style="background: linear-gradient(135deg, var(--accent-red), var(--accent-orange)); padding: 24px; border-radius: var(--radius-lg); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; flex: 1;">
+                    <h3 style="font-size: 1.5rem; margin-bottom: 10px;">Ưu Đãi Lớn</h3>
+                    <p style="margin-bottom: 20px;">Giảm tới 20% cho sinh viên</p>
+                    <a href="#" class="btn-primary" style="background: white; color: var(--accent-red);">Xem Ngay</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="container" style="margin-bottom: 60px;">
+        <h2 class="section-title">Laptop theo nhu cầu</h2>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;">
+            <a th:href="@{/search(query='Văn Phòng')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                <img loading="lazy" th:src="@{/assets/vanphonghoctap.webp}" alt="Văn phòng" style="height: 100px; margin: 0 auto 16px;">
+                <h4 style="color: var(--text-primary);">Học Tập, Văn Phòng</h4>
+            </a>
+            <a th:href="@{/search(query='Đồ Họa')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                <img loading="lazy" th:src="@{/assets/dohoakythuat.webp}" alt="Đồ họa" style="height: 100px; margin: 0 auto 16px;">
+                <h4 style="color: var(--text-primary);">Đồ Họa, Kỹ Thuật</h4>
+            </a>
+            <a th:href="@{/search(query='Lập Trình')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                <img loading="lazy" th:src="@{/assets/laptoplaptrinh.webp}" alt="Lập trình" style="height: 100px; margin: 0 auto 16px;">
+                <h4 style="color: var(--text-primary);">Lập Trình</h4>
+            </a>
+            <a th:href="@{/search(query='Gaming')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                <img loading="lazy" th:src="@{/assets/gamelaptop.webp}" alt="Gaming" style="height: 100px; margin: 0 auto 16px;">
+                <h4 style="color: var(--text-primary);">Gaming</h4>
+            </a>
+            <a th:href="@{/search(minPrice=30000000)}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                <img loading="lazy" th:src="@{/assets/sieuphamlaptop.webp}" alt="Siêu Phẩm" style="height: 100px; margin: 0 auto 16px;">
+                <h4 style="color: var(--text-primary);">Cao Cấp (Premium)</h4>
+            </a>
+        </div>
+    </section>
+
+    <!-- Hot Products -->
+        <section class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h2 class="section-title" style="margin-bottom: 0;">Máy Tính Xách Tay HOT</h2>
+                <a th:href="@{/search(query='Laptop')}" style="color: var(--accent-neon); font-weight: 500;">Xem tất cả <i class="fas fa-arrow-right"></i></a>
+            </div>
+            
+            <div class="product-grid">
+                <article class="product-card" th:each="product : ${laptopProducts}">
+                    <div class="badge" th:if="${product.stock == 0}" style="background: var(--accent-red);">Hết Hàng</div>
+                    <div class="badge" th:if="${product.stock > 0}">HOT!</div>
+                    <a th:href="@{/product_detail(id=${product.id})}">
+                        <div class="product-img-wrapper">
+                            <img loading="lazy" class="product-img" th:src="@{'/' + ${product.image}}" alt="Laptop">
+                        </div>
+                        <h3 class="product-title" th:text="${product.name}">Tên Sản Phẩm</h3>
+                        <div class="product-price" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">Giá</div>
+                        <div class="product-meta">
+                            <span th:text="'Kho: ' + ${product.stock}"></span>
+                            <span><i class="far fa-heart"></i> Yêu thích</span>
+                        </div>
+                        <div style="margin-top: 10px;" th:if="${product.productDetail != null}">
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); background: rgba(0,0,0,0.05); padding: 8px; border-radius: 8px;">
+                                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">CPU: <span th:text="${product.productDetail.cpu}"></span></div>
+                                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">RAM: <span th:text="${product.productDetail.ram}"></span></div>
+                            </div>
+                        </div>
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <!-- Apple Section -->
+        <section class="container">
+            <h2 class="section-title">Apple MacBook</h2>
+            <div class="product-grid">
+                <article class="product-card" th:each="product : ${appleProducts}">
+                    <div class="badge" style="background: linear-gradient(135deg, #111, #333);"><i class="fab fa-apple"></i> Mac</div>
+                    <a th:href="@{/product_detail(id=${product.id})}">
+                        <div class="product-img-wrapper">
+                            <img loading="lazy" class="product-img" th:src="@{'/' + ${product.image}}" alt="Macbook">
+                        </div>
+                        <h3 class="product-title" th:text="${product.name}">Macbook</h3>
+                        <div class="product-price" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">Giá</div>
+                        <div class="product-meta">
+                            <span th:text="'Kho: ' + ${product.stock}"></span>
+                            <span><i class="far fa-heart"></i> Yêu thích</span>
+                        </div>
+                    </a>
+                </article>
+            </div>
+    <!-- Features / Promises -->
+    <section class="container" style="margin-top: 80px; margin-bottom: 80px;">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 60px 40px; text-align: center;">
+            <h2 class="section-title" style="margin-bottom: 10px;">Bạn Xứng Đáng Với Những Điều Tốt Nhất</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 50px;">Cam kết của Lapzone đối với mọi khách hàng</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;">
+                <div>
+                    <i class="fa-solid fa-award" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
+                    <h3 style="margin-bottom: 15px;">Chất Lượng & Giá Tốt Nhất</h3>
+                    <p style="color: var(--text-secondary);">Sản phẩm laptop nhập khẩu cao cấp với chất lượng dịch vụ không ngừng nâng cao.</p>
+                </div>
+                <div>
+                    <i class="fa-solid fa-handshake" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
+                    <h3 style="margin-bottom: 15px;">Bảo Dưỡng Trọn Đời</h3>
+                    <p style="color: var(--text-secondary);">Miễn phí vệ sinh – bôi keo tản nhiệt – kiểm tra định kỳ trọn đời sử dụng.</p>
+                </div>
+                <div>
+                    <i class="fa-solid fa-truck-fast" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
+                    <h3 style="margin-bottom: 15px;">Giao Hàng Nhanh</h3>
+                    <p style="color: var(--text-secondary);">Giao nhanh toàn quốc, đóng gói chống sốc đảm bảo an toàn tuyệt đối.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- Footer -->
+<div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+
+</body>
+</html>

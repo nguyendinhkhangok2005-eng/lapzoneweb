@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Giỏ hàng của bạn - Lapzone</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .cart-wrapper { max-width: 1200px; margin: 40px auto; padding: 0 20px; min-height: 60vh; }
+        .cart-container { background: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-glass); overflow: hidden; }
+        .cart-header {
+            background: rgba(0,0,0,0.05);
+            padding: 24px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+        .cart-header h2 { margin: 0; font-size: 1.5rem; color: var(--text-primary); }
+        .cart-header i { font-size: 1.8rem; color: var(--accent-neon); }
+
+        .empty-cart { text-align: center; padding: 80px 20px; }
+        .empty-cart i { font-size: 5rem; color: var(--text-secondary); margin-bottom: 20px; }
+        .empty-cart p { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 30px; }
+
+        .cart-table { width: 100%; border-collapse: collapse; }
+        .cart-table th { background: rgba(255,255,255,0.02); color: var(--text-secondary); padding: 16px; text-align: center; font-weight: 500; border-bottom: 1px solid var(--border-glass); }
+        .cart-table td { padding: 20px 16px; text-align: center; border-bottom: 1px solid var(--border-glass); vertical-align: middle; }
+        
+        .product-col { display: flex; align-items: center; gap: 20px; text-align: left; }
+        .product-col img { width: 80px; height: 80px; object-fit: contain; background: rgba(0,0,0,0.05); border-radius: var(--radius-md); padding: 8px; border: 1px solid var(--border-glass); }
+        .product-col .name { font-weight: 600; color: var(--text-primary); }
+        .product-col .name:hover { color: var(--accent-neon); }
+        
+        .price-text { color: var(--accent-neon); font-weight: 600; font-size: 1.1rem; }
+
+        .qty-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .qty-btn { background: rgba(255,255,255,0.1); color: var(--text-primary); width: 32px; height: 32px; border-radius: 6px; }
+        .qty-btn:hover { background: var(--accent-blue); }
+        .qty-input { width: 50px; height: 32px; text-align: center; background: rgba(0,0,0,0.05); border: 1px solid var(--border-glass); color: var(--text-primary); border-radius: 6px; font-weight: 600; }
+        
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); width: 36px; height: 36px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; transition: var(--transition-normal); }
+        .btn-delete:hover { background: var(--accent-red); color: white; transform: scale(1.1); }
+
+        .cart-footer { padding: 30px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+        .total-box { font-size: 1.2rem; color: var(--text-primary); }
+        .total-box span { color: var(--accent-neon); font-size: 1.8rem; font-weight: 700; margin-left: 15px; text-shadow: 0 0 10px rgba(14, 165, 233, 0.3); }
+
+        .custom-checkbox { width: 20px; height: 20px; accent-color: var(--accent-neon); }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header_lapzone}"></div>
+    
+    <main class="cart-wrapper">
+        <div class="cart-container">
+            <div class="cart-header">
+                <i class="fas fa-shopping-cart"></i>
+                <h2>Giỏ hàng của bạn</h2>
+            </div>
+            
+            <div class="empty-cart" th:if="${cartItems == null or cartItems.isEmpty()}">
+                <i class="fas fa-box-open"></i>
+                <p>Giỏ hàng của bạn đang trống. Hãy chọn cho mình một chiếc Laptop ưng ý nhé!</p>
+                <a th:href="@{/}" class="btn-primary">← Tiếp tục mua sắm</a>
+            </div>
+            
+            <div th:unless="${cartItems == null or cartItems.isEmpty()}">
+                <form th:action="@{/checkout}" method="GET" onsubmit="return validateCartForm()">
+                    <table class="cart-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;"><input type="checkbox" id="selectAll" class="custom-checkbox" checked></th>
+                                <th style="text-align: left; padding-left: 10px;">Sản phẩm</th>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                                <th>Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${cartItems}">
+                                <td>
+                                    <input type="checkbox" name="selectedItems" th:value="${item.id}" class="custom-checkbox item-checkbox" 
+                                           th:data-price="${(item.product.price * item.quantity).longValue()}" checked>
+                                </td>
+                                
+                                <td>
+                                    <div class="product-col">
+                                        <img loading="lazy" th:src="@{'/' + ${item.product.image}}" th:alt="${item.product.name}">
+                                        <div class="info">
+                                            <a th:href="@{/product_detail(id=${item.product.id})}" class="name" th:text="${item.product.name}">Tên SP</a>
+                                            <span style="font-size: 0.85rem; color: var(--text-secondary);" th:text="${item.product.category.name}">Hãng</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                
+                                <td class="price-text" th:text="${#numbers.formatDecimal(item.product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giá</td>
+                                
+                                <td>
+                                    <div class="qty-wrapper">
+                                        <button type="button" class="qty-btn" th:onclick="'updateQty(' + ${item.id} + ', ' + ${item.quantity - 1} + ')'">-</button>
+                                        <input type="number" class="qty-input" th:value="${item.quantity}" min="1" th:max="${item.product.stock}" readonly>
+                                        <button type="button" class="qty-btn"
+                                                th:disabled="${item.product.stock != null and item.quantity >= item.product.stock}"
+                                                th:onclick="'updateQty(' + ${item.id} + ', ' + ${item.quantity + 1} + ', ' + ${item.product.stock} + ')'">+</button>
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 6px;"
+                                         th:text="'Kho: ' + ${item.product.stock}">Kho</div>
+                                </td>
+                                
+                                <td class="price-text" th:text="${#numbers.formatDecimal(item.product.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Thành tiền</td>
+                                
+                                <td>
+                                    <button type="button" class="btn-delete" title="Xóa khỏi giỏ hàng" th:onclick="'removeItem(' + ${item.id} + ')'">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <div class="cart-footer">
+                        <a th:href="@{/}" style="color: var(--text-secondary); text-decoration: underline;">← Mua thêm máy khác</a>
+                        <div style="display: flex; align-items: center; gap: 30px;">
+                            <div class="total-box">
+                                Tổng thanh toán:
+                                <span id="cartTotalDisplay" th:text="${#numbers.formatDecimal(total, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</span>
+                            </div>
+                            <button type="submit" class="btn-primary" style="padding: 16px 32px; font-size: 1.1rem;">
+                                Tiến hành đặt hàng <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <form id="actionForm" method="post" style="display: none;">
+                    <input type="hidden" id="cartItemIdInput" name="cartItemId">
+                    <input type="hidden" id="quantityInput" name="quantity">
+                </form>
+            </div>
+        </div>
+    </main>
+    
+    <div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAll = document.getElementById('selectAll');
+            const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+            const totalDisplay = document.getElementById('cartTotalDisplay');
+
+            function calculateTotal() {
+                let currentTotal = 0;
+                itemCheckboxes.forEach(cb => {
+                    if(cb.checked) {
+                        currentTotal += parseInt(cb.getAttribute('data-price'), 10);
+                    }
+                });
+                totalDisplay.innerText = currentTotal.toLocaleString('vi-VN') + ' ₫';
+            }
+
+            if(selectAll) {
+                selectAll.addEventListener('change', function() {
+                    itemCheckboxes.forEach(cb => cb.checked = this.checked);
+                    calculateTotal();
+                });
+            }
+
+            itemCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const allChecked = Array.from(itemCheckboxes).every(c => c.checked);
+                    selectAll.checked = allChecked;
+                    calculateTotal();
+                });
+            });
+        });
+
+        function validateCartForm() {
+            const checkedItems = document.querySelectorAll('.item-checkbox:checked');
+            if(checkedItems.length === 0) {
+                alert('Trưởng nhóm ơi! Vui lòng tích chọn ít nhất 1 sản phẩm để thanh toán nhé!');
+                return false;
+            }
+            return true;
+        }
+
+        function updateQty(itemId, newQty, maxQty) {
+            if(newQty < 1) return;
+            if(maxQty !== undefined && maxQty !== null && newQty > maxQty) {
+                alert('So luong trong gio hang khong the vuot qua ton kho.');
+                return;
+            }
+            const form = document.getElementById('actionForm');
+            form.action = '/cart/update';
+            document.getElementById('cartItemIdInput').value = itemId;
+            document.getElementById('quantityInput').value = newQty;
+            form.submit();
+        }
+
+        function removeItem(itemId) {
+            if(confirm('Bạn có chắc chắn muốn bỏ sản phẩm này khỏi giỏ?')) {
+                const form = document.getElementById('actionForm');
+                form.action = '/cart/remove';
+                document.getElementById('cartItemIdInput').value = itemId;
+                form.submit();
+            }
+        }
+    </script>
+</body>
+</html>

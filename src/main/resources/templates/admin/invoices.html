@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Hóa đơn | Lapzone Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body { margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background-color: #2c3e50 !important;
+            color: #ffffff;
+            position: fixed;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .sidebar-header {
+            font-size: 20px;
+            font-weight: 700;
+            text-align: center;
+            padding: 25px 0;
+            letter-spacing: 1.5px;
+            color: #11caa0;
+            border-bottom: 1px solid #34495e;
+            background-color: #1a252f;
+        }
+
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 15px 25px; color: #ecf0f1; text-decoration: none; font-size: 15px; transition: all 0.3s ease; }
+        .menu-item i { width: 24px; font-size: 16px; text-align: center; }
+        .menu-item:hover, .menu-item:focus { background-color: #34495e; color: #11caa0; text-decoration: none; padding-left: 30px; }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 20px;
+            min-height: 100vh;
+            width: calc(100% - 260px);
+        }
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{admin/sidebar :: adminSidebar}"></div>
+
+    <div class="main-content">
+        <div class="container-fluid py-2">
+            
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-success text-white shadow border-0 h-100">
+                        <div class="card-body d-flex align-items-center justify-content-between p-4">
+                            <div>
+                                <h6 class="text-uppercase fw-bold mb-2">Doanh thu tháng này</h6>
+                                <h2 class="mb-0 fw-bold">
+                                    [[${#numbers.formatDecimal(monthlyRevenue, 0, 'COMMA', 0, 'POINT')}]] ₫
+                                </h2>
+                            </div>
+                            <i class="fas fa-hand-holding-usd fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 rounded-3 mb-4 p-3 bg-white">
+                <form th:action="@{/admin/invoices}" method="get" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label text-muted fw-bold">Từ ngày:</label>
+                        <input type="date" class="form-control" name="startDate" th:value="${startDate}" title="Từ ngày">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted fw-bold">Đến ngày:</label>
+                        <input type="date" class="form-control" name="endDate" th:value="${endDate}" title="Đến ngày">
+                    </div>
+                    <div class="col-md-6">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Lọc hóa đơn
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card shadow border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold text-success"><i class="fas fa-file-invoice-dollar me-2"></i> CHỨNG TỪ KẾ TOÁN</h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-secondary fs-6" th:text="'Tổng: ' + ${totalElements} + ' hóa đơn'"></span>
+                        <a th:href="@{/admin/invoices/print(startDate=${startDate}, endDate=${endDate})}" target="_blank" class="btn btn-outline-success fw-bold me-2">
+                            <i class="fas fa-print me-2"></i> In Báo Cáo
+                        </a>
+                        <a th:href="@{/admin/invoices/export-excel(startDate=${startDate}, endDate=${endDate})}" class="btn btn-success fw-bold">
+                            <i class="fas fa-file-excel me-2"></i> Xuất Excel báo cáo
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+                        <span th:text="${success}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <span th:text="${error}"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle table-bordered">
+                            <thead class="table-light">
+                                <tr class="text-center">
+                                    <th>Mã HĐ</th>
+                                    <th>Khách hàng</th>
+                                    <th>Ngày thanh toán</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="invoice : ${invoices}">
+                                    <td class="text-center fw-bold">#[[${invoice.id}]]</td>
+                                    <td>
+                                        <strong>[[${invoice.customerName}]]</strong><br>
+                                        <small class="text-muted"><i class="fas fa-phone fa-sm"></i> [[${invoice.customerPhone}]]</small><br>
+                                        <small class="text-muted"><i class="fas fa-map-marker-alt fa-sm"></i> [[${invoice.address}]]</small>
+                                    </td>
+                                    <td class="text-center" th:text="${#dates.format(invoice.orderDate, 'dd/MM/yyyy HH:mm')}"></td>
+                                    <td class="text-end text-danger fw-bold">[[${#numbers.formatDecimal(invoice.totalAmount, 0, 'COMMA', 0, 'POINT')}]] ₫</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success"><i class="fas fa-check-circle"></i> [[${invoice.status}]]</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex gap-1 justify-content-center">
+                                            <a th:href="@{/order/detail/{id}(id=${invoice.id})}" target="_blank" class="btn btn-sm btn-outline-primary" title="In Hóa Đơn">
+                                                <i class="fas fa-print"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-warning" title="Sửa thông tin"
+                                                    data-bs-toggle="modal" data-bs-target="#editInvoiceModal"
+                                                    th:data-id="${invoice.id}"
+                                                    th:data-name="${invoice.customerName}"
+                                                    th:data-phone="${invoice.customerPhone}"
+                                                    th:data-address="${invoice.address}"
+                                                    th:data-total="${invoice.totalAmount.longValue()}"
+                                                    th:data-status="${invoice.status}"
+                                                    onclick="prepareEditModal(this)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <form th:action="@{/admin/invoices/delete}" method="POST" class="d-inline"
+                                                  onsubmit="return confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN hóa đơn này không? Thao tác này sẽ xóa sạch cả chi tiết hóa đơn và không thể khôi phục!')">
+                                                <input type="hidden" name="invoiceId" th:value="${invoice.id}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa hóa đơn">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(invoices)}">
+                                    <td colspan="6" class="text-center text-muted py-4">Chưa có hóa đơn nào hoàn thành.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- [MỚI] Thanh phân trang hóa đơn -->
+                    <div class="d-flex justify-content-between align-items-center mt-3" th:if="${totalPages > 0}">
+                        <span class="text-muted small">
+                            Hiển thị <strong th:text="${currentPage * 20 + 1}"></strong>
+                            đến <strong th:text="${(currentPage + 1) * 20 > totalElements ? totalElements : (currentPage + 1) * 20}"></strong>
+                            trong tổng số <strong th:text="${totalElements}"></strong> hóa đơn
+                        </span>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                                    <a class="page-link"
+                                       th:href="@{/admin/invoices(page=${currentPage - 1}, size=20, startDate=${startDate}, endDate=${endDate})}">
+                                        &laquo; Trước
+                                    </a>
+                                </li>
+                                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                    th:classappend="${i == currentPage} ? 'active'"
+                                    th:if="${i <= 4 or i >= totalPages - 2 or (i >= currentPage - 1 and i <= currentPage + 1)}">
+                                    <a class="page-link"
+                                       th:href="@{/admin/invoices(page=${i}, size=20, startDate=${startDate}, endDate=${endDate})}"
+                                       th:text="${i + 1}"></a>
+                                </li>
+                                <li class="page-item" th:classappend="${currentPage >= totalPages - 1} ? 'disabled'">
+                                    <a class="page-link"
+                                       th:href="@{/admin/invoices(page=${currentPage + 1}, size=20, startDate=${startDate}, endDate=${endDate})}">
+                                        Sau &raquo;
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <!-- /phân trang -->
+                </div>
+            </div>
+        </div> <div class="modal fade" id="editInvoiceModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form th:action="@{/admin/invoices/update}" method="POST">
+                        <div class="modal-header bg-warning text-white">
+                            <h5 class="modal-title fw-bold" id="editModalLabel"><i class="fas fa-edit me-2"></i> Chỉnh sửa hóa đơn</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" name="invoiceId" id="modalInvoiceId">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tên khách hàng</label>
+                                <input type="text" name="customerName" id="modalCustomerName" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Số điện thoại</label>
+                                <input type="text" name="customerPhone" id="modalCustomerPhone" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Địa chỉ giao hàng</label>
+                                <textarea name="address" id="modalAddress" class="form-control" rows="2" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tổng tiền hóa đơn (₫)</label>
+                                <input type="number" step="any" name="totalAmount" id="modalTotalAmount" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Trạng thái</label>
+                                <select name="status" id="modalStatus" class="form-select">
+                                    <option value="ĐÃ THANH TOÁN">ĐÃ THANH TOÁN</option>
+                                    <option value="HOÀN THÀNH">HOÀN THÀNH</option>
+                                    <option value="CHỜ XÁC NHẬN">CHỜ XÁC NHẬN (Đẩy ngược lại kho Đơn hàng)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                            <button type="submit" class="btn btn-warning fw-bold text-white"><i class="fas fa-save me-1"></i> Lưu thay đổi</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div> <script>
+        function prepareEditModal(button) {
+            document.getElementById('modalInvoiceId').value = button.getAttribute('data-id');
+            document.getElementById('modalCustomerName').value = button.getAttribute('data-name');
+            document.getElementById('modalCustomerPhone').value = button.getAttribute('data-phone');
+            document.getElementById('modalAddress').value = button.getAttribute('data-address') || '';
+            document.getElementById('modalTotalAmount').value = button.getAttribute('data-total');
+            document.getElementById('modalStatus').value = button.getAttribute('data-status');
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

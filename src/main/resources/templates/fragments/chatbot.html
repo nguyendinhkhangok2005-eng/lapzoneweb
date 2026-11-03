@@ -1,0 +1,143 @@
+<div th:fragment="chatbot_widget">
+    <!-- CSS Tùy chỉnh Chatbot -->
+    <style>
+        #chatbot-btn {
+            position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+            width: 60px; height: 60px; background-color: #0b5ed7;
+            color: white; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center;
+            cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 28px; border: none; transition: 0.3s;
+        }
+        #chatbot-btn:hover { background-color: #0a58ca; transform: scale(1.1); }
+        
+        #chatbot-window {
+            position: fixed; bottom: 100px; right: 30px; z-index: 9999;
+            width: 350px; height: 450px; background: white;
+            border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #chatbot-header {
+            background: #0b5ed7; color: white; padding: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        #chatbot-messages {
+            flex: 1; padding: 15px; overflow-y: auto; background: #f8f9fa;
+        }
+        
+        #chatbot-input-area {
+            display: flex; padding: 10px; background: white; border-top: 1px solid #eee;
+        }
+        
+        #chatbot-input {
+            flex: 1; padding: 10px; border: 1px solid #ccc;
+            border-radius: 20px; outline: none; padding-left: 15px;
+        }
+        
+        #chatbot-send {
+            background: #0b5ed7; color: white; border: none; font-weight: bold;
+            padding: 0 15px; margin-left: 10px; border-radius: 20px; cursor: pointer;
+        }
+    </style>
+
+    <!-- Giao diện HTML -->
+    <button id="chatbot-btn">💬</button>
+    
+    <div id="chatbot-window">
+        <div id="chatbot-header">
+            <b>Lapzone AI Tư Vấn</b>
+            <button id="chatbot-close" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+        </div>
+        
+        <div id="chatbot-messages">
+            <div style="background:#e9ecef; padding:10px 15px; border-radius:15px; display:inline-block; max-width:85%; margin-bottom:10px; font-size:14px; line-height: 1.5;">
+                Xin chào! Tôi là trợ lý AI của Lapzone. Bạn cần tìm mua laptop gaming hay văn phòng?
+            </div>
+        </div>
+        
+        <div id="chatbot-input-area">
+            <input type="text" id="chatbot-input" placeholder="Nhập câu hỏi của bạn...">
+            <button id="chatbot-send">Gửi</button>
+        </div>
+    </div>
+
+    <!-- Script điều khiển Bật/Tắt -->
+    <!-- Script điều khiển Bật/Tắt & Gửi tin nhắn -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const btn = document.getElementById("chatbot-btn");
+        const win = document.getElementById("chatbot-window");
+        const close = document.getElementById("chatbot-close");
+        const sendBtn = document.getElementById("chatbot-send");
+        const input = document.getElementById("chatbot-input");
+        const messages = document.getElementById("chatbot-messages");
+
+        // Bật/tắt khung chat
+        btn.addEventListener("click", () => win.style.display = win.style.display === "flex" ? "none" : "flex");
+        close.addEventListener("click", () => win.style.display = "none");
+
+        // Hàm xử lý gửi tin nhắn
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+
+            // 1. Hiển thị tin nhắn của người dùng
+            appendMessage(text, 'user');
+            input.value = '';
+
+            // 2. Hiển thị trạng thái đang xử lý
+            const loadingDiv = appendMessage('Đang suy nghĩ...', 'bot');
+
+            try {
+                // 3. Gọi chính xác API backend
+                const response = await fetch('/api/ai/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                });
+
+                // 4. Đọc dữ liệu JSON trả về từ Controller
+                const data = await response.json();
+                loadingDiv.innerText = data.reply || "Không có phản hồi từ AI";
+            } catch (error) {
+                loadingDiv.innerText = 'Có lỗi xảy ra, vui lòng thử lại sau!';
+            }
+        }
+
+        // Bắt sự kiện click nút Gửi & ấn phím Enter
+        sendBtn.addEventListener("click", sendMessage);
+        input.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") sendMessage();
+        });
+
+        // Hàm hỗ trợ vẽ tin nhắn lên giao diện
+        function appendMessage(text, sender) {
+            const msgDiv = document.createElement('div');
+            msgDiv.style.padding = '10px 15px';
+            msgDiv.style.borderRadius = '15px';
+            msgDiv.style.marginBottom = '10px';
+            msgDiv.style.fontSize = '14px';
+            msgDiv.style.maxWidth = '85%';
+            msgDiv.style.lineHeight = '1.4';
+            msgDiv.style.wordBreak = 'break-word';
+
+            if (sender === 'user') {
+                msgDiv.style.background = '#0b5ed7';
+                msgDiv.style.color = 'white';
+                msgDiv.style.marginLeft = 'auto';
+            } else {
+                msgDiv.style.background = '#e9ecef';
+                msgDiv.style.color = '#333';
+            }
+
+            msgDiv.innerText = text;
+            messages.appendChild(msgDiv);
+            messages.scrollTop = messages.scrollHeight;
+            return msgDiv;
+        }
+    });
+</script>
+</div>
