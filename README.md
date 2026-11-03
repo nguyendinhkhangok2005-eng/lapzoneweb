@@ -30,15 +30,17 @@ Lapzone Web là một ứng dụng thương mại điện tử chuyên cung cấ
 
 ### Bước 2: Cấu hình kết nối Database
 
-1. Mở project trong IDE của bạn (Mở thư mục `lapzoneweb`).
-2. Mở file cấu hình `src/main/resources/application.properties`.
-3. Kiểm tra và sửa lại `username` và `password` cho khớp với cấu hình MySQL trên máy tính của bạn:
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/lapzone_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-   spring.datasource.username=username
-   spring.datasource.password=password
-   ```
+Nếu chưa có cấu hình cục bộ, sao chép `src/main/resources/application-example.properties` thành `src/main/resources/application.properties`. File cục bộ này đã được `.gitignore` loại trừ; không commit thông tin đăng nhập.
 
+Đặt biến môi trường trong PowerShell trên Windows trước khi chạy ứng dụng:
+
+```powershell
+$env:DB_USERNAME = "root"
+$env:DB_PASSWORD = "<mật khẩu MySQL cục bộ của bạn>"
+$env:GEMINI_API_KEY = "<API key Gemini cục bộ của bạn>"
+```
+
+Trong VS Code, mở **Terminal → New Terminal** (chọn PowerShell nếu cần), chạy các lệnh trên trong terminal đó, rồi chạy ứng dụng ở Bước 3. Các biến chỉ có hiệu lực với terminal/ứng dụng được mở từ terminal đó. Không lưu giá trị thật vào README, `launch.json` đã chia sẻ, hoặc Git.
 ### Bước 3: Chạy ứng dụng
 
 Bạn có thể chạy dự án bằng một trong các cách sau:

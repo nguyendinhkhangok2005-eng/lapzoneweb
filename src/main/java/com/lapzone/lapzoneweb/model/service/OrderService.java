@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
@@ -103,6 +104,11 @@ public class OrderService {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn số: #" + orderId));
     }
+
+    public Optional<Order> findOrderById(Long orderId) {
+        return orderRepository.findById(orderId);
+    }
+
     // Hàm tìm kiếm và lọc đơn hàng - [CŨ] Chỉ dùng cho export/in báo cáo
         public List<Order> searchOrders(String keyword, String status, java.util.Date startDate, java.util.Date endDate) {
             if (status != null && status.isEmpty()) status = null;
