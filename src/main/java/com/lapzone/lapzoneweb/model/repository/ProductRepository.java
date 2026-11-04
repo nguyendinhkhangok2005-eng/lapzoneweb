@@ -1,6 +1,8 @@
 package com.lapzone.lapzoneweb.model.repository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import com.lapzone.lapzoneweb.model.entity.Product;
@@ -10,6 +12,32 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
+    @EntityGraph(attributePaths = {"category", "productDetail"})
+    @Query("SELECT p FROM Product p WHERE p.stock > 0")
+    List<Product> findAvailableProductsForAi();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.stock > 0")
+    long countAvailableProductsForAi();
+
+    @EntityGraph(attributePaths = {"category", "productDetail"})
+    @Query("""
+        SELECT p FROM Product p LEFT JOIN p.productDetail pd
+        WHERE p.stock > 0
+        AND (:keyword IS NULL
+            OR LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(p.category.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(COALESCE(pd.cpu, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(COALESCE(pd.ram, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(COALESCE(pd.storage, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(COALESCE(pd.gpu, '')) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            OR LOWER(COALESCE(pd.moreInfo, '')) LIKE LOWER(CONCAT('%', :keyword, '%')))
+        ORDER BY p.price ASC, p.id ASC
+        """)
+    List<Product> findTopAvailableProductsForAi(
+        @Param("keyword") String keyword,
+        Pageable pageable
+    );
+
     @Modifying
     @Query("UPDATE Product p SET p.stock = p.stock - :qty WHERE p.id = :id AND p.stock >= :qty")
     int decrementStockIfAvailable(@Param("id") Long id, @Param("qty") Integer qty);

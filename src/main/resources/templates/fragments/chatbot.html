@@ -41,6 +41,13 @@
             background: #0b5ed7; color: white; border: none; font-weight: bold;
             padding: 0 15px; margin-left: 10px; border-radius: 20px; cursor: pointer;
         }
+        #chatbot-reset {
+            background: transparent; color: white; border: 1px solid rgba(255,255,255,.7);
+            border-radius: 14px; padding: 4px 8px; cursor: pointer; font-size: 12px;
+        }
+        #chatbot-messages .chatbot-list { margin: 4px 0; padding-left: 20px; }
+        #chatbot-messages .chatbot-link { color: #0b5ed7; }
+        #chatbot-send:disabled { opacity: .65; cursor: wait; }
     </style>
 
     <!-- Giao diện HTML -->
@@ -49,6 +56,7 @@
     <div id="chatbot-window">
         <div id="chatbot-header">
             <b>Lapzone AI Tư Vấn</b>
+            <button id="chatbot-reset" type="button" aria-label="Bắt đầu cuộc trò chuyện mới">Làm mới</button>
             <button id="chatbot-close" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
         </div>
         
@@ -71,6 +79,7 @@
         const btn = document.getElementById("chatbot-btn");
         const win = document.getElementById("chatbot-window");
         const close = document.getElementById("chatbot-close");
+        const resetBtn = document.getElementById("chatbot-reset");
         const sendBtn = document.getElementById("chatbot-send");
         const input = document.getElementById("chatbot-input");
         const messages = document.getElementById("chatbot-messages");
@@ -78,6 +87,7 @@
         // Bật/tắt khung chat
         btn.addEventListener("click", () => win.style.display = win.style.display === "flex" ? "none" : "flex");
         close.addEventListener("click", () => win.style.display = "none");
+        resetBtn.addEventListener("click", resetConversation);
 
         // Hàm xử lý gửi tin nhắn
         async function sendMessage() {
@@ -89,21 +99,40 @@
             input.value = '';
 
             // 2. Hiển thị trạng thái đang xử lý
-            const loadingDiv = appendMessage('Đang suy nghĩ...', 'bot');
+            const loadingDiv = appendMessage('Đang trả lời...', 'bot');
+            sendBtn.disabled = true;
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(() => controller.abort(), 30000);
 
             try {
                 // 3. Gọi chính xác API backend
                 const response = await fetch('/api/ai/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text })
+                    body: JSON.stringify({ message: text }),
+                    signal: controller.signal
                 });
 
                 // 4. Đọc dữ liệu JSON trả về từ Controller
+                if (!response.ok) throw new Error('Chat request failed');
                 const data = await response.json();
-                loadingDiv.innerText = data.reply || "Không có phản hồi từ AI";
+                loadingDiv.innerHTML = formatBotReply(data.reply || "Không có phản hồi từ AI");
             } catch (error) {
                 loadingDiv.innerText = 'Có lỗi xảy ra, vui lòng thử lại sau!';
+            } finally {
+                window.clearTimeout(timeoutId);
+                sendBtn.disabled = false;
+            }
+        }
+
+        async function resetConversation() {
+            try {
+                const response = await fetch('/api/chat/reset', { method: 'POST' });
+                if (!response.ok) throw new Error('Chat reset failed');
+                messages.replaceChildren();
+                appendMessage('Xin chào! Tôi là trợ lý AI của Lapzone. Bạn cần tìm mua laptop gaming hay văn phòng?', 'bot');
+            } catch (error) {
+                appendMessage('Không thể làm mới cuộc trò chuyện, vui lòng thử lại.', 'bot');
             }
         }
 
@@ -137,6 +166,44 @@
             messages.appendChild(msgDiv);
             messages.scrollTop = messages.scrollHeight;
             return msgDiv;
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, character => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            })[character]);
+        }
+
+        function formatBotReply(text) {
+            const lines = escapeHtml(String(text)).split(/\r?\n/);
+            const output = [];
+            let inList = false;
+            for (const line of lines) {
+                const item = line.match(/^\s*[-*]\s+(.+)$/);
+                if (item) {
+                    if (!inList) {
+                        output.push('<ul class="chatbot-list">');
+                        inList = true;
+                    }
+                    output.push('<li>' + formatInline(item[1]) + '</li>');
+                } else {
+                    if (inList) {
+                        output.push('</ul>');
+                        inList = false;
+                    }
+                    if (line) output.push(formatInline(line));
+                    output.push('<br>');
+                }
+            }
+            if (inList) output.push('</ul>');
+            return output.join('');
+        }
+
+        function formatInline(text) {
+            return text
+                .replace(/\/product_detail\?id=(\d+)/g,
+                    '<a class="chatbot-link" href="/product_detail?id=$1" target="_blank" rel="noopener">Xem chi tiết</a>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         }
     });
 </script>

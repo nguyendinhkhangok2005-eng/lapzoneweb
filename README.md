@@ -40,6 +40,8 @@ $env:DB_PASSWORD = "<mật khẩu MySQL cục bộ của bạn>"
 $env:GEMINI_API_KEY = "<API key Gemini cục bộ của bạn>"
 ```
 
+Chatbot đọc API key từ `GEMINI_API_KEY`. Model chính và dự phòng mặc định lần lượt là `gemini-3.1-flash-lite` và `gemini-flash-lite-latest`. Timeout đọc mỗi lần gọi là 15 giây và tổng thời gian cho một câu hỏi là 25 giây; có thể chỉnh qua `app.ai.read-timeout-seconds` và `app.ai.total-deadline-seconds` trong `src/main/resources/application-example.properties`. Không ghi API key thật vào file cấu hình hoặc commit lên Git.
+
 Trong VS Code, mở **Terminal → New Terminal** (chọn PowerShell nếu cần), chạy các lệnh trên trong terminal đó, rồi chạy ứng dụng ở Bước 3. Các biến chỉ có hiệu lực với terminal/ứng dụng được mở từ terminal đó. Không lưu giá trị thật vào README, `launch.json` đã chia sẻ, hoặc Git.
 
 Để gửi OTP qua Gmail:
