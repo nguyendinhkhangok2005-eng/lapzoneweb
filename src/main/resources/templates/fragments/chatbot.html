@@ -67,7 +67,7 @@
         </div>
         
         <div id="chatbot-input-area">
-            <input type="text" id="chatbot-input" placeholder="Nhập câu hỏi của bạn...">
+            <input type="text" id="chatbot-input" maxlength="500" placeholder="Nhập câu hỏi của bạn...">
             <button id="chatbot-send">Gửi</button>
         </div>
     </div>
@@ -113,9 +113,11 @@
                     signal: controller.signal
                 });
 
-                // 4. Đọc dữ liệu JSON trả về từ Controller
-                if (!response.ok) throw new Error('Chat request failed');
                 const data = await response.json();
+                if (!response.ok) {
+                    loadingDiv.innerText = data.reply || 'Có lỗi xảy ra, vui lòng thử lại sau!';
+                    return;
+                }
                 loadingDiv.innerHTML = formatBotReply(data.reply || "Không có phản hồi từ AI");
             } catch (error) {
                 loadingDiv.innerText = 'Có lỗi xảy ra, vui lòng thử lại sau!';

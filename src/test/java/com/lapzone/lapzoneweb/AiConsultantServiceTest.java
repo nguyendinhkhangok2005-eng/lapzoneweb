@@ -62,7 +62,7 @@ class AiConsultantServiceTest {
         when(productRepository.findAvailableProductsForAi()).thenReturn(List.of(product));
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenReturn(ResponseEntity.ok("""
-                {"candidates":[{"content":{"parts":[{"text":"Acer Nitro phù hợp."}]}}]}
+                {"candidates":[{"content":{"parts":[{"text":"{\\\"message\\\":\\\"Acer Nitro phù hợp.\\\",\\\"productIds\\\":[1]}"}]}}]}
                 """));
 
         String reply = aiConsultantService.consult("Máy đó còn hàng không?",
@@ -77,7 +77,10 @@ class AiConsultantServiceTest {
         String systemText = (String) instructionPart.get("text");
         List<?> contents = (List<?>) payload.get("contents");
 
-        assertEquals("Acer Nitro phù hợp.", reply);
+        assertTrue(reply.startsWith("Acer Nitro phù hợp."));
+        assertTrue(reply.contains("**Laptop Gaming Acer Nitro**"));
+        assertTrue(reply.contains("21.990.000 VNĐ"));
+        assertTrue(reply.contains("/product_detail?id=1"));
         assertEquals("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent",
             urlCaptor.getValue());
         assertEquals("test-key", requestCaptor.getValue().getHeaders().getFirst("x-goog-api-key"));
@@ -126,7 +129,7 @@ class AiConsultantServiceTest {
             .thenReturn(matchingProducts);
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenReturn(ResponseEntity.ok("""
-                {"candidates":[{"content":{"parts":[{"text":"Gợi ý đã sẵn sàng."}]}}]}
+                {"candidates":[{"content":{"parts":[{"text":"{\\\"message\\\":\\\"Gợi ý đã sẵn sàng.\\\",\\\"productIds\\\":[]}"}]}}]}
                 """));
 
         aiConsultantService.consult("Tìm gaming RTX dưới 20 triệu", List.of());
@@ -151,7 +154,7 @@ class AiConsultantServiceTest {
             .thenThrow(new ResourceAccessException("I/O error: Read timed out",
                 new java.net.SocketTimeoutException("Read timed out")))
             .thenReturn(ResponseEntity.ok("""
-                {"candidates":[{"content":{"parts":[{"text":"Đã thử lại thành công."}]}}]}
+                {"candidates":[{"content":{"parts":[{"text":"{\\\"message\\\":\\\"Đã thử lại thành công.\\\",\\\"productIds\\\":[]}"}]}}]}
                 """));
 
         String reply = aiConsultantService.consult("Tư vấn laptop", List.of());
@@ -190,7 +193,7 @@ class AiConsultantServiceTest {
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenThrow(serviceUnavailable())
             .thenReturn(ResponseEntity.ok("""
-                {"candidates":[{"content":{"parts":[{"text":"Gemini đã hồi phục."}]}}]}
+                {"candidates":[{"content":{"parts":[{"text":"{\\\"message\\\":\\\"Gemini đã hồi phục.\\\",\\\"productIds\\\":[]}"}]}}]}
                 """));
 
         String reply = aiConsultantService.consult("Tư vấn laptop", List.of());
@@ -210,7 +213,7 @@ class AiConsultantServiceTest {
                     {"error":{"message":"Rate limit."}}
                     """.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8))
             .thenReturn(ResponseEntity.ok("""
-                {"candidates":[{"content":{"parts":[{"text":"Đã thử lại sau giới hạn."}]}}]}
+                {"candidates":[{"content":{"parts":[{"text":"{\\\"message\\\":\\\"Đã thử lại sau giới hạn.\\\",\\\"productIds\\\":[]}"}]}}]}
                 """));
 
         String reply = aiConsultantService.consult("Tư vấn laptop", List.of());
@@ -228,7 +231,7 @@ class AiConsultantServiceTest {
             .thenThrow(serviceUnavailable())
             .thenThrow(serviceUnavailable())
             .thenReturn(ResponseEntity.ok("""
-                {"candidates":[{"content":{"parts":[{"text":"Phản hồi từ model dự phòng."}]}}]}
+                {"candidates":[{"content":{"parts":[{"text":"{\\\"message\\\":\\\"Phản hồi từ model dự phòng.\\\",\\\"productIds\\\":[]}"}]}}]}
                 """));
 
         String reply = aiConsultantService.consult("Tư vấn laptop", List.of());
@@ -271,6 +274,17 @@ class AiConsultantServiceTest {
         String reply = serviceWithoutKey.consult("Tư vấn laptop", List.of());
 
         assertTrue(reply.contains("tạm thời chưa khả dụng"));
+        verifyNoInteractions(restTemplate);
+    }
+
+    @Test
+    void shouldNotSuggestProductsOutsideAnExplicitBudget() {
+        when(productRepository.findAvailableProductsForAi()).thenReturn(
+            List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
+
+        String reply = aiConsultantService.consult("Laptop dưới 10 triệu", List.of());
+
+        assertTrue(reply.contains("chưa có sản phẩm còn hàng phù hợp"));
         verifyNoInteractions(restTemplate);
     }
 
