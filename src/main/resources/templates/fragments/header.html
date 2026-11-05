@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
 </head>
@@ -21,34 +21,38 @@
             </div>
 
             <div class="header-actions">
-                <th:block th:if="${session.currentUser == null}">
-                    <a th:href="@{/dangnhap}" class="btn-primary" style="padding: 8px 16px; font-size: 0.9rem; background: transparent; color: var(--text-primary); box-shadow: none; border: 1px solid var(--border-glass);">
+                <th:block sec:authorize="isAnonymous()">
+                    <a th:href="@{/dangnhap}" class="btn-primary" aria-label="Đăng nhập" title="Đăng nhập" style="padding: 8px 16px; font-size: 0.9rem; background: transparent; color: var(--text-primary); box-shadow: none; border: 1px solid var(--border-glass);">
                         Đăng nhập
                     </a>
-                    <a th:href="@{/dangki}" class="btn-primary" style="padding: 8px 16px; font-size: 0.9rem;">
-                        <i class="fas fa-user-plus"></i> Đăng ký
+                    <a th:href="@{/dangki}" class="btn-primary" aria-label="Đăng ký" title="Đăng ký" style="padding: 8px 16px; font-size: 0.9rem;">
+                        <i class="fas fa-user-plus" aria-hidden="true"></i> Đăng ký
                     </a>
                 </th:block>
-                <th:block th:unless="${session.currentUser == null}">
-                    <a th:if="${session.currentUser.role == 'ADMIN'}" th:href="@{/admin/dashboard}" class="header-action-icon" style="color: #11caa0 !important;" title="Trang quản trị">
-                        <i class="fas fa-user-shield"></i>
+                <th:block sec:authorize="isAuthenticated()">
+                    <a th:if="${session.currentUser != null and session.currentUser.role == 'ADMIN'}" th:href="@{/admin/dashboard}" class="header-action-icon" style="color: #11caa0 !important;" title="Trang quản trị">
+                        <i class="fas fa-user-shield" aria-hidden="true"></i>
                     </a>
-                    <a th:href="@{/logout}" class="header-action-icon" style="color: var(--accent-red) !important;" title="Đăng xuất">
-                        <i class="fas fa-sign-out-alt"></i>
+                    <a th:href="@{/logout}" class="header-action-icon" aria-label="Đăng xuất" style="color: var(--accent-red) !important;" title="Đăng xuất">
+                        <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+                        <span class="header-action-label">Đăng xuất</span>
                     </a>
                 </th:block>
 
-                <a th:href="@{/tracuudonhang}" class="header-action-icon" title="Tra cứu đơn hàng">
-                    <i class="fas fa-file-invoice"></i>
+                <a th:href="@{/tracuudonhang}" class="header-action-icon" aria-label="Tra cứu đơn hàng" title="Tra cứu đơn hàng">
+                    <i class="fas fa-file-invoice" aria-hidden="true"></i>
+                    <span class="header-action-label">Tra cứu đơn</span>
                 </a>
                 
-                <a th:href="@{/cart}" class="header-action-icon" title="Giỏ hàng">
-                    <i class="fas fa-shopping-cart"></i>
+                <a th:href="@{/cart}" class="header-action-icon" aria-label="Giỏ hàng" title="Giỏ hàng">
+                    <i class="fas fa-shopping-cart" aria-hidden="true"></i>
                     <span class="cart-count" th:text="${cartItemCount}">0</span>
+                    <span class="header-action-label">Giỏ hàng</span>
                 </a>
                 
-                <a th:href="@{/profile}" class="header-action-icon" title="Hồ sơ">
-                    <i class="fas fa-user"></i>
+                <a th:href="@{/profile}" class="header-action-icon" aria-label="Tài khoản" title="Tài khoản">
+                    <i class="fas fa-user" aria-hidden="true"></i>
+                    <span class="header-action-label">Tài khoản</span>
                 </a>
             </div>
         </div>

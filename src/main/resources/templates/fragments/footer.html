@@ -33,9 +33,9 @@
                 <h3>Hệ thống cửa hàng</h3>
                 <ul class="footer-links">
                     <li><a href="#"><i class="fas fa-map-marker-alt"></i> Đại Học Công Nghiệp Hà Nội</a></li>
-                    <li><a href="#"><i class="fas fa-phone"></i> Bán hàng: 0876795495</a></li>
-                    <li><a href="#"><i class="fas fa-headset"></i> Kỹ thuật: 0876795495</a></li>
-                    <li><a href="#"><i class="fas fa-envelope"></i> contact@lapzone.vn</a></li>
+                    <li><a href="tel:0876795495"><i class="fas fa-phone"></i> Bán hàng: 0876795495</a></li>
+                    <li><a href="tel:0876795495"><i class="fas fa-headset"></i> Kỹ thuật: 0876795495</a></li>
+                    <li><a href="mailto:contact@lapzone.vn"><i class="fas fa-envelope"></i> contact@lapzone.vn</a></li>
                 </ul>
             </div>
 
@@ -52,7 +52,7 @@
         </div>
 
         <div class="footer-bottom">
-            <p>&copy; 2024 LAPZONE. Tất cả các quyền được bảo lưu.</p>
+            <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">2026</span> LAPZONE. Tất cả các quyền được bảo lưu.</p>
         </div>
     </div>
 
