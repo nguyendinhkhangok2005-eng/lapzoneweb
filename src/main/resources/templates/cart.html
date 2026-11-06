@@ -93,7 +93,7 @@
                                 
                                 <td>
                                     <div class="product-col">
-                                        <img loading="lazy" th:src="@{'/' + ${item.product.image}}" th:alt="${item.product.name}">
+                                        <img loading="lazy" class="product-media-surface" th:src="@{'/' + ${item.product.image}}" th:alt="${item.product.name}">
                                         <div class="info">
                                             <a th:href="@{/product_detail(id=${item.product.id})}" class="name" th:text="${item.product.name}">Tên SP</a>
                                             <span style="font-size: 0.85rem; color: var(--text-secondary);" th:text="${item.product.category.name}">Hãng</span>

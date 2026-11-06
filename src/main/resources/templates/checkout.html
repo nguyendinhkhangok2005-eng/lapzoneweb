@@ -83,7 +83,7 @@
         .product-item img {
             width: 60px;
             height: 60px;
-            object-fit: cover;
+            object-fit: contain;
             border-radius: 8px;
             margin-right: 15px;
         }
@@ -193,7 +193,7 @@
                 <div class="card-body">
                     <div th:each="item : ${cartItems}" class="product-item"
                          th:with="salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(item.product)}">
-                       <img loading="lazy" th:src="${item.product.image}" alt="Product">
+                       <img loading="lazy" class="product-media-surface" th:src="${item.product.image}" alt="Product">
                         <div class="flex-grow-1">
                             <h6 class="mb-0" th:text="${item.product.name}">Tên sản phẩm</h6>
                             <small class="text-muted" th:text="${#numbers.formatDecimal(salePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>

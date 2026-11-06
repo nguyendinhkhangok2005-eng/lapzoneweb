@@ -347,7 +347,7 @@ html[data-theme] :is(
     border-radius: 10px;
 }
 
-html[data-theme] :is(
+html[data-theme="classic"] :is(
     .product-image, .product-img, .product-gallery-main, .product-thumb,
     .product-card .card-img-top, .home-slide__fallback,
     .home-thumbnail__fallback,
@@ -356,6 +356,42 @@ html[data-theme] :is(
 ) {
     object-fit: contain;
     mix-blend-mode: multiply;
+}
+
+html[data-theme]:not([data-theme="classic"]) :is(
+    .product-image, .product-img, .product-gallery-main, .product-thumb,
+    .product-card .card-img-top, .home-slide__fallback,
+    .home-thumbnail__fallback,
+    .home-deal__image, .product-col img, .product_item3 img, .product_items img,
+    .product_items2 img, .product_item4 img, .product-item img
+) {
+    mix-blend-mode: normal;
+}
+
+html[data-theme]:not([data-theme="classic"]) .product-media-surface {
+    background: linear-gradient(145deg, #f7f8fb 0%, #e9ecf3 100%) !important;
+    border: 1px solid #dfe4ed !important;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+    object-fit: contain;
+    mix-blend-mode: normal !important;
+    filter: none !important;
+    opacity: 1 !important;
+    padding: 10px !important;
+}
+
+html[data-theme]:not([data-theme="classic"]) .product-gallery-main.product-media-surface {
+    padding: 16px !important;
+}
+
+html[data-theme]:not([data-theme="classic"]) .product-thumb.product-media-surface {
+    border: 2px solid #dfe4ed !important;
+    padding: 5px !important;
+}
+
+html[data-theme]:not([data-theme="classic"]) .product-thumb.active {
+    border: 2px solid var(--accent-blue) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-blue) 20%, transparent);
 }
 
 html[data-theme] .home-thumbnail__media--cutout {

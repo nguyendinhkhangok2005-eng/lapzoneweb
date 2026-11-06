@@ -185,7 +185,7 @@
                     <article class="product-card" th:each="p : ${products}">
                         <a th:href="@{/product_detail(id=${p.id})}">
                             <div class="product-img-wrapper">
-                                <img loading="lazy" class="product-img" th:src="@{${p.image != null and p.image.startsWith('assets/') ? '/' + p.image : '/assets/' + p.image}}" th:alt="${p.name}">
+                                <img loading="lazy" class="product-img product-media-surface" th:src="@{${p.image != null and p.image.startsWith('assets/') ? '/' + p.image : '/assets/' + p.image}}" th:alt="${p.name}">
                             </div>
                             <h3 class="product-title" th:text="${p.name}">Tên SP</h3>
                             <div class="product-price" th:text="${#numbers.formatDecimal(T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p), 0, 'COMMA', 0, 'POINT')} + ' đ'">Giá</div>

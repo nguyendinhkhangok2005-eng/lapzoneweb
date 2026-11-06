@@ -17,16 +17,16 @@
     <div class="product-detail-layout">
         <!-- Left: Image Gallery -->
         <div class="product-gallery">
-            <img loading="lazy" id="mainImage" th:src="@{${product.image != null and product.image.startsWith('assets/') ? '/' + product.image : '/assets/' + product.image}}" alt="Main Image" class="product-gallery-main">
+            <img loading="lazy" id="mainImage" th:src="@{${product.image != null and product.image.startsWith('assets/') ? '/' + product.image : '/assets/' + product.image}}" alt="Main Image" class="product-gallery-main product-media-surface">
             
          <div class="product-thumbnails" th:if="${product.images != null and !product.images.isEmpty()}">
-                <img loading="lazy" class="product-thumb active"
+                <img loading="lazy" class="product-thumb product-media-surface active"
                     th:src="@{${product.image != null and product.image.startsWith('assets/') ? '/' + product.image : '/assets/' + product.image}}"
                     onclick="changeMainImage(this.src, this)">
 
                 <img loading="lazy" th:each="imgObj : ${product.images}"
                     th:if="${!#strings.equals(imgObj.imageUrl, product.image)}"
-                    class="product-thumb"
+                    class="product-thumb product-media-surface"
                     th:src="@{${imgObj.imageUrl != null and imgObj.imageUrl.startsWith('assets/') ? '/' + imgObj.imageUrl : '/assets/' + imgObj.imageUrl}}"
                     onclick="changeMainImage(this.src, this)">
         </div>
@@ -142,7 +142,7 @@
             <div th:each="p : ${relatedProducts}" style="flex: 0 0 auto; width: 260px;">
                 <div class="card product-card h-100 shadow-sm border-0" style="border-radius: 12px; overflow: hidden; transition: transform 0.3s ease;">
                     <a th:href="@{/product_detail(id=${p.id})}" style="text-decoration: none; color: inherit;">
-                        <img loading="lazy" th:src="@{'/' + ${p.image}}" class="card-img-top p-3" alt="Product" style="object-fit: contain; height: 180px;">
+                        <img loading="lazy" th:src="@{'/' + ${p.image}}" class="card-img-top p-3 product-media-surface" alt="Product" style="object-fit: contain; height: 180px;">
                         <div class="card-body text-center pt-0">
                             <h6 class="card-title fw-bold" th:text="${p.name}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 40px; margin-bottom: 10px;"></h6>
                             <p class="text-danger fw-bold fs-5 mb-0" th:text="${#numbers.formatDecimal(T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p), 0, 'COMMA', 0, 'POINT')} + ' ₫'"></p>
