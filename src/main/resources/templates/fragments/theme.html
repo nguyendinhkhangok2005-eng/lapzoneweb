@@ -1,0 +1,18 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="head">
+    <script>
+        (function () {
+            var theme = 'classic';
+            try {
+                var storedTheme = window.localStorage.getItem('lapzone-theme');
+                if (['classic', 'dark', 'gaming', 'ocean'].indexOf(storedTheme) !== -1) {
+                    theme = storedTheme;
+                }
+            } catch (error) {
+                // Use the default theme when browser storage is unavailable.
+            }
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
+    <script defer th:src="@{/js/customer-theme.js}"></script>
+</th:block>

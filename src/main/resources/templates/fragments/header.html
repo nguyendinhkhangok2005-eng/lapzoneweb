@@ -21,6 +21,30 @@
             </div>
 
             <div class="header-actions">
+                <div class="theme-picker" id="theme-picker">
+                    <button class="theme-picker__trigger" type="button" aria-label="Chọn giao diện" title="Chọn giao diện"
+                            aria-haspopup="menu" aria-expanded="false" aria-controls="theme-menu">
+                        <span aria-hidden="true">◐</span>
+                    </button>
+                    <div class="theme-picker__menu" id="theme-menu" role="menu" aria-label="Chọn giao diện" hidden>
+                        <button class="theme-choice" type="button" role="menuitemradio" aria-checked="true" data-theme-choice="classic">
+                            <span class="theme-choice__swatch" aria-hidden="true" style="background-color: #2563eb;"></span>
+                            <span class="theme-choice__name">Cổ điển</span><span class="theme-choice__check" aria-hidden="true">✓</span>
+                        </button>
+                        <button class="theme-choice" type="button" role="menuitemradio" aria-checked="false" data-theme-choice="dark">
+                            <span class="theme-choice__swatch" aria-hidden="true" style="background-color: #374151;"></span>
+                            <span class="theme-choice__name">Tối</span><span class="theme-choice__check" aria-hidden="true"></span>
+                        </button>
+                        <button class="theme-choice" type="button" role="menuitemradio" aria-checked="false" data-theme-choice="gaming">
+                            <span class="theme-choice__swatch" aria-hidden="true" style="background-color: #a855f7;"></span>
+                            <span class="theme-choice__name">Gaming</span><span class="theme-choice__check" aria-hidden="true"></span>
+                        </button>
+                        <button class="theme-choice" type="button" role="menuitemradio" aria-checked="false" data-theme-choice="ocean">
+                            <span class="theme-choice__swatch" aria-hidden="true" style="background-color: #0369a1;"></span>
+                            <span class="theme-choice__name">Đại dương</span><span class="theme-choice__check" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </div>
                 <th:block sec:authorize="isAnonymous()">
                     <a th:href="@{/dangnhap}" class="btn-primary" aria-label="Đăng nhập" title="Đăng nhập" style="padding: 8px 16px; font-size: 0.9rem; background: transparent; color: var(--text-primary); box-shadow: none; border: 1px solid var(--border-glass);">
                         Đăng nhập

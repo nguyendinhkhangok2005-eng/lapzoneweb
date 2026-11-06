@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="@{/css/home-products.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Trang chủ - LAPZONE</title>
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
 </head>
 
 <body>
@@ -27,16 +28,15 @@
                         <div class="home-slider__viewport">
                             <div class="home-slider__slides" aria-live="off">
                                 <article class="home-slide" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}"
-                                         th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, hasCutout=${tienTo != 'lenovo_loq_15'}, fallbackImage=${p.image.startsWith('assets/') ? '/' + p.image : (p.image.startsWith('/') ? p.image : '/assets/' + p.image)}, salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p)}"
+                                         th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, fallbackImage=${p.image.startsWith('assets/') ? '/' + p.image : (p.image.startsWith('/') ? p.image : '/assets/' + p.image)}, salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p)}"
                                          th:classappend="${iterStat.index == 0} ? ' is-active'" role="group" aria-roledescription="slide"
                                          th:attr="aria-hidden=${iterStat.index != 0}, aria-label=${p.name}">
                                     <div class="home-slide__visual">
                                         <span class="home-slide__shadow"></span>
                                         <span class="home-slide__image-frame">
                                             <a class="home-slide__image-link" th:href="@{/product_detail(id=${p.id})}" th:aria-label="${'Xem sản phẩm ' + p.name}">
-                                                <img class="home-slide__image" data-cutout-image th:if="${hasCutout}"
-                                                     th:src="@{/assets/cutout/hero/{x}.png(x=${tienTo})}" width="800" height="600"
-                                                     th:attr="loading=${iterStat.index == 0 ? 'eager' : 'lazy'}, fetchpriority=${iterStat.index == 0 ? 'high' : null}"
+                                                <img class="home-slide__image" data-cutout-image hidden
+                                                     th:attr="data-cutout-name=${tienTo}, loading=${iterStat.index == 0 ? 'eager' : 'lazy'}, fetchpriority=${iterStat.index == 0 ? 'high' : null}"
                                                      decoding="async" alt="" draggable="false">
                                                 <span class="home-slide__plate" hidden>
                                                     <img class="home-slide__fallback" th:attr="data-fallback-src=${fallbackImage}"
@@ -102,14 +102,13 @@
                     <div class="home-thumbnails-mask" th:if="${#lists.size(bannerProducts) > 1}">
                         <div class="home-thumbnails" role="group" aria-label="Chọn sản phẩm nổi bật">
                             <button class="home-thumbnail" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" type="button"
-                                    th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, hasCutout=${tienTo != 'lenovo_loq_15'}, salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p)}"
+                                    th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p)}"
                                     th:attr="data-thumbnail-to=${iterStat.index}, aria-current=${iterStat.index == 0 ? 'true' : null}"
                                     th:aria-label="${'Hiển thị sản phẩm: ' + p.name}"
                                     th:classappend="${iterStat.index == 0} ? ' is-active'">
-                                <img th:src="@{${p.image.startsWith('assets/') ? '/' + p.image : '/assets/' + p.image}}" width="120" height="80" loading="lazy" decoding="async" th:alt="${p.name}" draggable="false">
                                 <span class="home-thumbnail__media">
-                                    <img class="home-thumbnail__cutout" data-cutout-image th:if="${hasCutout}"
-                                         th:src="@{/assets/cutout/hero/{x}.png(x=${tienTo})}"
+                                    <img class="home-thumbnail__cutout" data-cutout-image hidden
+                                         th:attr="data-cutout-name=${tienTo}"
                                          width="800" height="600" loading="lazy" decoding="async" alt="" draggable="false">
                                     <img class="home-thumbnail__fallback" th:attr="data-fallback-src=@{${p.image.startsWith('assets/') ? '/' + p.image : (p.image.startsWith('/') ? p.image : '/assets/' + p.image)}}"
                                          width="120" height="80" loading="lazy" decoding="async" th:alt="${p.name}" draggable="false" hidden>

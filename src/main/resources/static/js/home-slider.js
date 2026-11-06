@@ -17,6 +17,17 @@
     const progress = slider.querySelector(".home-slider__progress-fill");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const slideInterval = 5000;
+    const availableCutouts = new Set([
+        "Dell_gaming_G15_5530", "acer_helios_neo_16", "acer_nitro_v15", "acer_sadow_desc",
+        "acer_swift_go14", "asus_rog_g14", "asus_tuf_a15", "asus_zenbook_s13",
+        "dell_alienware_m16", "dell_inspiron_16", "dell_xps_15", "gigabyte_gaming_a16",
+        "hp_envy_x360", "hp_omen_16", "hp_victus_16", "ideapad_5pro_14gt",
+        "ideapad_5pro_16gt", "ideapad_slim3_15irh10", "ideapad_slim5_2025",
+        "legion_pro5_r9000p", "lenovo_legion_slim5", "lenovo_thinkpad_t14",
+        "macbook_air_13_m3", "macbook_air_15_m3", "macbook_pro14_M2",
+        "macbook_pro_14_m1", "macbook_pro_16_m3max", "macbook_pro_16m1",
+        "thinkbook_14_g7", "y7000_2025"
+    ]);
 
     const setImageSizeLimit = (image, widthProperty, heightProperty) => {
         if (!image) {
@@ -54,12 +65,21 @@
                 if (plate) {
                     plate.hidden = false;
                 }
+                media.classList.remove("home-thumbnail__media--cutout");
             };
 
             setImageSizeLimit(cutout, "--image-max-width", "--image-max-height");
             setImageSizeLimit(fallback, "--fallback-max-width", "--fallback-max-height");
             if (cutout) {
                 cutout.addEventListener("error", showFallback, { once: true });
+            }
+
+            if (cutout && availableCutouts.has(cutout.dataset.cutoutName)) {
+                if (media.classList.contains("home-thumbnail__media")) {
+                    media.classList.add("home-thumbnail__media--cutout");
+                }
+                cutout.hidden = false;
+                cutout.src = `/assets/cutout/hero/${cutout.dataset.cutoutName}.png`;
                 if (cutout.complete && cutout.naturalWidth === 0) {
                     showFallback();
                 }
