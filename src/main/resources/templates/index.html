@@ -21,58 +21,106 @@
         <section class="container home-hero" style="margin-top: 40px; margin-bottom: 60px;" th:if="${newProducts != null and selectedCatId == null}" th:with="bannerProducts=${newProducts.?[image != null and !#strings.isEmpty(image) and stock != null and stock > 0]}">
             <div class="home-hero-layout" th:if="${#lists.size(bannerProducts) > 0}">
                 <div class="home-showcase">
-                    <div class="home-showcase__main">
-                        <div class="home-slider" role="region" aria-label="Sản phẩm nổi bật" aria-roledescription="carousel" tabindex="0">
+                    <div class="home-slider" role="region" aria-label="Sản phẩm nổi bật LAPZONE" aria-roledescription="carousel" tabindex="0">
+                        <div class="home-slider__surface" aria-hidden="true"></div>
+                        <div class="home-slider__viewport">
                             <div class="home-slider__slides" aria-live="off">
-                                <a class="home-slide" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" th:classappend="${iterStat.index == 0} ? ' is-active'" role="group" aria-roledescription="slide" th:attr="aria-hidden=${iterStat.index != 0}" th:href="@{/product_detail(id=${p.id})}"
-                                    th:aria-label="${p.name}">
-                                    <img class="home-slide__backdrop" th:src="@{'/' + ${p.image}}" width="600" height="400" loading="lazy" alt="" aria-hidden="true" draggable="false">
-                                    <span class="home-slide__product">
-                                    <img class="home-slide__image" th:src="@{'/' + ${p.image}}" width="600" height="400"
-                                         th:attr="loading=${iterStat.index == 0 ? 'eager' : 'lazy'}, fetchpriority=${iterStat.index == 0 ? 'high' : null}"
-                                         th:alt="${p.name}" draggable="false">
-                                </span>
-                                    <span class="home-slide__hint" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" focusable="false"><path d="M7 17 17 7M8 7h9v9"/></svg>
-                                </span>
-                                </a>
+                                <article class="home-slide" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}"
+                                         th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, hasCutout=${tienTo != 'lenovo_loq_15'}, fallbackImage=${p.image.startsWith('assets/') ? '/' + p.image : (p.image.startsWith('/') ? p.image : '/assets/' + p.image)}"
+                                         th:classappend="${iterStat.index == 0} ? ' is-active'" role="group" aria-roledescription="slide"
+                                         th:attr="aria-hidden=${iterStat.index != 0}, aria-label=${p.name}">
+                                    <div class="home-slide__visual">
+                                        <span class="home-slide__shadow"></span>
+                                        <span class="home-slide__image-frame">
+                                            <a class="home-slide__image-link" th:href="@{/product_detail(id=${p.id})}" th:aria-label="${'Xem sản phẩm ' + p.name}">
+                                                <img class="home-slide__image" data-cutout-image th:if="${hasCutout}"
+                                                     th:src="@{/assets/cutout/hero/{x}.png(x=${tienTo})}" width="800" height="600"
+                                                     th:attr="loading=${iterStat.index == 0 ? 'eager' : 'lazy'}, fetchpriority=${iterStat.index == 0 ? 'high' : null}"
+                                                     decoding="async" alt="" draggable="false">
+                                                <span class="home-slide__plate" hidden>
+                                                    <img class="home-slide__fallback" th:attr="data-fallback-src=${fallbackImage}"
+                                                         width="600" height="400" loading="lazy" decoding="async" th:alt="${p.name}" draggable="false">
+                                                </span>
+                                            </a>
+                                        </span>
+                                    </div>
+
+                                    <div class="home-slide__details">
+                                        <span class="home-slide__eyebrow">LAPTOP NỔI BẬT</span>
+                                        <h2 class="home-slide__title">
+                                            <a th:href="@{/product_detail(id=${p.id})}" th:text="${p.name}">Tên sản phẩm</a>
+                                        </h2>
+                                        <dl class="home-slide__specs">
+                                            <div><dt>CPU</dt><dd th:text="${p.productDetail != null and p.productDetail.cpu != null ? p.productDetail.cpu : 'Đang cập nhật'}">Đang cập nhật</dd></div>
+                                            <div><dt>RAM</dt><dd th:text="${p.productDetail != null and p.productDetail.ram != null ? p.productDetail.ram : 'Đang cập nhật'}">Đang cập nhật</dd></div>
+                                            <div><dt>SSD</dt><dd th:text="${p.productDetail != null and p.productDetail.storage != null ? p.productDetail.storage : 'Đang cập nhật'}">Đang cập nhật</dd></div>
+                                            <div><dt>Màn hình</dt><dd th:text="${p.productDetail != null and p.productDetail.screen != null ? p.productDetail.screen : 'Đang cập nhật'}">Đang cập nhật</dd></div>
+                                        </dl>
+                                        <div class="home-slide__purchase">
+                                            <strong class="home-slide__price" th:text="${p.price != null ? #numbers.formatDecimal(p.price, 0, 'POINT', 0, 'COMMA') + ' ₫' : 'Liên hệ'}">17.890.000 ₫</strong>
+                                            <span class="home-slide__stock" th:if="${p.stock != null and p.stock > 0 and p.stock <= 2}">Sắp hết hàng</span>
+                                        </div>
+                                        <div class="home-slide__actions">
+                                            <a class="home-slide__details-link" th:href="@{/product_detail(id=${p.id})}">Xem chi tiết</a>
+                                            <form class="home-slide__cart" th:action="@{/cart/add}" method="post">
+                                                <input type="hidden" name="productId" th:value="${p.id}">
+                                                <input type="hidden" name="quantity" value="1">
+                                                <button type="submit" class="home-slide__cart-button" th:disabled="${p.stock == null or p.stock <= 0}">Thêm vào giỏ</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </article>
                             </div>
-                            <div class="home-slider__controls" role="group" aria-label="Điều khiển banner" th:if="${#lists.size(bannerProducts) > 1}">
-                                <button class="home-slider__arrow" type="button" data-slide-previous aria-label="Chuyển đến slide trước">
+                        </div>
+
+                        <span class="home-slider__counter" data-slide-counter aria-live="polite"
+                              th:text="${'1 / ' + (#lists.size(bannerProducts) > 6 ? 6 : #lists.size(bannerProducts))}">1 / 6</span>
+                        <div class="home-slider__controls" role="group" aria-label="Điều khiển sản phẩm" th:if="${#lists.size(bannerProducts) > 1}">
+                            <button class="home-slider__arrow" type="button" data-slide-previous aria-label="Sản phẩm trước">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
                             </button>
-                                <button class="home-slider__arrow" type="button" data-slide-next aria-label="Chuyển đến slide tiếp theo">
+                            <button class="home-slider__arrow" type="button" data-slide-next aria-label="Sản phẩm tiếp theo">
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                             </button>
-                            </div>
-                            <div class="home-slider__dots" role="group" aria-label="Chọn slide" th:if="${#lists.size(bannerProducts) > 1}">
-                                <button class="home-slider__dot" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" type="button" th:attr="data-slide-to=${iterStat.index}, aria-current=${iterStat.index == 0 ? 'true' : null}" th:aria-label="${'Hiển thị slide ' + (iterStat.index + 1) + ': ' + p.name}"
+                        </div>
+                        <button class="home-slider__autoplay" type="button" data-autoplay-toggle aria-label="Tạm dừng tự chuyển" aria-pressed="false" th:if="${#lists.size(bannerProducts) > 1}">
+                            <svg class="home-slider__pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
+                            <svg class="home-slider__play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 12 7-12 7z"/></svg>
+                        </button>
+                        <div class="home-slider__dots" role="group" aria-label="Chọn sản phẩm" th:if="${#lists.size(bannerProducts) > 1}">
+                            <button class="home-slider__dot" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" type="button"
+                                    th:attr="data-slide-to=${iterStat.index}, aria-current=${iterStat.index == 0 ? 'true' : null}"
+                                    th:aria-label="${'Hiển thị sản phẩm ' + (iterStat.index + 1) + ': ' + p.name}"
                                     th:classappend="${iterStat.index == 0} ? ' is-active'"></button>
-                            </div>
-                            <div class="home-slider__progress" aria-hidden="true" th:if="${#lists.size(bannerProducts) > 1}">
-                                <span class="home-slider__progress-fill"></span>
-                            </div>
+                        </div>
+                        <div class="home-slider__progress" aria-hidden="true" th:if="${#lists.size(bannerProducts) > 1}">
+                            <span class="home-slider__progress-fill"></span>
                         </div>
                     </div>
 
-                    <div class="home-thumbnails" role="group" aria-label="Ảnh thu nhỏ sản phẩm">
-                        <button class="home-thumbnail" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" type="button" th:attr="data-thumbnail-to=${iterStat.index}, aria-current=${iterStat.index == 0 ? 'true' : null}" th:aria-label="${'Hiển thị ảnh sản phẩm: ' + p.name}"
-                            th:classappend="${iterStat.index == 0} ? ' is-active'">
-                        <img th:src="@{'/' + ${p.image}}" width="120" height="80" loading="lazy" th:alt="${p.name}" draggable="false">
-                    </button>
+                    <div class="home-thumbnails-mask" th:if="${#lists.size(bannerProducts) > 1}">
+                        <div class="home-thumbnails" role="group" aria-label="Chọn sản phẩm nổi bật">
+                            <button class="home-thumbnail" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" type="button"
+                                    th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, hasCutout=${tienTo != 'lenovo_loq_15'}"
+                                    th:attr="data-thumbnail-to=${iterStat.index}, aria-current=${iterStat.index == 0 ? 'true' : null}"
+                                    th:aria-label="${'Hiển thị sản phẩm: ' + p.name}"
+                                    th:classappend="${iterStat.index == 0} ? ' is-active'">
+                                <img th:src="@{${p.image.startsWith('assets/') ? '/' + p.image : '/assets/' + p.image}}" width="120" height="80" loading="lazy" decoding="async" th:alt="${p.name}" draggable="false">
+                                <span class="home-thumbnail__media">
+                                    <img class="home-thumbnail__cutout" data-cutout-image th:if="${hasCutout}"
+                                         th:src="@{/assets/cutout/hero/{x}.png(x=${tienTo})}"
+                                         width="800" height="600" loading="lazy" decoding="async" alt="" draggable="false">
+                                    <img class="home-thumbnail__fallback" th:attr="data-fallback-src=@{${p.image.startsWith('assets/') ? '/' + p.image : (p.image.startsWith('/') ? p.image : '/assets/' + p.image)}}"
+                                         width="120" height="80" loading="lazy" decoding="async" th:alt="${p.name}" draggable="false" hidden>
+                                </span>
+                                <span class="home-thumbnail__name" th:text="${p.name}">Tên sản phẩm</span>
+                                <span class="home-thumbnail__price" th:text="${p.price != null ? #numbers.formatDecimal(p.price, 0, 'POINT', 0, 'COMMA') + ' ₫' : 'Liên hệ'}">17.890.000 ₫</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <aside class="home-promo" aria-label="Ưu đãi sinh viên">
-                    <div class="home-promo__message">
-                        <span class="home-promo__label">GIẢM SỐC</span>
-                        <span>[Ưu đãi cho sinh viên, liên hệ showroom để được tư vấn]</span>
-                    </div>
-                    <a class="home-promo__link" th:href="@{/search(sort='price_asc')}">
-                    Xem sản phẩm giá tốt
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
-                </a>
-                </aside>
+                <aside class="home-deals" aria-label="Khu vực giảm sốc"></aside>
             </div>
         </section>
 
