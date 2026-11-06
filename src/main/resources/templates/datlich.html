@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Đặt lịch hẹn hỗ trợ - LAPZONE</title>
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+
+    <style>
+        .appointment-page {
+            max-width: 1000px;
+            margin: 48px auto;
+            padding: 0 24px;
+        }
+
+        .appointment-card {
+            padding: 36px;
+            color: var(--text-primary);
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md), var(--shadow-neon);
+            transition: background-color var(--transition-normal), border-color var(--transition-normal), box-shadow var(--transition-normal);
+        }
+
+        .appointment-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .appointment-description {
+            text-align: center;
+            margin-bottom: 32px;
+            color: var(--text-secondary);
+        }
+
+        .form-section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 25px 0 18px;
+            padding-bottom: 10px;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .form-section-title i,
+        .form-group label i {
+            color: var(--accent-neon);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 14px;
+            border: 1px solid var(--border-glass) !important;
+            border-radius: 9px;
+            background: var(--theme-input, var(--bg-card)) !important;
+            color: var(--text-primary) !important;
+            font: inherit;
+            outline: none;
+            transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-normal);
+        }
+
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: var(--accent-blue) !important;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-blue) 25%, transparent);
+        }
+
+        .form-group option {
+            color: var(--text-primary);
+            background: var(--bg-card);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .appointment-submit {
+            width: 100%;
+            margin-top: 26px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--accent-button), var(--accent-button-secondary));
+            color: white;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--shadow-neon);
+            transition: transform var(--transition-fast), box-shadow var(--transition-normal), filter var(--transition-fast);
+        }
+
+        .appointment-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-neon-hover);
+            filter: brightness(1.06);
+        }
+
+        .appointment-submit:focus-visible {
+            outline: 3px solid color-mix(in srgb, var(--accent-blue) 45%, transparent);
+            outline-offset: 3px;
+        }
+
+        .required {
+            color: var(--accent-red);
+        }
+
+        .appointment-message {
+            margin: 0 0 20px;
+            padding: 14px 16px;
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .appointment-message--success {
+            border-color: var(--accent-success-button);
+        }
+
+        .appointment-message--error,
+        .field-error {
+            color: var(--accent-red);
+        }
+
+        .field-error {
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 650px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .appointment-page {
+                margin: 28px auto;
+                padding: 0 14px;
+            }
+
+            .appointment-card {
+                padding: 24px 18px;
+            }
+
+            .form-group.full-width {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header LAPZONE -->
+    <div th:replace="~{fragments/header :: header_lapzone}"></div>
+
+    <main class="appointment-page">
+
+        <div class="appointment-card">
+
+            <h1 class="appointment-title">
+                ĐẶT LỊCH HẸN HỖ TRỢ
+            </h1>
+
+            <p class="appointment-description">
+                LAPZONE luôn sẵn sàng hỗ trợ và đồng hành cùng bạn.
+            </p>
+
+            <div class="appointment-message appointment-message--success" role="status"
+                 th:if="${appointmentSuccess}" th:text="${appointmentSuccess}"></div>
+            <div class="appointment-message appointment-message--error" role="alert"
+                 th:if="${error}" th:text="${error}"></div>
+            <form th:action="@{/datlich}" th:object="${appointmentForm}" method="post">
+
+                <h3 class="form-section-title">
+                    <i class="fa-regular fa-user" aria-hidden="true"></i> 1. Thông tin khách hàng
+                </h3>
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="fullName">Họ và tên <span class="required">*</span></label>
+                        <input id="fullName" type="text" th:field="*{fullName}" placeholder="Nhập họ và tên" required maxlength="100">
+                        <span class="field-error" th:if="${#fields.hasErrors('fullName')}" th:errors="*{fullName}"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Số điện thoại <span class="required">*</span></label>
+                        <input id="phone" type="tel" th:field="*{phone}" placeholder="Nhập số điện thoại" required maxlength="20">
+                        <span class="field-error" th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}"></span>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input id="email" type="email" th:field="*{email}" placeholder="example@gmail.com" required maxlength="150">
+                        <span class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+                    </div>
+
+                </div>
+
+                <h3 class="form-section-title">
+                    <i class="fa-regular fa-calendar-days" aria-hidden="true"></i> 2. Thông tin lịch hẹn
+                </h3>
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="supportType">Loại hỗ trợ <span class="required">*</span></label>
+                        <select id="supportType" th:field="*{supportType}" required>
+                            <option value="">-- Chọn nhu cầu hỗ trợ --</option>
+                            <option value="Tư vấn mua laptop">
+                                Tư vấn mua laptop
+                            </option>
+                            <option value="Tư vấn cấu hình laptop">
+                                Tư vấn cấu hình laptop
+                            </option>
+                            <option value="Bảo hành, sửa chữa">
+                                Bảo hành, sửa chữa
+                            </option>
+                            <option value="Hỗ trợ kỹ thuật">
+                                Hỗ trợ kỹ thuật
+                            </option>
+                            <option value="Khác">Nhu cầu khác</option>
+                        </select>
+                        <span class="field-error" th:if="${#fields.hasErrors('supportType')}" th:errors="*{supportType}"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="showroom">Showroom mong muốn</label>
+                        <input id="showroom" type="text" th:field="*{showroom}" placeholder="Nhập tên hoặc địa chỉ showroom" maxlength="200">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appointmentDate"><i class="fa-regular fa-calendar" aria-hidden="true"></i> Ngày hẹn <span class="required">*</span></label>
+                        <input type="date" id="appointmentDate" th:field="*{appointmentDate}" required>
+                        <span class="field-error" th:if="${#fields.hasErrors('appointmentDate')}" th:errors="*{appointmentDate}"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="appointmentTime"><i class="fa-regular fa-clock" aria-hidden="true"></i> Giờ hẹn <span class="required">*</span></label>
+                        <input type="time" id="appointmentTime" th:field="*{appointmentTime}" required>
+                        <span class="field-error" th:if="${#fields.hasErrors('appointmentTime')}" th:errors="*{appointmentTime}"></span>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="description">Nội dung cần hỗ trợ</label>
+                        <textarea id="description" th:field="*{description}" placeholder="Mô tả nhu cầu hoặc vấn đề bạn đang gặp phải..." maxlength="5000"></textarea>
+                        <span class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></span>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="appointment-submit">
+                    GỬI YÊU CẦU ĐẶT LỊCH
+                </button>
+
+            </form>
+
+        </div>
+
+    </main>
+
+    <div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+
+    <script>
+        // Không cho phép chọn ngày trong quá khứ
+        const dateInput = document.getElementById('appointmentDate');
+
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+
+        dateInput.min = `${year}-${month}-${day}`;
+    </script>
+
+</body>
+
+</html>
