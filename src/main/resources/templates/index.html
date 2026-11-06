@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,118 +10,111 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Trang chủ - LAPZONE</title>
 </head>
+
 <body>
 
-<!-- Header -->
-<div th:replace="~{fragments/header :: header_lapzone}"></div>
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: header_lapzone}"></div>
 
-<main>
-    <!-- Hero Section -->
-    <section class="container" style="margin-top: 40px; margin-bottom: 60px;">
-        <div class="home-hero-layout">
-            <!-- Main Banner -->
-            <div class="home-slider" role="region" aria-label="Banner giới thiệu sản phẩm LAPZONE" aria-roledescription="carousel" tabindex="0">
-                <div class="home-slider__slides" aria-live="off">
-                    <article class="home-slide is-active" role="group" aria-roledescription="slide" aria-label="1 / 3" aria-hidden="false">
-                        <img fetchpriority="high" th:src="@{/assets/reviewimage.webp}" alt="Banner laptop Lenovo Legion">
-                        <div class="home-slide__caption">
-                            <div>
-                                <h2>Lenovo Legion - Sẵn sàng chinh phục</h2>
-                                <p>Khám phá laptop gaming và các mẫu máy đang có tại LAPZONE.</p>
+    <main>
+        <!-- Hero Section -->
+        <section class="container home-hero" style="margin-top: 40px; margin-bottom: 60px;" th:if="${newProducts != null and selectedCatId == null}" th:with="bannerProducts=${newProducts.?[image != null and !#strings.isEmpty(image) and stock != null and stock > 0]}">
+            <div class="home-hero-layout" th:if="${#lists.size(bannerProducts) > 0}">
+                <div class="home-showcase">
+                    <div class="home-showcase__main">
+                        <div class="home-slider" role="region" aria-label="Sản phẩm nổi bật" aria-roledescription="carousel" tabindex="0">
+                            <div class="home-slider__slides" aria-live="off">
+                                <a class="home-slide" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" th:classappend="${iterStat.index == 0} ? ' is-active'" role="group" aria-roledescription="slide" th:attr="aria-hidden=${iterStat.index != 0}" th:href="@{/product_detail(id=${p.id})}"
+                                    th:aria-label="${p.name}">
+                                    <img class="home-slide__backdrop" th:src="@{'/' + ${p.image}}" width="600" height="400" loading="lazy" alt="" aria-hidden="true" draggable="false">
+                                    <span class="home-slide__product">
+                                    <img class="home-slide__image" th:src="@{'/' + ${p.image}}" width="600" height="400"
+                                         th:attr="loading=${iterStat.index == 0 ? 'eager' : 'lazy'}, fetchpriority=${iterStat.index == 0 ? 'high' : null}"
+                                         th:alt="${p.name}" draggable="false">
+                                </span>
+                                    <span class="home-slide__hint" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" focusable="false"><path d="M7 17 17 7M8 7h9v9"/></svg>
+                                </span>
+                                </a>
                             </div>
-                            <a class="home-slide__link" th:href="@{/search(query='Gaming')}">Khám phá laptop gaming</a>
-                        </div>
-                    </article>
-                    <!-- Có thể thay ảnh bằng banner chiến dịch thực tế qua thuộc tính th:src bên dưới. -->
-                    <article class="home-slide" role="group" aria-roledescription="slide" aria-label="2 / 3" aria-hidden="true">
-                        <img loading="lazy" th:src="@{/assets/reviewimage3.webp}" alt="Banner Lenovo IdeaPad Ultrabook 2025">
-                        <div class="home-slide__caption">
-                            <div>
-                                <h2>Lenovo IdeaPad Ultrabook 2025</h2>
-                                <p>Gọn nhẹ cho học tập, công việc và di chuyển mỗi ngày.</p>
+                            <div class="home-slider__controls" role="group" aria-label="Điều khiển banner" th:if="${#lists.size(bannerProducts) > 1}">
+                                <button class="home-slider__arrow" type="button" data-slide-previous aria-label="Chuyển đến slide trước">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                            </button>
+                                <button class="home-slider__arrow" type="button" data-slide-next aria-label="Chuyển đến slide tiếp theo">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                            </button>
                             </div>
-                            <a class="home-slide__link" th:href="@{/search(query='Lenovo')}">Xem laptop Lenovo</a>
-                        </div>
-                    </article>
-                    <article class="home-slide" role="group" aria-roledescription="slide" aria-label="3 / 3" aria-hidden="true">
-                        <img loading="lazy" th:src="@{/assets/lapzone_banner_footer.png}" alt="Banner ưu đãi laptop LAPZONE">
-                        <div class="home-slide__caption">
-                            <div>
-                                <h2>Khám phá các mẫu laptop tại LAPZONE</h2>
-                                <p>Tìm sản phẩm phù hợp từ danh mục laptop hiện có.</p>
+                            <div class="home-slider__dots" role="group" aria-label="Chọn slide" th:if="${#lists.size(bannerProducts) > 1}">
+                                <button class="home-slider__dot" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" type="button" th:attr="data-slide-to=${iterStat.index}, aria-current=${iterStat.index == 0 ? 'true' : null}" th:aria-label="${'Hiển thị slide ' + (iterStat.index + 1) + ': ' + p.name}"
+                                    th:classappend="${iterStat.index == 0} ? ' is-active'"></button>
                             </div>
-                            <a class="home-slide__link" th:href="@{/search(query='Laptop')}">Xem laptop</a>
+                            <div class="home-slider__progress" aria-hidden="true" th:if="${#lists.size(bannerProducts) > 1}">
+                                <span class="home-slider__progress-fill"></span>
+                            </div>
                         </div>
-                    </article>
-                </div>
-                <div class="home-slider__controls" aria-label="Điều khiển slider">
-                    <button class="home-slider__arrow" type="button" data-slide-previous aria-label="Chuyển đến slide trước">
-                        <i class="fas fa-chevron-left" aria-hidden="true"></i>
-                    </button>
-                    <div class="home-slider__dots" aria-label="Chọn slide">
-                        <button class="home-slider__dot is-active" type="button" data-slide-to="0" aria-label="Hiển thị slide 1: Lenovo Legion" aria-current="true"></button>
-                        <button class="home-slider__dot" type="button" data-slide-to="1" aria-label="Hiển thị slide 2: Lenovo IdeaPad"></button>
-                        <button class="home-slider__dot" type="button" data-slide-to="2" aria-label="Hiển thị slide 3: LAPZONE"></button>
                     </div>
-                    <button class="home-slider__arrow" type="button" data-slide-next aria-label="Chuyển đến slide tiếp theo">
-                        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+
+                    <div class="home-thumbnails" role="group" aria-label="Ảnh thu nhỏ sản phẩm">
+                        <button class="home-thumbnail" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" type="button" th:attr="data-thumbnail-to=${iterStat.index}, aria-current=${iterStat.index == 0 ? 'true' : null}" th:aria-label="${'Hiển thị ảnh sản phẩm: ' + p.name}"
+                            th:classappend="${iterStat.index == 0} ? ' is-active'">
+                        <img th:src="@{'/' + ${p.image}}" width="120" height="80" loading="lazy" th:alt="${p.name}" draggable="false">
                     </button>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- Side Banners/News -->
-            <div style="display: flex; flex-direction: column; gap: 24px;">
-                <div style="background: var(--bg-card); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--border-glass);">
-                    <h3 style="color: var(--accent-neon); margin-bottom: 16px;"><i class="fas fa-newspaper"></i> Tin Công Nghệ</h3>
-                    <ul style="display: flex; flex-direction: column; gap: 12px;">
-                        <li><a href="#" style="color: var(--text-secondary);">&bull; Tạm Ngưng Hỗ Trợ Kĩ Thuật, Bảo Dưỡng</a></li>
-                        <li><a href="#" style="color: var(--text-secondary);">&bull; Đặt Lịch Hẹn Trước Để Được Hỗ Trợ</a></li>
-                        <li><a href="#" style="color: var(--text-secondary);">&bull; Thông Báo Lịch Làm Việc Dịp Lễ</a></li>
-                    </ul>
-                </div>
-                <div style="background: linear-gradient(135deg, var(--accent-red), var(--accent-orange)); padding: 24px; border-radius: var(--radius-lg); color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; flex: 1;">
-                    <h3 style="font-size: 1.5rem; margin-bottom: 10px;">Ưu Đãi Lớn</h3>
-                    <p style="margin-bottom: 20px;">Giảm tới 20% cho sinh viên</p>
-                    <a th:href="@{/search(query='Laptop')}" class="btn-primary" style="background: white; color: var(--accent-red);">Xem Ngay</a>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Categories Section -->
-    <section class="container" style="margin-bottom: 60px;">
-        <h2 class="section-title">Laptop theo nhu cầu</h2>
-        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;">
-            <a th:href="@{/search(query='Văn Phòng')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
-                <img loading="lazy" th:src="@{/assets/vanphonghoctap.webp}" alt="Văn phòng" style="height: 100px; margin: 0 auto 16px;">
-                <h4 style="color: var(--text-primary);">Học Tập, Văn Phòng</h4>
-            </a>
-            <a th:href="@{/search(query='Đồ Họa')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
-                <img loading="lazy" th:src="@{/assets/dohoakythuat.webp}" alt="Đồ họa" style="height: 100px; margin: 0 auto 16px;">
-                <h4 style="color: var(--text-primary);">Đồ Họa, Kỹ Thuật</h4>
-            </a>
-            <a th:href="@{/search(query='Lập Trình')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
-                <img loading="lazy" th:src="@{/assets/laptoplaptrinh.webp}" alt="Lập trình" style="height: 100px; margin: 0 auto 16px;">
-                <h4 style="color: var(--text-primary);">Lập Trình</h4>
-            </a>
-            <a th:href="@{/search(query='Gaming')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
-                <img loading="lazy" th:src="@{/assets/gamelaptop.webp}" alt="Gaming" style="height: 100px; margin: 0 auto 16px;">
-                <h4 style="color: var(--text-primary);">Gaming</h4>
-            </a>
-            <a th:href="@{/search(minPrice=30000000)}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';" onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
-                <img loading="lazy" th:src="@{/assets/sieuphamlaptop.webp}" alt="Siêu Phẩm" style="height: 100px; margin: 0 auto 16px;">
-                <h4 style="color: var(--text-primary);">Cao Cấp (Premium)</h4>
-            </a>
-        </div>
-    </section>
+                <aside class="home-promo" aria-label="Ưu đãi sinh viên">
+                    <div class="home-promo__message">
+                        <span class="home-promo__label">GIẢM SỐC</span>
+                        <span>[Ưu đãi cho sinh viên, liên hệ showroom để được tư vấn]</span>
+                    </div>
+                    <a class="home-promo__link" th:href="@{/search(sort='price_asc')}">
+                    Xem sản phẩm giá tốt
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                </a>
+                </aside>
+            </div>
+        </section>
 
-    <!-- Hot Products -->
+        <!-- Categories Section -->
+        <section class="container" style="margin-bottom: 60px;">
+            <h2 class="section-title">Laptop theo nhu cầu</h2>
+            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px;">
+                <a th:href="@{/search(query='Văn Phòng')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';"
+                    onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                    <img loading="lazy" th:src="@{/assets/vanphonghoctap.webp}" alt="Văn phòng" style="height: 100px; margin: 0 auto 16px;">
+                    <h4 style="color: var(--text-primary);">Học Tập, Văn Phòng</h4>
+                </a>
+                <a th:href="@{/search(query='Đồ Họa')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';"
+                    onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                    <img loading="lazy" th:src="@{/assets/dohoakythuat.webp}" alt="Đồ họa" style="height: 100px; margin: 0 auto 16px;">
+                    <h4 style="color: var(--text-primary);">Đồ Họa, Kỹ Thuật</h4>
+                </a>
+                <a th:href="@{/search(query='Lập Trình')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';"
+                    onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                    <img loading="lazy" th:src="@{/assets/laptoplaptrinh.webp}" alt="Lập trình" style="height: 100px; margin: 0 auto 16px;">
+                    <h4 style="color: var(--text-primary);">Lập Trình</h4>
+                </a>
+                <a th:href="@{/search(query='Gaming')}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';"
+                    onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                    <img loading="lazy" th:src="@{/assets/gamelaptop.webp}" alt="Gaming" style="height: 100px; margin: 0 auto 16px;">
+                    <h4 style="color: var(--text-primary);">Gaming</h4>
+                </a>
+                <a th:href="@{/search(minPrice=30000000)}" style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 20px; text-align: center; transition: var(--transition-normal);" onmouseover="this.style.borderColor='var(--accent-blue)'; this.style.transform='translateY(-5px)';"
+                    onmouseout="this.style.borderColor='var(--border-glass)'; this.style.transform='translateY(0)';">
+                    <img loading="lazy" th:src="@{/assets/sieuphamlaptop.webp}" alt="Siêu Phẩm" style="height: 100px; margin: 0 auto 16px;">
+                    <h4 style="color: var(--text-primary);">Cao Cấp (Premium)</h4>
+                </a>
+            </div>
+        </section>
+
+        <!-- Hot Products -->
         <section class="container">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                 <h2 class="section-title" style="margin-bottom: 0;">Máy Tính Xách Tay HOT</h2>
                 <a th:href="@{/search(query='Laptop')}" style="color: var(--accent-neon); font-weight: 500;">Xem tất cả <i class="fas fa-arrow-right"></i></a>
             </div>
-            
+
             <div class="product-grid home-product-grid">
                 <article class="product-card home-product-card" th:each="product : ${laptopProducts}">
                     <div class="badge home-product-badge" th:if="${product.stock != null and product.stock == 0}">Hết hàng</div>
@@ -187,37 +181,38 @@
                 </article>
             </div>
         </section>
-    <!-- Features / Promises -->
-    <section class="container" style="margin-top: 80px; margin-bottom: 80px;">
-        <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 60px 40px; text-align: center;">
-            <h2 class="section-title" style="margin-bottom: 10px;">Bạn Xứng Đáng Với Những Điều Tốt Nhất</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 50px;">Cam kết của Lapzone đối với mọi khách hàng</p>
-            
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;">
-                <div>
-                    <i class="fa-solid fa-award" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
-                    <h3 style="margin-bottom: 15px;">Chất Lượng & Giá Tốt Nhất</h3>
-                    <p style="color: var(--text-secondary);">Sản phẩm laptop nhập khẩu cao cấp với chất lượng dịch vụ không ngừng nâng cao.</p>
-                </div>
-                <div>
-                    <i class="fa-solid fa-handshake" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
-                    <h3 style="margin-bottom: 15px;">Bảo Dưỡng Trọn Đời</h3>
-                    <p style="color: var(--text-secondary);">Miễn phí vệ sinh – bôi keo tản nhiệt – kiểm tra định kỳ trọn đời sử dụng.</p>
-                </div>
-                <div>
-                    <i class="fa-solid fa-truck-fast" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
-                    <h3 style="margin-bottom: 15px;">Giao Hàng Nhanh</h3>
-                    <p style="color: var(--text-secondary);">Giao nhanh toàn quốc, đóng gói chống sốc đảm bảo an toàn tuyệt đối.</p>
+        <!-- Features / Promises -->
+        <section class="container" style="margin-top: 80px; margin-bottom: 80px;">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 60px 40px; text-align: center;">
+                <h2 class="section-title" style="margin-bottom: 10px;">Bạn Xứng Đáng Với Những Điều Tốt Nhất</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 50px;">Cam kết của Lapzone đối với mọi khách hàng</p>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;">
+                    <div>
+                        <i class="fa-solid fa-award" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
+                        <h3 style="margin-bottom: 15px;">Chất Lượng & Giá Tốt Nhất</h3>
+                        <p style="color: var(--text-secondary);">Sản phẩm laptop nhập khẩu cao cấp với chất lượng dịch vụ không ngừng nâng cao.</p>
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-handshake" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
+                        <h3 style="margin-bottom: 15px;">Bảo Dưỡng Trọn Đời</h3>
+                        <p style="color: var(--text-secondary);">Miễn phí vệ sinh – bôi keo tản nhiệt – kiểm tra định kỳ trọn đời sử dụng.</p>
+                    </div>
+                    <div>
+                        <i class="fa-solid fa-truck-fast" style="font-size: 3rem; color: var(--accent-neon); margin-bottom: 20px;"></i>
+                        <h3 style="margin-bottom: 15px;">Giao Hàng Nhanh</h3>
+                        <p style="color: var(--text-secondary);">Giao nhanh toàn quốc, đóng gói chống sốc đảm bảo an toàn tuyệt đối.</p>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-</main>
+    </main>
 
-<!-- Footer -->
-<div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+    <!-- Footer -->
+    <div th:replace="~{fragments/footer :: footer_lapzone}"></div>
 
-<script th:src="@{/js/home-slider.js}" defer></script>
+    <script th:src="@{/js/home-slider.js}" defer></script>
 </body>
+
 </html>
