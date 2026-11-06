@@ -446,7 +446,26 @@ button {
     font-size: 2.5rem;
     font-weight: 800;
     color: var(--accent-red);
+    margin-bottom: 0;
+}
+.product-sale-prices {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 12px;
     margin-bottom: 24px;
+}
+.product-original-price {
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+.product-sale-badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(239, 68, 68, .12);
+    color: var(--accent-red);
+    font-size: .82rem;
+    font-weight: 800;
 }
 .product-specs-list {
     background: var(--bg-card);

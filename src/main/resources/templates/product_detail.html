@@ -49,7 +49,14 @@
                 <span th:text="'Kho: ' + ${product.stock} + ' máy'">Số lượng</span>
             </div>
 
-            <div class="product-price-large" th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giá VND</div>
+            <div class="product-sale-prices">
+                <del class="product-original-price" th:if="${discountPercent > 0}"
+                     th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giá gốc</del>
+                <div class="product-price-large"
+                     th:text="${#numbers.formatDecimal(salePrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giá VND</div>
+                <span class="product-sale-badge" th:if="${discountPercent > 0}"
+                      th:text="${'-' + discountPercent + '%'}">-15%</span>
+            </div>
 
             <!-- Specs Summary -->
             <div class="product-specs-list" th:if="${product.productDetail != null}">
@@ -137,7 +144,7 @@
                         <img loading="lazy" th:src="@{'/' + ${p.image}}" class="card-img-top p-3" alt="Product" style="object-fit: contain; height: 180px;">
                         <div class="card-body text-center pt-0">
                             <h6 class="card-title fw-bold" th:text="${p.name}" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 40px; margin-bottom: 10px;"></h6>
-                            <p class="text-danger fw-bold fs-5 mb-0" th:text="${#numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></p>
+                            <p class="text-danger fw-bold fs-5 mb-0" th:text="${#numbers.formatDecimal(T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p), 0, 'COMMA', 0, 'POINT')} + ' ₫'"></p>
                         </div>
                     </a>
                 </div>

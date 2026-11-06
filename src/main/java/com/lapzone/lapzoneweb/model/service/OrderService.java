@@ -43,9 +43,15 @@ public class OrderService {
     // ====================================================================
     @Transactional
     public Order placeOrder(User user, String customerName, String customerPhone, String address, List<Long> selectedItemIds, String paymentMethod) {
-        List<CartItem> selectedItems = cartItemRepository.findAllById(selectedItemIds);
+        if (user == null || user.getId() == null) {
+            throw new IllegalArgumentException("Vui lòng đăng nhập để thanh toán giỏ hàng.");
+        }
+        if (selectedItemIds == null || selectedItemIds.isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.");
+        }
+        List<CartItem> selectedItems = cartItemRepository.findByIdInAndUserIdWithProduct(selectedItemIds, user.getId());
         if (selectedItems.isEmpty()) {
-            throw new RuntimeException("Chưa chọn sản phẩm nào để thanh toán!");
+            throw new IllegalArgumentException("Không tìm thấy sản phẩm hợp lệ trong giỏ hàng của bạn.");
         }
         // Gọi hàm lõi và báo là "Đến từ giỏ hàng" (để còn xóa khỏi giỏ)
         return createOrderCore(user, customerName, customerPhone, address, selectedItems, paymentMethod, true);
@@ -56,8 +62,27 @@ public class OrderService {
     // ====================================================================
     @Transactional
     public Order placeOrderBuyNow(User user, String customerName, String customerPhone, String address, CartItem buyNowItem, String paymentMethod) {
+        if (buyNowItem == null || buyNowItem.getProduct() == null || buyNowItem.getProduct().getId() == null) {
+            throw new IllegalArgumentException("Không tìm thấy sản phẩm mua ngay.");
+        }
+        Integer quantity = buyNowItem.getQuantity();
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("Số lượng mua ngay phải lớn hơn 0.");
+        }
+        Product product = productRepository.findById(buyNowItem.getProduct().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Sản phẩm mua ngay không còn tồn tại."));
+        if (product.getPrice() == null) {
+            throw new IllegalArgumentException("Sản phẩm hiện không có giá hợp lệ.");
+        }
+        if (product.getStock() == null || quantity > product.getStock()) {
+            throw new IllegalArgumentException("Số lượng mua vượt quá tồn kho hiện có.");
+        }
+
+        CartItem trustedItem = new CartItem();
+        trustedItem.setProduct(product);
+        trustedItem.setQuantity(quantity);
         // Gọi hàm lõi và báo là "Không đến từ giỏ hàng"
-        return createOrderCore(user, customerName, customerPhone, address, List.of(buyNowItem), paymentMethod, false);
+        return createOrderCore(user, customerName, customerPhone, address, List.of(trustedItem), paymentMethod, false);
     }
 
 
@@ -95,7 +120,7 @@ public class OrderService {
         // Tính tổng tiền
         double totalAmount = 0;
         for(CartItem item : items) {
-            totalAmount += item.getProduct().getPrice() * item.getQuantity();
+            totalAmount += PromotionService.getDiscountedPrice(item.getProduct()) * item.getQuantity();
         }
         newOrder.setTotalAmount(totalAmount);
 
@@ -108,12 +133,12 @@ public class OrderService {
             detail.setOrder(savedOrder);
             detail.setProduct(item.getProduct());
             detail.setQuantity(item.getQuantity());
-            detail.setPrice(item.getProduct().getPrice()); 
+            detail.setPrice(PromotionService.getDiscountedPrice(item.getProduct()));
             orderDetailRepository.save(detail);
 
             // Xóa món hàng khỏi DB giỏ hàng CHỈ KHI nó xuất phát từ giỏ hàng
             if (isFromCart && item.getId() != null) {
-                cartItemRepository.delete(item);
+                cartItemRepository.deleteByIdAndUserId(item.getId(), user.getId());
             }
         }
 

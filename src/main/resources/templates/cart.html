@@ -18,6 +18,8 @@
         }
         .cart-header h2 { margin: 0; font-size: 1.5rem; color: var(--text-primary); }
         .cart-header i { font-size: 1.8rem; color: var(--accent-neon); }
+        .cart-feedback { margin: 0 0 16px; padding: 12px 16px; border: 1px solid #a7e4c2; border-radius: 8px; background: #effcf4; color: #17653a; }
+        .cart-error { border-color: #f3b4b4; background: #fff3f3; color: #9c2929; }
 
         .empty-cart { text-align: center; padding: 80px 20px; }
         .empty-cart i { font-size: 5rem; color: var(--text-secondary); margin-bottom: 20px; }
@@ -53,6 +55,8 @@
     <div th:replace="~{fragments/header :: header_lapzone}"></div>
     
     <main class="cart-wrapper">
+        <div class="cart-feedback" role="status" th:if="${cartSuccess}" th:text="${cartSuccess}"></div>
+        <div class="cart-feedback cart-error" role="alert" th:if="${error}" th:text="${error}"></div>
         <div class="cart-container">
             <div class="cart-header">
                 <i class="fas fa-shopping-cart"></i>
@@ -79,10 +83,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="item : ${cartItems}">
+                            <tr th:each="item : ${cartItems}"
+                                th:with="discountPercent=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountPercent(item.product)}, salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(item.product)}">
                                 <td>
                                     <input type="checkbox" name="selectedItems" th:value="${item.id}" class="custom-checkbox item-checkbox" 
-                                           th:data-price="${(item.product.price * item.quantity).longValue()}" checked>
+                                           th:data-price="${(salePrice * item.quantity).longValue()}" checked>
                                 </td>
                                 
                                 <td>
@@ -95,7 +100,11 @@
                                     </div>
                                 </td>
                                 
-                                <td class="price-text" th:text="${#numbers.formatDecimal(item.product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giá</td>
+                                <td class="price-text">
+                                    <del th:if="${discountPercent > 0}"
+                                         th:text="${#numbers.formatDecimal(item.product.price, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giá gốc</del>
+                                    <strong th:text="${#numbers.formatDecimal(salePrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Giá</strong>
+                                </td>
                                 
                                 <td>
                                     <div class="qty-wrapper">
@@ -109,7 +118,7 @@
                                          th:text="'Kho: ' + ${item.product.stock}">Kho</div>
                                 </td>
                                 
-                                <td class="price-text" th:text="${#numbers.formatDecimal(item.product.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Thành tiền</td>
+                                <td class="price-text" th:text="${#numbers.formatDecimal(salePrice * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' ₫'">Thành tiền</td>
                                 
                                 <td>
                                     <button type="button" class="btn-delete" title="Xóa khỏi giỏ hàng" th:onclick="'removeItem(' + ${item.id} + ')'">

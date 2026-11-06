@@ -32,8 +32,8 @@
         <h2 class="fw-bold mb-3">Đặt Hàng Thành Công!</h2>
         <p class="text-muted fs-5">Cảm ơn bạn đã tin tưởng và lựa chọn sản phẩm tại <strong>Lapzone</strong>.</p>
         
-        <div class="order-id" th:if="${successMessage}">
-            <span th:text="${successMessage}">Mã đơn hàng: #12345</span>
+        <div class="order-id" th:if="${successOrderId != null}">
+            <span th:text="${successMessage != null ? successMessage : 'Mã đơn hàng: #' + successOrderId}">Mã đơn hàng: #12345</span>
         </div>
 
         <div th:if="${payMethod != null and payMethod != 'COD'}" class="mt-4 p-4 border rounded-4 bg-light shadow-sm mb-4">

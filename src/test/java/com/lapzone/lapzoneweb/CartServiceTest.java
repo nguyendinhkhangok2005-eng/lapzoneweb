@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.ArgumentMatchers.any;
 import java.util.List;
 import java.util.Optional;
@@ -49,8 +50,8 @@ public class CartServiceTest {
     // TH2: Xóa sản phẩm khỏi giỏ → gọi deleteById
     @Test
     public void testRemoveFromCart() {
-        cartService.removeFromCart(1L);
-        verify(cartItemRepository, times(1)).deleteById(1L);
+        cartService.removeFromCart(7L, 1L);
+        verify(cartItemRepository, times(1)).deleteByIdAndUserId(1L, 7L);
     }
 
     // TH3: Lấy danh sách giỏ hàng cùng sản phẩm bằng một fetch join
@@ -75,9 +76,9 @@ public class CartServiceTest {
         mockCartItem.setId(1L);
         mockCartItem.setQuantity(1);
 
-        when(cartItemRepository.findById(1L)).thenReturn(Optional.of(mockCartItem));
+        when(cartItemRepository.findByIdAndUserId(1L, 7L)).thenReturn(Optional.of(mockCartItem));
 
-        cartService.updateQuantity(1L, 2);
+        cartService.updateQuantity(7L, 1L, 2);
 
         verify(cartItemRepository, times(1)).save(mockCartItem);
     }
@@ -113,15 +114,43 @@ public class CartServiceTest {
         mockCartItem.setProduct(mockProduct);
         mockCartItem.setQuantity(1);
 
-        when(cartItemRepository.findById(1L)).thenReturn(Optional.of(mockCartItem));
+        when(cartItemRepository.findByIdAndUserId(1L, 7L)).thenReturn(Optional.of(mockCartItem));
 
-        cartService.updateQuantity(1L, 10);
+        cartService.updateQuantity(7L, 1L, 10);
 
         ArgumentCaptor<CartItem> captor = ArgumentCaptor.forClass(CartItem.class);
         verify(cartItemRepository, times(1)).save(captor.capture());
         assertEquals(4, captor.getValue().getQuantity());
     }
 
+    @Test
+    public void testAnotherUsersItemCannotBeUpdated() {
+        when(cartItemRepository.findByIdAndUserId(1L, 7L)).thenReturn(Optional.empty());
+
+        cartService.updateQuantity(7L, 1L, 10);
+
+        verify(cartItemRepository, never()).save(any(CartItem.class));
+        verify(cartItemRepository, never()).deleteByIdAndUserId(any(), any());
+    }
+
+    @Test
+    public void testAnotherUsersItemCannotBeRemoved() {
+        cartService.removeFromCart(7L, 1L);
+
+        verify(cartItemRepository).deleteByIdAndUserId(1L, 7L);
+    }
+
+    @Test
+    public void testCartTotalUsesPromotionalPrice() {
+        Product product = new Product();
+        product.setId(1L);
+        product.setPrice(25_000_000.0);
+        CartItem item = new CartItem();
+        item.setProduct(product);
+        item.setQuantity(2);
+        when(cartItemRepository.findByUserIdWithProduct(7L)).thenReturn(List.of(item));
+
+        assertEquals(45_000_000.0, cartService.getCartTotal(7L));
+    }
+
 }
-
-

@@ -12,6 +12,7 @@ import com.lapzone.lapzoneweb.model.service.InsufficientStockException;
 import com.lapzone.lapzoneweb.model.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -113,6 +114,23 @@ class OrderServiceTest {
 
         verify(productRepository).decrementStockIfAvailable(3L, 1);
         verify(cartItemRepository, never()).delete(any(CartItem.class));
+    }
+
+    @Test
+    void savesPromotionalPriceInOrderTotalAndOrderDetail() {
+        Product product = product(1L, "Laptop giảm giá", 2);
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.decrementStockIfAvailable(1L, 1)).thenReturn(1);
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        CartItem buyNowItem = cartItem(null, product, 1);
+
+        Order order = orderService.placeOrderBuyNow(null, "Khách hàng", "0123",
+                "Địa chỉ", buyNowItem, "COD");
+
+        assertEquals(90.0, order.getTotalAmount());
+        ArgumentCaptor<OrderDetail> detailCaptor = ArgumentCaptor.forClass(OrderDetail.class);
+        verify(orderDetailRepository).save(detailCaptor.capture());
+        assertEquals(90.0, detailCaptor.getValue().getPrice());
     }
 
     @Test

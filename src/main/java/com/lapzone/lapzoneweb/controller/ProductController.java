@@ -3,6 +3,7 @@ package com.lapzone.lapzoneweb.controller;
 import com.lapzone.lapzoneweb.model.entity.Product;
 import com.lapzone.lapzoneweb.model.repository.CategoryRepository;
 import com.lapzone.lapzoneweb.model.service.ProductService;
+import com.lapzone.lapzoneweb.model.service.PromotionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,6 +32,8 @@ public class ProductController {
             List<Product> relatedProducts = productService.getRelatedProducts(product.getCategory().getId(), product.getId());
             model.addAttribute("relatedProducts", relatedProducts);
             model.addAttribute("product", product);
+            model.addAttribute("discountPercent", PromotionService.getDiscountPercent(product));
+            model.addAttribute("salePrice", PromotionService.getDiscountedPrice(product));
             return "product_detail"; 
         } else {
             return "redirect:/"; 

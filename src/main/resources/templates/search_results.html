@@ -187,7 +187,7 @@
                                 <img loading="lazy" class="product-img" th:src="@{${p.image != null and p.image.startsWith('assets/') ? '/' + p.image : '/assets/' + p.image}}" th:alt="${p.name}">
                             </div>
                             <h3 class="product-title" th:text="${p.name}">Tên SP</h3>
-                            <div class="product-price" th:text="${#numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">Giá</div>
+                            <div class="product-price" th:text="${#numbers.formatDecimal(T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p), 0, 'COMMA', 0, 'POINT')} + ' đ'">Giá</div>
                             
                             <div class="product-meta" th:if="${p.productDetail != null}" th:text="'CPU: ' + ${p.productDetail.cpu} + ' / RAM: ' + ${p.productDetail.ram}" style="font-size: 0.8rem;">Cấu hình</div>
                         </a>

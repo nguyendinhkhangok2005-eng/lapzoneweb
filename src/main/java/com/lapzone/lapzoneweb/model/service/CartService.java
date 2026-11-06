@@ -22,41 +22,48 @@ public class CartService {
         return cartItemRepository.findByUserIdWithProduct(userId);
     }
 
-    public void addToCart(Long userId, Long productId, Integer quantity) {
+    public boolean addToCart(Long userId, Long productId, Integer quantity) {
         Product product = productRepository.findById(productId).orElse(null);
         if (product == null)
-            return;
+            return false;
         if (quantity == null || quantity <= 0)
-            return;
+            return false;
+        if (product.getStock() != null && product.getStock() <= 0)
+            return false;
 
         CartItem existingItem = cartItemRepository.findByUserIdAndProduct(userId, product);
 
         if (existingItem != null) {
             int currentQuantity = existingItem.getQuantity() != null ? existingItem.getQuantity() : 0;
-            existingItem.setQuantity(limitQuantityByStock(currentQuantity + quantity, product));
+            int newQuantity = limitQuantityByStock(currentQuantity + quantity, product);
+            if (newQuantity <= currentQuantity)
+                return false;
+            existingItem.setQuantity(newQuantity);
             cartItemRepository.save(existingItem);
+            return true;
         } else {
             int limitedQuantity = limitQuantityByStock(quantity, product);
             if (limitedQuantity <= 0)
-                return;
+                return false;
 
             CartItem newItem = new CartItem();
             newItem.setUserId(userId);
             newItem.setProduct(product);
             newItem.setQuantity(limitedQuantity);
             cartItemRepository.save(newItem);
+            return true;
         }
     }
 
-    public void updateQuantity(Long cartItemId, Integer quantity) {
-        CartItem item = cartItemRepository.findById(cartItemId).orElse(null);
+    public void updateQuantity(Long userId, Long cartItemId, Integer quantity) {
+        CartItem item = cartItemRepository.findByIdAndUserId(cartItemId, userId).orElse(null);
         if (item != null) {
             if (quantity == null || quantity <= 0) {
-                cartItemRepository.delete(item);
+                cartItemRepository.deleteByIdAndUserId(cartItemId, userId);
             } else {
                 int limitedQuantity = limitQuantityByStock(quantity, item.getProduct());
                 if (limitedQuantity <= 0) {
-                    cartItemRepository.delete(item);
+                    cartItemRepository.deleteByIdAndUserId(cartItemId, userId);
                 } else {
                     item.setQuantity(limitedQuantity);
                     cartItemRepository.save(item);
@@ -72,8 +79,8 @@ public class CartService {
         return Math.min(requestedQuantity, Math.max(product.getStock(), 0));
     }
 
-    public void removeFromCart(Long cartItemId) {
-        cartItemRepository.deleteById(cartItemId);
+    public void removeFromCart(Long userId, Long cartItemId) {
+        cartItemRepository.deleteByIdAndUserId(cartItemId, userId);
     }
 
     // [FIX N+1] Dùng JOIN FETCH: lấy Cart + Product trong 1 query, không lazy load
@@ -81,22 +88,25 @@ public class CartService {
         List<CartItem> cartItems = cartItemRepository.findByUserIdWithProduct(userId);
         double total = 0.0;
         for (CartItem item : cartItems) {
-            total += item.getProduct().getPrice() * item.getQuantity();
+            total += PromotionService.getDiscountedPrice(item.getProduct()) * item.getQuantity();
         }
         return total;
     }
 
     // Lấy danh sách các CartItem dựa trên danh sách ID được truyền vào
-    public List<CartItem> getSelectedCartItems(List<Long> cartItemIds) {
-        return cartItemRepository.findAllById(cartItemIds);
+    public List<CartItem> getSelectedCartItems(List<Long> cartItemIds, Long userId) {
+        if (cartItemIds == null || cartItemIds.isEmpty()) {
+            return List.of();
+        }
+        return cartItemRepository.findByIdInAndUserIdWithProduct(cartItemIds, userId);
     }
 
     // Tính tổng tiền chỉ cho những món được chọn
-    public Double getSelectedCartTotal(List<Long> cartItemIds) {
-        List<CartItem> selectedItems = cartItemRepository.findAllById(cartItemIds);
+    public Double getSelectedCartTotal(List<Long> cartItemIds, Long userId) {
+        List<CartItem> selectedItems = getSelectedCartItems(cartItemIds, userId);
         double total = 0.0;
         for (CartItem item : selectedItems) {
-            total += item.getProduct().getPrice() * item.getQuantity();
+            total += PromotionService.getDiscountedPrice(item.getProduct()) * item.getQuantity();
         }
         return total;
     }

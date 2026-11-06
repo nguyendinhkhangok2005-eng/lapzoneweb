@@ -1,6 +1,7 @@
 package com.lapzone.lapzoneweb.controller;
 
 import com.lapzone.lapzoneweb.model.service.ProductService;
+import com.lapzone.lapzoneweb.model.service.PromotionService;
 import com.lapzone.lapzoneweb.model.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,9 @@ public class HomeController {
     
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    private PromotionService promotionService;
 
     @GetMapping("/")
     public String showHomePage(@RequestParam(value = "categoryId", required = false) Long categoryId, Model model) {
@@ -34,6 +38,7 @@ public class HomeController {
             model.addAttribute("laptopProducts", productService.getProductsByBrand("Lenovo")); 
             model.addAttribute("appleProducts", productService.getProductsByBrand("Apple"));
             model.addAttribute("newProducts", productService.getNewProducts());
+            model.addAttribute("promotionProducts", promotionService.getDealProducts());
         }
 
         return "index";

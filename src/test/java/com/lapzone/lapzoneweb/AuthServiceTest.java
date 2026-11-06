@@ -35,10 +35,10 @@ public class AuthServiceTest {
     @Test
     public void testAuthenticateSuccess() {
         User mockUser = new User();
-        mockUser.setPassword("Dobietmatkhaudaycu01");
+        mockUser.setPassword("test-password");
 
         when(userRepository.findByEmailOrPhone("phileevaan@gmail.com", "phileevaan@gmail.com")).thenReturn(mockUser);
-        User result = authService.authenticate("phileevaan@gmail.com", "Dobietmatkhaudaycu01");
+        User result = authService.authenticate("phileevaan@gmail.com", "test-password");
         assertNotNull(result);
     }
 
@@ -46,10 +46,10 @@ public class AuthServiceTest {
     @Test
     public void testAuthenticateFailed() {
         User mockUser = new User();
-        mockUser.setPassword("Dobietmatkhaudaycu01@");
+        mockUser.setPassword("stored-password-fixture");
 
         when(userRepository.findByEmailOrPhone("phileevaan@gmail.com", "phileevaan@gmail.com")).thenReturn(mockUser);
-        User result = authService.authenticate("phileevaan@gmail.com", "Dobietmatkhaudaycu01");
+        User result = authService.authenticate("phileevaan@gmail.com", "test-password");
         assertNull(result);
     }
 
@@ -57,7 +57,7 @@ public class AuthServiceTest {
     @Test
     public void testAuthenticateNotFound() {
         when(userRepository.findByEmailOrPhone("phileevaan@gmail.com", "phileevaan@gmail.com")).thenReturn(null);
-        User result = authService.authenticate("phileevaan@gmail.com", "Dobietmatkhaudaycu01");
+        User result = authService.authenticate("phileevaan@gmail.com", "test-password");
         assertNull(result);
     }
 

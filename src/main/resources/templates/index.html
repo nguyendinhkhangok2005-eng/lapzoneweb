@@ -19,14 +19,15 @@
     <main>
         <!-- Hero Section -->
         <section class="container home-hero" style="margin-top: 40px; margin-bottom: 60px;" th:if="${newProducts != null and selectedCatId == null}" th:with="bannerProducts=${newProducts.?[image != null and !#strings.isEmpty(image) and stock != null and stock > 0]}">
-            <div class="home-hero-layout" th:if="${#lists.size(bannerProducts) > 0}">
+            <div class="home-hero-layout" th:if="${#lists.size(bannerProducts) > 0}"
+                 th:classappend="${promotionProducts == null or promotionProducts.isEmpty()} ? ' home-hero-layout--single'">
                 <div class="home-showcase">
                     <div class="home-slider" role="region" aria-label="Sản phẩm nổi bật LAPZONE" aria-roledescription="carousel" tabindex="0">
                         <div class="home-slider__surface" aria-hidden="true"></div>
                         <div class="home-slider__viewport">
                             <div class="home-slider__slides" aria-live="off">
                                 <article class="home-slide" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}"
-                                         th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, hasCutout=${tienTo != 'lenovo_loq_15'}, fallbackImage=${p.image.startsWith('assets/') ? '/' + p.image : (p.image.startsWith('/') ? p.image : '/assets/' + p.image)}"
+                                         th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, hasCutout=${tienTo != 'lenovo_loq_15'}, fallbackImage=${p.image.startsWith('assets/') ? '/' + p.image : (p.image.startsWith('/') ? p.image : '/assets/' + p.image)}, salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p)}"
                                          th:classappend="${iterStat.index == 0} ? ' is-active'" role="group" aria-roledescription="slide"
                                          th:attr="aria-hidden=${iterStat.index != 0}, aria-label=${p.name}">
                                     <div class="home-slide__visual">
@@ -57,7 +58,7 @@
                                             <div><dt>Màn hình</dt><dd th:text="${p.productDetail != null and p.productDetail.screen != null ? p.productDetail.screen : 'Đang cập nhật'}">Đang cập nhật</dd></div>
                                         </dl>
                                         <div class="home-slide__purchase">
-                                            <strong class="home-slide__price" th:text="${p.price != null ? #numbers.formatDecimal(p.price, 0, 'POINT', 0, 'COMMA') + ' ₫' : 'Liên hệ'}">17.890.000 ₫</strong>
+                                            <strong class="home-slide__price" th:text="${salePrice != null ? #numbers.formatDecimal(salePrice, 0, 'POINT', 0, 'COMMA') + ' ₫' : 'Liên hệ'}">17.890.000 ₫</strong>
                                             <span class="home-slide__stock" th:if="${p.stock != null and p.stock > 0 and p.stock <= 2}">Sắp hết hàng</span>
                                         </div>
                                         <div class="home-slide__actions">
@@ -101,7 +102,7 @@
                     <div class="home-thumbnails-mask" th:if="${#lists.size(bannerProducts) > 1}">
                         <div class="home-thumbnails" role="group" aria-label="Chọn sản phẩm nổi bật">
                             <button class="home-thumbnail" th:each="p, iterStat : ${bannerProducts}" th:if="${iterStat.index < 6}" type="button"
-                                    th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, hasCutout=${tienTo != 'lenovo_loq_15'}"
+                                    th:with="tienTo=${#strings.substringBefore(#strings.substringAfter(p.image, 'assets/'), '_img')}, hasCutout=${tienTo != 'lenovo_loq_15'}, salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p)}"
                                     th:attr="data-thumbnail-to=${iterStat.index}, aria-current=${iterStat.index == 0 ? 'true' : null}"
                                     th:aria-label="${'Hiển thị sản phẩm: ' + p.name}"
                                     th:classappend="${iterStat.index == 0} ? ' is-active'">
@@ -114,13 +115,55 @@
                                          width="120" height="80" loading="lazy" decoding="async" th:alt="${p.name}" draggable="false" hidden>
                                 </span>
                                 <span class="home-thumbnail__name" th:text="${p.name}">Tên sản phẩm</span>
-                                <span class="home-thumbnail__price" th:text="${p.price != null ? #numbers.formatDecimal(p.price, 0, 'POINT', 0, 'COMMA') + ' ₫' : 'Liên hệ'}">17.890.000 ₫</span>
+                                <span class="home-thumbnail__price" th:text="${salePrice != null ? #numbers.formatDecimal(salePrice, 0, 'POINT', 0, 'COMMA') + ' ₫' : 'Liên hệ'}">17.890.000 ₫</span>
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <aside class="home-deals" aria-label="Khu vực giảm sốc"></aside>
+                <aside class="home-deals" aria-labelledby="home-deals-title"
+                       th:if="${promotionProducts != null and !promotionProducts.isEmpty()}">
+                    <header class="home-deals__header">
+                        <div>
+                            <h2 id="home-deals-title">LAPTOP ĐANG KHUYẾN MÃI</h2>
+                            <p>Ưu đãi hấp dẫn mỗi ngày</p>
+                        </div>
+                        <span class="home-deals__icon" aria-hidden="true">
+                            <i class="fas fa-bolt"></i>
+                        </span>
+                    </header>
+                    <div class="home-deals__list" role="list" aria-label="Danh sách laptop khuyến mãi">
+                        <article class="home-deal" role="listitem" th:each="p : ${promotionProducts}"
+                                 th:with="discountPercent=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountPercent(p)}, salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(p)}">
+                            <a class="home-deal__image-link" th:href="@{/product_detail(id=${p.id})}"
+                               th:aria-label="${'Xem chi tiết ' + p.name}">
+                                <img class="home-deal__image" loading="lazy" decoding="async" width="100" height="76"
+                                     th:src="@{${p.image.startsWith('assets/') ? '/' + p.image : (p.image.startsWith('/') ? p.image : '/assets/' + p.image)}}"
+                                     th:alt="${p.name}">
+                            </a>
+                            <div class="home-deal__content">
+                                <a class="home-deal__name" th:href="@{/product_detail(id=${p.id})}" th:text="${p.name}">Tên laptop</a>
+                                <div class="home-deal__prices">
+                                    <span class="home-deal__old-price"
+                                          th:text="${#numbers.formatDecimal(p.price, 0, 'POINT', 0, 'COMMA') + ' ₫'}">25.000.000 ₫</span>
+                                    <strong class="home-deal__sale-price"
+                                            th:text="${#numbers.formatDecimal(salePrice, 0, 'POINT', 0, 'COMMA') + ' ₫'}">21.250.000 ₫</strong>
+                                    <span class="home-deal__badge" th:text="${'-' + discountPercent + '%'}">-15%</span>
+                                </div>
+                                <div class="home-deal__actions">
+                                    <form th:action="@{/cart/add}" method="post">
+                                        <input type="hidden" name="productId" th:value="${p.id}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="home-deal__cart" th:disabled="${p.stock == null or p.stock <= 0}">
+                                            <i class="fas fa-cart-plus" aria-hidden="true"></i> Thêm vào giỏ
+                                        </button>
+                                    </form>
+                                    <a class="home-deal__details" th:href="@{/product_detail(id=${p.id})}">Xem chi tiết</a>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </aside>
             </div>
         </section>
 
@@ -172,7 +215,7 @@
                             <img loading="lazy" class="product-img" th:classappend="${product.stock != null and product.stock == 0} ? ' is-unavailable' : ''" th:src="@{'/' + ${product.image}}" th:alt="${product.name}">
                         </div>
                         <h3 class="product-title" th:text="${product.name}">Tên Sản Phẩm</h3>
-                        <div class="product-price" th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'COMMA')} + ' ₫'">Giá</div>
+                        <div class="product-price" th:text="${#numbers.formatDecimal(T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(product), 0, 'POINT', 0, 'COMMA')} + ' ₫'">Giá</div>
                         <div class="product-meta">
                             <span th:text="${product.stock != null ? 'Kho: ' + product.stock : 'Tồn kho chưa cập nhật'}"></span>
                             <span><i class="far fa-heart"></i> Yêu thích</span>
@@ -207,7 +250,7 @@
                             <img loading="lazy" class="product-img" th:classappend="${product.stock != null and product.stock == 0} ? ' is-unavailable' : ''" th:src="@{'/' + ${product.image}}" th:alt="${product.name}">
                         </div>
                         <h3 class="product-title" th:text="${product.name}">Macbook</h3>
-                        <div class="product-price" th:text="${#numbers.formatDecimal(product.price, 0, 'POINT', 0, 'COMMA')} + ' ₫'">Giá</div>
+                        <div class="product-price" th:text="${#numbers.formatDecimal(T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(product), 0, 'POINT', 0, 'COMMA')} + ' ₫'">Giá</div>
                         <div class="product-meta">
                             <span th:text="${product.stock != null ? 'Kho: ' + product.stock : 'Tồn kho chưa cập nhật'}"></span>
                             <span><i class="far fa-heart"></i> Yêu thích</span>
