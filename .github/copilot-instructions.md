@@ -7,7 +7,7 @@
 - KHÔNG đổi spring.jpa.hibernate.ddl-auto. Nếu thấy giá trị nguy hiểm (create, create-drop), chỉ báo cho người dùng chứ không tự sửa.
 - KHÔNG chạy lại lapzone_init_official.sql, insert_products.sql, lapzone_generate_bigdata.sql và không sửa chúng làm mất dữ liệu hiện có.
 - Test KHÔNG được ghi, xóa hay làm bẩn dữ liệu trong database thật: dùng Mockito, @WebMvcTest, hoặc @Transactional có rollback.
-- Cần thêm bảng/cột: đưa script SQL (ALTER/CREATE) để người dùng tự chạy, không tự chạy, và code mới phải không làm hỏng khi dữ liệu cũ chưa có cột đó nếu có thể.
+- Chức năng mới được phép THÊM bảng mới (entity mới), nhưng KHÔNG sửa, xóa hay đổi tên bảng/cột hiện có và KHÔNG đổi spring.jpa.hibernate.ddl-auto. Với mỗi bảng mới, đưa trước script CREATE TABLE để người dùng xem. Không chạy SQL lên database thật.
 
 ## Quy tắc chung
 - Chỉ sửa đúng phạm vi được yêu cầu. Không refactor lan man, không đổi tên package/class không liên quan.
