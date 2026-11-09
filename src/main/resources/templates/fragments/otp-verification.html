@@ -1,0 +1,38 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="fields">
+    <div class="otp-entry" data-otp-entry th:attr="data-result=${otpResult}">
+        <div class="otp-workspace">
+            <div class="otp-inputs" role="group" aria-label="Mã xác thực gồm 6 chữ số">
+                <input id="otp-digit-1" class="otp-digit" data-otp-digit type="text" inputmode="numeric"
+                       autocomplete="one-time-code" maxlength="1" pattern="[0-9]" autofocus
+                       aria-label="Chữ số thứ 1">
+                <input class="otp-digit" data-otp-digit type="text" inputmode="numeric"
+                       maxlength="1" pattern="[0-9]" aria-label="Chữ số thứ 2">
+                <input class="otp-digit" data-otp-digit type="text" inputmode="numeric"
+                       maxlength="1" pattern="[0-9]" aria-label="Chữ số thứ 3">
+                <input class="otp-digit" data-otp-digit type="text" inputmode="numeric"
+                       maxlength="1" pattern="[0-9]" aria-label="Chữ số thứ 4">
+                <input class="otp-digit" data-otp-digit type="text" inputmode="numeric"
+                       maxlength="1" pattern="[0-9]" aria-label="Chữ số thứ 5">
+                <input class="otp-digit" data-otp-digit type="text" inputmode="numeric"
+                       maxlength="1" pattern="[0-9]" aria-label="Chữ số thứ 6">
+            </div>
+            <div class="otp-motion" aria-hidden="true">
+                <span class="otp-motion__tile" data-otp-tile></span>
+                <span class="otp-motion__tile" data-otp-tile></span>
+                <span class="otp-motion__tile" data-otp-tile></span>
+                <span class="otp-motion__tile" data-otp-tile></span>
+                <span class="otp-motion__tile" data-otp-tile></span>
+                <span class="otp-motion__tile" data-otp-tile></span>
+                <span class="otp-motion__pending"></span>
+            </div>
+        </div>
+        <input type="hidden" name="otp" data-otp-value>
+        <p class="otp-status" data-otp-status aria-live="polite">
+            Nhập mã xác thực 6 số đã được gửi đến email của bạn.
+        </p>
+        <div class="otp-result otp-result--error" th:if="${otpResult == 'error'}" role="alert">
+            <span class="otp-result__icon" aria-hidden="true">×</span>
+            <span>Mã xác thực không đúng. Vui lòng nhập lại.</span>
+        </div>
+    </div>
+</th:block>

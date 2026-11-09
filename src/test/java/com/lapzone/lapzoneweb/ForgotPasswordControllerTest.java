@@ -242,6 +242,7 @@ class ForgotPasswordControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("reset_password"))
                 .andExpect(model().attributeExists("resetToken"))
+                .andExpect(model().attribute("otpVerified", true))
                 .andReturn();
         return (String) result.getRequest().getSession().getAttribute("passwordResetToken");
     }

@@ -103,7 +103,9 @@ public class AuthController {
 
         Optional<String> verifiedEmail = otpService.verifyOtp(session, Purpose.REGISTER, code);
         if (verifiedEmail.isEmpty() || !pending.email().equals(verifiedEmail.get())) {
-            return registrationOtpPage(session, model, OTP_ERROR);
+            String view = registrationOtpPage(session, model, OTP_ERROR);
+            model.addAttribute("otpResult", "error");
+            return view;
         }
 
         if (!authService.registerEncoded(pending.fullName(), pending.email(), pending.phone(),
@@ -117,7 +119,8 @@ public class AuthController {
 
         session.removeAttribute(PENDING_REGISTRATION_ATTRIBUTE);
         model.addAttribute("success", "Đăng ký thành công! Hãy đăng nhập.");
-        return "dangnhap";
+        model.addAttribute("otpVerified", true);
+        return "verify_registration_otp";
     }
 
     @PostMapping("/dangki/xac-thuc/gui-lai")

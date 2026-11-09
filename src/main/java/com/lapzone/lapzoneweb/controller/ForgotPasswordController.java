@@ -88,6 +88,7 @@ public class ForgotPasswordController {
 
         model.addAttribute("message", GENERIC_MESSAGE);
         model.addAttribute("otpStep", true);
+        model.addAttribute("resendWaitSeconds", OtpService.RESEND_INTERVAL.getSeconds());
         return "forgot_password";
     }
 
@@ -107,6 +108,7 @@ public class ForgotPasswordController {
 
         model.addAttribute("message", GENERIC_MESSAGE);
         model.addAttribute("otpStep", true);
+        model.addAttribute("resendWaitSeconds", OtpService.RESEND_INTERVAL.getSeconds());
         return "forgot_password";
     }
 
@@ -120,12 +122,15 @@ public class ForgotPasswordController {
                 || verifiedEmail.isEmpty()
                 || !email.equals(verifiedEmail.get())) {
             model.addAttribute("otpStep", true);
+            model.addAttribute("otpResult", "error");
+            model.addAttribute("resendWaitSeconds", OtpService.RESEND_INTERVAL.getSeconds());
             model.addAttribute("error", OTP_ERROR);
             return "forgot_password";
         }
 
         createResetAuthorization(session, email);
         model.addAttribute("resetToken", session.getAttribute(RESET_TOKEN_ATTRIBUTE));
+        model.addAttribute("otpVerified", true);
         return "reset_password";
     }
 

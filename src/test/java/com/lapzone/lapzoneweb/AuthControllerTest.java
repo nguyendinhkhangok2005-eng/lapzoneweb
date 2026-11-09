@@ -97,8 +97,9 @@ class AuthControllerTest {
 
         mockMvc.perform(post("/dangki/xac-thuc").session(session).param("otp", "123456"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("dangnhap"))
-                .andExpect(model().attributeExists("success"));
+                .andExpect(view().name("verify_registration_otp"))
+                .andExpect(model().attributeExists("success"))
+                .andExpect(model().attribute("otpVerified", true));
 
         verify(authService).registerEncoded("Test User", EMAIL, PHONE, "Address", HASHED_PASSWORD);
         assertNull(session.getAttribute("pendingRegistration"));
