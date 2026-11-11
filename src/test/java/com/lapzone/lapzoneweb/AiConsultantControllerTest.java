@@ -1,10 +1,12 @@
 package com.lapzone.lapzoneweb;
 
 import com.lapzone.lapzoneweb.controller.AiConsultantController;
-import com.lapzone.lapzoneweb.model.dto.ChatMessageDTO;
 import com.lapzone.lapzoneweb.model.dto.ChatRequestDTO;
 import com.lapzone.lapzoneweb.model.service.AiChatRateLimiter;
-import com.lapzone.lapzoneweb.model.service.AiConsultantService;
+import com.lapzone.lapzoneweb.model.service.AiConversationService;
+import com.lapzone.lapzoneweb.model.dto.ConversationDTO;
+import org.junit.jupiter.api.AfterEach;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,14 +17,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -31,31 +29,29 @@ import static org.mockito.Mockito.when;
 
 class AiConsultantControllerTest {
 
-    @Test
-    void shouldKeepOnlySixRecentTurnsAndAllowReset() {
-        AiConsultantService service = mock(AiConsultantService.class);
-        when(service.consult(anyString(), anyList())).thenReturn("reply");
-        AiConsultantController controller = controller(service, new MutableClock());
-        MockHttpSession session = new MockHttpSession();
-        session.setAttribute("lapzoneAiChatHistory", historyFrom(1, 8));
-
-        send(controller, "new question", session, "192.0.2.1");
-
-        List<ChatMessageDTO> recentHistory =
-            (List<ChatMessageDTO>) session.getAttribute("lapzoneAiChatHistory");
-        assertEquals(12, recentHistory.size());
-        assertEquals("question-4", recentHistory.get(0).text());
-        assertEquals("reply-question-8", recentHistory.get(9).text());
-        verify(service).consult("new question", historyFrom(3, 8));
-
-        controller.reset(session);
-        assertNull(session.getAttribute("lapzoneAiChatHistory"));
+    @AfterEach
+    void clearAuthentication() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
+    void shouldReuseLegacyDefaultAndRotateOnResetWithoutDeletingHistory() {
+        AiConversationService service = mock(AiConversationService.class);
+        stubChat(service);
+        AiConsultantController controller = controller(service, new MutableClock());
+        MockHttpSession session = new MockHttpSession();
+        assertEquals("default-id", send(controller, "first", session, "192.0.2.1").getBody().get("conversationId"));
+        send(controller, "second", session, "192.0.2.1");
+        verify(service, org.mockito.Mockito.times(1)).create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.isNull());
+        controller.reset(session, null);
+        send(controller, "third", session, "192.0.2.1");
+        verify(service, org.mockito.Mockito.times(2)).create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.isNull());
+        verify(service, org.mockito.Mockito.never()).reset(anyString(), org.mockito.ArgumentMatchers.any());
+    }
+    @Test
     void shouldRejectTheSeventhRequestAndAllowItAfterTheMinuteWindow() {
-        AiConsultantService service = mock(AiConsultantService.class);
-        when(service.consult(anyString(), anyList())).thenReturn("reply");
+        AiConversationService service = mock(AiConversationService.class);
+        stubChat(service);
         MutableClock clock = new MutableClock();
         AiConsultantController controller = controller(service, clock);
         MockHttpSession session = new MockHttpSession();
@@ -77,8 +73,8 @@ class AiConsultantControllerTest {
 
     @Test
     void shouldCountRequestsPerRemoteIpAndIgnoreForwardedFor() {
-        AiConsultantService service = mock(AiConsultantService.class);
-        when(service.consult(anyString(), anyList())).thenReturn("reply");
+        AiConversationService service = mock(AiConversationService.class);
+        stubChat(service);
         AiConsultantController controller = controller(service, new MutableClock());
         MockHttpSession session = new MockHttpSession();
 
@@ -96,7 +92,7 @@ class AiConsultantControllerTest {
 
     @Test
     void shouldRejectQuestionsLongerThanFiveHundredCharactersWithoutCallingService() {
-        AiConsultantService service = mock(AiConsultantService.class);
+        AiConversationService service = mock(AiConversationService.class);
         AiConsultantController controller = controller(service, new MutableClock());
 
         ResponseEntity<Map<String, String>> response =
@@ -108,23 +104,20 @@ class AiConsultantControllerTest {
     }
 
     @Test
-    void shouldRemoveControlCharactersFromQuestionAndHistory() {
-        AiConsultantService service = mock(AiConsultantService.class);
-        when(service.consult(anyString(), anyList())).thenReturn("reply");
+    void shouldRemoveControlCharactersAndRouteExplicitConversation() {
+        AiConversationService service = mock(AiConversationService.class);
+        stubChat(service);
         AiConsultantController controller = controller(service, new MutableClock());
         MockHttpSession session = new MockHttpSession();
-        session.setAttribute("lapzoneAiChatHistory",
-            List.of(new ChatMessageDTO("user", "old\u0000question")));
-
-        send(controller, "new\u0007question", session, "192.0.2.1");
-
-        verify(service).consult("newquestion", List.of(new ChatMessageDTO("user", "oldquestion")));
+        controller.chat(new ChatRequestDTO("new\u0007question", "chosen-id"), session, request("192.0.2.1"));
+        verify(service).chat(org.mockito.ArgumentMatchers.eq("chosen-id"), org.mockito.ArgumentMatchers.any(),
+            org.mockito.ArgumentMatchers.eq("newquestion"));
+        verify(service, org.mockito.Mockito.never()).create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
-
     @Test
     void shouldEnforceTheGlobalPerMinuteLimit() {
-        AiConsultantService service = mock(AiConsultantService.class);
-        when(service.consult(anyString(), anyList())).thenReturn("reply");
+        AiConversationService service = mock(AiConversationService.class);
+        stubChat(service);
         AiChatRateLimiter rateLimiter = new AiChatRateLimiter(10, 60, 2, new MutableClock());
         AiConsultantController controller = new AiConsultantController(service, rateLimiter);
 
@@ -138,8 +131,8 @@ class AiConsultantControllerTest {
 
     @Test
     void shouldEnforceThePerIpDailyLimitAfterTheMinuteWindowExpires() {
-        AiConsultantService service = mock(AiConsultantService.class);
-        when(service.consult(anyString(), anyList())).thenReturn("reply");
+        AiConversationService service = mock(AiConversationService.class);
+        stubChat(service);
         MutableClock clock = new MutableClock();
         AiChatRateLimiter rateLimiter = new AiChatRateLimiter(10, 2, 30, clock);
         AiConsultantController controller = new AiConsultantController(service, rateLimiter);
@@ -154,7 +147,7 @@ class AiConsultantControllerTest {
             send(controller, "three", new MockHttpSession(), "192.0.2.1").getStatusCode());
     }
 
-    private AiConsultantController controller(AiConsultantService service, Clock clock) {
+    private AiConsultantController controller(AiConversationService service, Clock clock) {
         return new AiConsultantController(service, new AiChatRateLimiter(6, 60, 30, clock));
     }
 
@@ -169,15 +162,11 @@ class AiConsultantControllerTest {
         return request;
     }
 
-    private List<ChatMessageDTO> historyFrom(int firstQuestion, int lastQuestion) {
-        List<ChatMessageDTO> history = new ArrayList<>();
-        for (int i = firstQuestion; i <= lastQuestion; i++) {
-            history.add(new ChatMessageDTO("user", "question-" + i));
-            history.add(new ChatMessageDTO("model", "reply-question-" + i));
-        }
-        return history;
+    private void stubChat(AiConversationService service) {
+        when(service.chat(anyString(), org.mockito.ArgumentMatchers.any(), anyString())).thenReturn("reply");
+        when(service.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.isNull()))
+            .thenReturn(new ConversationDTO("default-id", "New", Instant.now(), Instant.now()));
     }
-
     private static final class MutableClock extends Clock {
         private Instant current = Instant.parse("2026-01-01T00:00:00Z");
 

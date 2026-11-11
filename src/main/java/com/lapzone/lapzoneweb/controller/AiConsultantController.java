@@ -1,39 +1,36 @@
 package com.lapzone.lapzoneweb.controller;
 
-import com.lapzone.lapzoneweb.model.service.AiConsultantService;
+import com.lapzone.lapzoneweb.model.service.AiConversationService;
 import com.lapzone.lapzoneweb.model.service.AiChatRateLimiter;
-import com.lapzone.lapzoneweb.model.dto.ChatMessageDTO;
+import com.lapzone.lapzoneweb.model.dto.ConversationDTO;
 import com.lapzone.lapzoneweb.model.dto.ChatRequestDTO;
+import com.lapzone.lapzoneweb.security.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 public class AiConsultantController {
 
-    private static final String CHAT_HISTORY_SESSION_KEY = "lapzoneAiChatHistory";
+    private static final String DEFAULT_CONVERSATION_KEY = "lapzoneAiDefaultConversation:";
+    private static final String GUEST_KEY = "lapzoneAiGuestKey";
     private static final int MAX_QUESTION_LENGTH = 500;
-    private static final int MAX_HISTORY_MESSAGES = 12;
-    private final AiConsultantService aiConsultantService;
+    private final AiConversationService conversations;
     private final AiChatRateLimiter rateLimiter;
 
-    @Autowired
-    public AiConsultantController(AiConsultantService aiConsultantService, AiChatRateLimiter rateLimiter) {
-        this.aiConsultantService = aiConsultantService;
+    public AiConsultantController(AiConversationService conversations, AiChatRateLimiter rateLimiter) {
+        this.conversations = conversations;
         this.rateLimiter = rateLimiter;
-    }
-
-    public AiConsultantController(AiConsultantService aiConsultantService) {
-        this(aiConsultantService, new AiChatRateLimiter(6, 60, 30, java.time.Clock.systemUTC()));
     }
 
     @PostMapping("/api/ai/chat")
@@ -59,38 +56,96 @@ public class AiConsultantController {
             ));
         }
 
-        List<ChatMessageDTO> history = getHistory(session);
-        String reply = aiConsultantService.consult(question, List.copyOf(history));
-        history.add(new ChatMessageDTO("user", question));
-        history.add(new ChatMessageDTO("model", reply));
-        if (history.size() > MAX_HISTORY_MESSAGES) {
-            history = new ArrayList<>(history.subList(history.size() - MAX_HISTORY_MESSAGES, history.size()));
+        AiConversationService.Access access = access(session);
+        String id = request == null ? null : request.conversationId();
+        if (id == null) {
+            synchronized (session) {
+                String key = defaultKey(access);
+                id = (String) session.getAttribute(key);
+                if (id == null) {
+                    id = conversations.create(access, null).id();
+                    session.setAttribute(key, id);
+                }
+            }
         }
-        session.setAttribute(CHAT_HISTORY_SESSION_KEY, history);
-        return ResponseEntity.ok(Map.of("reply", reply));
+        String reply = conversations.chat(id, access, question);
+        return ResponseEntity.ok(Map.of("reply", reply, "conversationId", id));
     }
 
     @PostMapping("/api/chat/reset")
-    public ResponseEntity<Map<String, String>> reset(HttpSession session) {
-        session.removeAttribute(CHAT_HISTORY_SESSION_KEY);
+    public ResponseEntity<Map<String, String>> reset(HttpSession session,
+            @RequestParam(required = false) String conversationId) {
+        AiConversationService.Access access = access(session);
+        if (conversationId != null) {
+            conversations.reset(conversationId, access);
+        } else {
+            // The legacy UI starts fresh while its previous conversation remains in history.
+            synchronized (session) {
+                session.removeAttribute(defaultKey(access));
+                session.removeAttribute("lapzoneAiChatHistory");
+            }
+        }
         return ResponseEntity.ok(Map.of("reply", "Cuộc trò chuyện đã được làm mới."));
     }
 
-    private List<ChatMessageDTO> getHistory(HttpSession session) {
-        Object value = session.getAttribute(CHAT_HISTORY_SESSION_KEY);
-        if (value instanceof List<?> messages) {
-            List<ChatMessageDTO> history = messages.stream()
-                .filter(ChatMessageDTO.class::isInstance)
-                .map(ChatMessageDTO.class::cast)
-                .filter(message -> "user".equals(message.role()) || "model".equals(message.role()))
-                .map(message -> new ChatMessageDTO(message.role(), cleanControls(message.text())))
-                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
-            if (history.size() > MAX_HISTORY_MESSAGES) {
-                return new ArrayList<>(history.subList(history.size() - MAX_HISTORY_MESSAGES, history.size()));
+    @PostMapping("/api/ai/conversations")
+    public ResponseEntity<ConversationDTO> create(@RequestBody(required = false) ConversationDTO.TitleRequest request,
+                                                  HttpSession session) {
+        ConversationDTO created = conversations.create(access(session), request == null ? null : request.title());
+        return ResponseEntity.created(java.net.URI.create("/api/ai/conversations/" + created.id())).body(created);
+    }
+
+    @GetMapping("/api/ai/conversations")
+    public List<ConversationDTO> list(HttpSession session, @RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "20") int size) {
+        return conversations.list(access(session), page, size);
+    }
+
+    @GetMapping("/api/ai/conversations/{id}")
+    public ConversationDTO.Detail retrieve(@PathVariable String id, HttpSession session) {
+        return conversations.retrieve(id, access(session));
+    }
+
+    @PatchMapping("/api/ai/conversations/{id}")
+    public ConversationDTO rename(@PathVariable String id, @RequestBody ConversationDTO.TitleRequest request,
+                                   HttpSession session) {
+        return conversations.rename(id, access(session), request == null ? null : request.title());
+    }
+
+    @DeleteMapping("/api/ai/conversations/{id}")
+    public ResponseEntity<Void> delete(@PathVariable String id, HttpSession session) {
+        AiConversationService.Access access = access(session);
+        conversations.delete(id, access);
+        synchronized (session) {
+            if (id.equals(session.getAttribute(defaultKey(access)))) {
+                session.removeAttribute(defaultKey(access));
             }
-            return history;
         }
-        return new ArrayList<>();
+        return ResponseEntity.noContent().build();
+    }
+
+    private AiConversationService.Access access(HttpSession session) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken)) {
+            if (authentication.getPrincipal() instanceof CustomUserDetails details
+                    && details.getUser().getId() != null) {
+                return new AiConversationService.Access(details.getUser().getId(), null);
+            }
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+        synchronized (session) {
+            String key = (String) session.getAttribute(GUEST_KEY);
+            if (key == null) {
+                key = UUID.randomUUID().toString();
+                session.setAttribute(GUEST_KEY, key);
+            }
+            return new AiConversationService.Access(null, key);
+        }
+    }
+
+    private String defaultKey(AiConversationService.Access access) {
+        return DEFAULT_CONVERSATION_KEY + (access.ownerId() == null ? "guest" : access.ownerId());
     }
 
     private String cleanControls(String value) {
