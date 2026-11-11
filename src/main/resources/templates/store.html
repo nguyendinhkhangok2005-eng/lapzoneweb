@@ -40,11 +40,29 @@
             <section class="store-card" aria-labelledby="voucher-heading">
                 <div class="store-card__top">
                     <span class="store-icon store-icon--violet"><i class="fa-solid fa-ticket" aria-hidden="true"></i></span>
-                    <span class="store-status">Sắp ra mắt</span>
+                    <span class="store-status">Dùng khi thanh toán</span>
                 </div>
                 <h2 id="voucher-heading">Voucher giảm giá</h2>
-                <p class="store-card__description">Khu vực quản lý và sử dụng voucher sẽ được cập nhật sau.</p>
-                <button class="store-card__action store-card__action--disabled" type="button" disabled>Chưa khả dụng <i class="fa-solid fa-lock" aria-hidden="true"></i></button>
+                <p class="store-card__description">Chọn một mã giảm giá khi thanh toán. Giá và điều kiện áp dụng sẽ được kiểm tra lại trước khi đặt hàng.</p>
+                <p class="store-voucher-empty" th:if="${#lists.isEmpty(availableVouchers)}">Hiện chưa có voucher phù hợp. Vui lòng quay lại sau.</p>
+                <div class="store-vouchers" th:if="${!#lists.isEmpty(availableVouchers)}">
+                    <article class="store-voucher" th:each="voucher : ${availableVouchers}">
+                        <div class="store-voucher__heading">
+                            <strong th:text="${voucher.discountPercent + '% giảm giá'}">5% giảm giá</strong>
+                            <code th:text="${voucher.code}">MÃ</code>
+                        </div>
+                        <p>Hết hạn: <time th:datetime="${voucher.endsAt}" th:text="${#temporals.format(voucher.endsAt, 'dd/MM/yyyy HH:mm')}"></time></p>
+                        <p th:if="${voucher.minimumOrderValue.signum() > 0}">Đơn tối thiểu: <strong th:text="${#numbers.formatDecimal(voucher.minimumOrderValue, 0, 'COMMA', 0, 'POINT') + ' đ'}"></strong></p>
+                        <p th:if="${voucher.minimumOrderValue.signum() == 0}">Không yêu cầu giá trị đơn tối thiểu</p>
+                        <p th:if="${#lists.isEmpty(voucher.productNames) && #lists.isEmpty(voucher.categoryNames)}">Áp dụng cho tất cả sản phẩm</p>
+                        <p th:if="${!#lists.isEmpty(voucher.productNames)}">Sản phẩm áp dụng: <span th:text="${#strings.listJoin(voucher.productNames, ', ')}"></span></p>
+                        <p th:if="${!#lists.isEmpty(voucher.categoryNames)}">Danh mục áp dụng: <span th:text="${#strings.listJoin(voucher.categoryNames, ', ')}"></span></p>
+                        <p th:if="${voucher.restricted}">Chỉ dành cho tài khoản đủ điều kiện</p>
+                        <p>Còn <strong th:text="${voucher.availableQuantity}"></strong> lượt · Tối đa <strong th:text="${voucher.perUserLimit}"></strong> lượt mỗi tài khoản</p>
+                    </article>
+                </div>
+                <p class="store-voucher-note">Cần đăng nhập để sử dụng mã. Mã chưa được giữ chỗ khi xem hoặc kiểm tra.</p>
+                <a class="store-card__action" th:href="@{/cart}">Đến giỏ hàng <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
             </section>
 
             <section class="store-card" aria-labelledby="messages-heading">
@@ -60,11 +78,33 @@
             <section class="store-card" aria-labelledby="address-heading">
                 <div class="store-card__top">
                     <span class="store-icon store-icon--orange"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span>
-                    <span class="store-status">Sắp ra mắt</span>
+                    <span class="store-status" th:text="${#lists.isEmpty(storeBranches) ? 'Chưa có thông tin' : 'Thông tin cửa hàng'}">Chưa có thông tin</span>
                 </div>
                 <h2 id="address-heading">Địa chỉ cửa hàng</h2>
-                <p class="store-card__description">Danh sách cửa hàng và thông tin địa chỉ chính thức sẽ được bổ sung sau.</p>
-                <button class="store-card__action store-card__action--disabled" type="button" disabled>Chưa khả dụng <i class="fa-solid fa-lock" aria-hidden="true"></i></button>
+                <p class="store-card__description" th:if="${#lists.isEmpty(storeBranches)}">Thông tin cửa hàng chưa được cập nhật. Vui lòng quay lại sau.</p>
+                <div class="store-branches" th:if="${!#lists.isEmpty(storeBranches)}">
+                    <article class="store-branch" th:each="branch : ${storeBranches}">
+                        <h3 th:text="${!#strings.isEmpty(branch.name) ? branch.name : 'Cửa hàng LAPZONE'}">Cửa hàng LAPZONE</h3>
+                        <dl class="store-branch__details">
+                            <div th:if="${!#strings.isEmpty(branch.address)}">
+                                <dt><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Địa chỉ</dt>
+                                <dd th:text="${branch.address}">Địa chỉ cửa hàng</dd>
+                            </div>
+                            <div th:if="${!#strings.isEmpty(branch.phone)}">
+                                <dt><i class="fa-solid fa-phone" aria-hidden="true"></i> Điện thoại</dt>
+                                <dd><a th:href="|tel:${branch.phone}|" th:text="${branch.phone}">Số điện thoại</a></dd>
+                            </div>
+                            <div th:if="${!#strings.isEmpty(branch.openingHours)}">
+                                <dt><i class="fa-regular fa-clock" aria-hidden="true"></i> Giờ mở cửa</dt>
+                                <dd th:text="${branch.openingHours}">Giờ mở cửa</dd>
+                            </div>
+                        </dl>
+                        <a class="store-card__action" th:if="${branch.mapUrl != null}" th:href="${branch.mapUrl}" target="_blank" rel="noopener noreferrer">
+                            Xem bản đồ <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                        </a>
+                        <span class="store-map-unavailable" th:if="${branch.mapUrl == null}">Chưa có địa chỉ để mở bản đồ</span>
+                    </article>
+                </div>
             </section>
         </div>
     </div>

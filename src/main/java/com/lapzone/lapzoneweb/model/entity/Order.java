@@ -7,6 +7,20 @@ import java.util.Date;
 @Entity
 @Table(name = "orders") // Thêm 's' vì chữ 'order' là từ khóa nhạy cảm trong SQL
 public class Order {
+
+    @Column(precision = 19, scale = 2)
+    private java.math.BigDecimal subtotalBeforeVoucher;
+    @Column(precision = 19, scale = 2)
+    private java.math.BigDecimal voucherDiscount;
+    @Column(length = 40)
+    private String voucherCode;
+
+    public java.math.BigDecimal getSubtotalBeforeVoucher() { return subtotalBeforeVoucher; }
+    public void setSubtotalBeforeVoucher(java.math.BigDecimal value) { this.subtotalBeforeVoucher = value; }
+    public java.math.BigDecimal getVoucherDiscount() { return voucherDiscount; }
+    public void setVoucherDiscount(java.math.BigDecimal value) { this.voucherDiscount = value; }
+    public String getVoucherCode() { return voucherCode; }
+    public void setVoucherCode(String value) { this.voucherCode = value; }
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

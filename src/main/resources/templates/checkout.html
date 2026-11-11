@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thanh toán | Lapzone</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -101,6 +102,7 @@
         }
     </style>
     <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/checkout-voucher.css}">
 </head>
 <body>
 
@@ -119,8 +121,9 @@
                     <i class="fas fa-shipping-fast me-2 text-primary"></i> Thông Tin Nhận Hàng
                 </div>
                 <div class="card-body p-4">
-                    <form th:action="@{/checkout/process}" method="POST">
+                    <form id="checkout-form" th:action="@{/checkout/process}" method="POST" th:attr="data-voucher-preview-url=@{/checkout/voucher-preview}">
                     <input type="hidden" name="mode" th:value="${checkoutMode}">
+                    <input type="hidden" name="checkoutKey" th:value="${checkoutKey}">
                     <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
                      <th:block th:each="id : ${selectedItemIds}">
                         <input type="hidden" name="selectedItemIds" th:value="${id}">
@@ -177,6 +180,32 @@
                     .payment-item:hover { border-color: #0d6efd; background-color: #f8faff; }
                     .form-check-input:checked + label { color: #0d6efd; }
                 </style>
+                        <div class="checkout-voucher mb-3" aria-labelledby="voucher-title">
+                            <h2 id="voucher-title" class="checkout-voucher__title"><i class="fas fa-ticket-alt" aria-hidden="true"></i> Voucher giảm giá</h2>
+                            <p class="checkout-voucher__intro">Mỗi đơn hàng chỉ dùng một voucher. Giá sản phẩm đã bao gồm khuyến mãi hiện có.</p>
+                            <p class="checkout-voucher__empty" th:if="${#lists.isEmpty(availableVouchers)}">Hiện chưa có voucher phù hợp. Bạn vẫn có thể nhập mã được cung cấp riêng.</p>
+                            <div class="checkout-voucher__list" th:if="${!#lists.isEmpty(availableVouchers)}">
+                                <article class="checkout-voucher__offer" th:each="voucher : ${availableVouchers}">
+                                    <div class="checkout-voucher__offer-top"><strong th:text="${voucher.discountPercent + '% giảm giá'}">5% giảm giá</strong><code th:text="${voucher.code}">MÃ</code></div>
+                                    <p>Hết hạn: <time th:datetime="${voucher.endsAt}" th:text="${#temporals.format(voucher.endsAt, 'dd/MM/yyyy HH:mm')}"></time></p>
+                                    <p th:if="${voucher.minimumOrderValue.signum() > 0}">Đơn tối thiểu: <span th:text="${#numbers.formatDecimal(voucher.minimumOrderValue, 0, 'COMMA', 0, 'POINT') + ' đ'}"></span></p>
+                                    <p th:if="${voucher.minimumOrderValue.signum() == 0}">Không yêu cầu giá trị đơn tối thiểu</p>
+                                    <p th:if="${#lists.isEmpty(voucher.productNames) && #lists.isEmpty(voucher.categoryNames)}">Áp dụng cho tất cả sản phẩm</p>
+                                    <p th:if="${!#lists.isEmpty(voucher.productNames)}">Sản phẩm: <span th:text="${#strings.listJoin(voucher.productNames, ', ')}"></span></p>
+                                    <p th:if="${!#lists.isEmpty(voucher.categoryNames)}">Danh mục: <span th:text="${#strings.listJoin(voucher.categoryNames, ', ')}"></span></p>
+                                    <p th:if="${voucher.restricted}">Chỉ dành cho tài khoản đủ điều kiện</p>
+                                    <p>Còn <span th:text="${voucher.availableQuantity}"></span> lượt · Tối đa <span th:text="${voucher.perUserLimit}"></span> lượt mỗi tài khoản</p>
+                                    <button type="button" class="checkout-voucher__choose" th:attr="data-voucher-code=${voucher.code}" th:aria-label="|Dùng mã ${voucher.code}|">Dùng mã này</button>
+                                </article>
+                            </div>
+                            <label class="form-label" for="voucher-code">Nhập mã giảm giá</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <input id="voucher-code" type="text" name="voucherCode" class="form-control" style="flex:1;min-width:150px" maxlength="40" placeholder="Nhập mã giảm giá">
+                                <button type="button" id="voucher-preview" class="btn btn-outline-primary">Kiểm tra mã</button>
+                            </div>
+                            <small>Cần đăng nhập để dùng mã. Số tiền giảm và tổng thanh toán được máy chủ tính lại khi đặt hàng.</small>
+                            <p id="voucher-message" role="status" aria-live="polite" class="mt-2"></p>
+                        </div>
                         <button type="submit" class="btn btn-order mt-4">
                             Xác Nhận Đặt Hàng <i class="fas fa-check-circle ms-2"></i>
                         </button>
@@ -193,7 +222,7 @@
                 <div class="card-body">
                     <div th:each="item : ${cartItems}" class="product-item"
                          th:with="salePrice=${T(com.lapzone.lapzoneweb.model.service.PromotionService).getDiscountedPrice(item.product)}">
-                       <img loading="lazy" class="product-media-surface" th:src="${item.product.image}" alt="Product">
+                       <img loading="lazy" class="product-media-surface" th:src="${item.product.image}" alt="Sản phẩm">
                         <div class="flex-grow-1">
                             <h6 class="mb-0" th:text="${item.product.name}">Tên sản phẩm</h6>
                             <small class="text-muted" th:text="${#numbers.formatDecimal(salePrice, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
@@ -204,15 +233,16 @@
                     <div class="mt-4 pt-3">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Tạm tính:</span>
-                            <span th:text="${#numbers.formatDecimal(cartTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                            <span id="voucher-subtotal" th:text="${#numbers.formatDecimal(cartTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
                         </div>
                         <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
                             <span>Phí vận chuyển:</span>
                             <span class="text-success">Miễn phí</span>
                         </div>
+                        <div class="d-flex justify-content-between mb-2"><span>Mã giảm giá:</span><span id="voucher-discount">0 đ</span></div>
                         <div class="d-flex justify-content-between total-section">
                             <span>TỔNG CỘNG:</span>
-                            <span th:text="${#numbers.formatDecimal(cartTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+                            <span id="voucher-total" th:text="${#numbers.formatDecimal(cartTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
                         </div>
                     </div>
                 </div>
@@ -231,5 +261,6 @@
     </div>
 </footer>
 
+<script defer th:src="@{/js/checkout-voucher.js}"></script>
 </body>
 </html>

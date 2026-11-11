@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý mã giảm giá - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <style>
+        .voucher-admin { padding: 32px 24px; }
+        .voucher-admin h1, .voucher-admin h2 { margin-bottom: 16px; }
+        .voucher-panel { background: var(--bg-card); padding: 24px; border: 1px solid var(--border-glass); border-radius: 16px; margin: 20px 0; }
+        .voucher-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+        .voucher-fields label { display: grid; gap: 6px; }
+        .voucher-fields input { width: 100%; background: var(--theme-input); color: var(--text-primary); border: 1px solid var(--border-glass); border-radius: 8px; padding: 10px; }
+        .voucher-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+        .voucher-actions button, .voucher-table button { padding: 10px; border-radius: 8px; background: var(--accent-button); color: white; }
+        .voucher-table { overflow-x: auto; }
+        .voucher-table table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+        .voucher-table td, .voucher-table th { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-glass); }
+        .voucher-table a { color: var(--accent-neon); text-decoration: underline; }
+        .voucher-note { color: var(--text-secondary); margin: 12px 0; }
+        .voucher-error { color: var(--accent-red); }
+        .voucher-success { color: var(--accent-green); }
+        .voucher-errors { grid-column: 1 / -1; color: var(--accent-red); }
+    </style>
+</head>
+<body>
+<main class="container voucher-admin">
+    <a th:href="@{/admin/dashboard}">← Trang quản trị</a>
+    <h1>Quản lý mã giảm giá</h1>
+    <p th:if="${success}" th:text="${success}" class="voucher-success" role="status"></p>
+    <p th:if="${error}" th:text="${error}" class="voucher-error" role="alert"></p>
+    <section class="voucher-panel">
+        <h2 th:text="${editId != null ? 'Chỉnh sửa mã giảm giá' : 'Tạo mã giảm giá'}">Tạo mã giảm giá</h2>
+        <form th:action="@{/admin/vouchers/save}" method="post" th:object="${voucherForm}">
+            <input type="hidden" name="id" th:if="${editId != null}" th:value="${editId}">
+            <div class="voucher-fields">
+                <label>Mã giảm giá<input th:field="*{code}" required minlength="3" maxlength="40" pattern="[A-Za-z0-9_-]{3,40}"></label>
+                <label>Mức giảm (%)<input type="number" th:field="*{discountPercent}" min="1" max="10" required></label>
+                <label>Tổng số lượt<input type="number" th:field="*{quantity}" min="1" max="1000000" required></label>
+                <label>Giới hạn mỗi tài khoản<input type="number" th:field="*{perUserLimit}" min="1" max="100" required></label>
+                <label>Bắt đầu (giờ Việt Nam)<input type="datetime-local" th:field="*{startsAt}" required></label>
+                <label>Kết thúc (giờ Việt Nam)<input type="datetime-local" th:field="*{endsAt}" required></label>
+                <label>Đơn tối thiểu (đồng)<input type="number" th:field="*{minimumOrderValue}" min="0" max="1000000000000" step="0.01" required></label>
+                <label>Mã sản phẩm áp dụng<input name="productIds" th:value="${#strings.arrayJoin(voucherForm.productIds.toArray(), ',')}" placeholder="Các mã số, cách nhau bằng dấu phẩy"></label>
+                <label>Mã danh mục áp dụng<input name="categoryIds" th:value="${#strings.arrayJoin(voucherForm.categoryIds.toArray(), ',')}" placeholder="Các mã số, cách nhau bằng dấu phẩy"></label>
+                <label>Tài khoản được phép dùng<input name="userIds" th:value="${#strings.arrayJoin(voucherForm.userIds.toArray(), ',')}" placeholder="Các mã số, cách nhau bằng dấu phẩy"></label>
+                <div class="voucher-errors" th:if="${#fields.hasAnyErrors()}">Vui lòng kiểm tra định dạng và giới hạn của các trường.</div>
+            </div>
+            <label><input type="checkbox" th:field="*{active}"> Đang hoạt động</label>
+            <p class="voucher-note">Để trống điều kiện để áp dụng cho tất cả. Sản phẩm khớp mã sản phẩm hoặc danh mục đều được giảm; mỗi đơn chỉ dùng một mã. Mức giảm tính trên giá sau khuyến mãi. Không sửa lượt đã giữ hoặc đã sử dụng.</p>
+            <div class="voucher-actions"><button type="submit">Lưu mã giảm giá</button><a th:href="@{/admin/vouchers}">Tạo mã mới</a></div>
+        </form>
+    </section>
+    <section class="voucher-panel voucher-table">
+        <h2>Danh sách mã giảm giá</h2>
+        <table>
+            <thead><tr><th>Mã</th><th>Giảm</th><th>Tổng lượt</th><th>Còn lại</th><th>Đang giữ</th><th>Đã dùng</th><th>Mỗi tài khoản</th><th>Hiệu lực</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+            <tbody>
+            <tr th:each="v : ${voucherPage.content}">
+                <td th:text="${v.code}"></td><td th:text="|${v.discountPercent}%|"></td>
+                <td th:text="${v.quantity}"></td><td th:text="${v.availableQuantity}"></td><td th:text="${v.reservedCount}"></td><td th:text="${v.redeemedCount}"></td>
+                <td th:text="${v.perUserLimit}"></td><td><span th:text="${#temporals.format(v.startsAt, 'dd/MM/yyyy HH:mm')}"></span> – <span th:text="${#temporals.format(v.endsAt, 'dd/MM/yyyy HH:mm')}"></span></td>
+                <td th:text="${v.active ? 'Đang bật' : 'Đã ngừng'}"></td>
+                <td><a th:href="@{/admin/vouchers(editId=${v.id})}">Sửa</a> · <a th:href="@{/admin/vouchers(historyId=${v.id})}">Lịch sử</a>
+                    <form th:if="${v.active}" th:action="@{/admin/vouchers/{id}/deactivate(id=${v.id})}" method="post"><button type="submit">Ngừng sử dụng</button></form></td>
+            </tr>
+            <tr th:if="${voucherPage.empty}"><td colspan="10">Chưa có mã giảm giá.</td></tr>
+            </tbody>
+        </table>
+        <div class="voucher-actions"><a th:if="${voucherPage.hasPrevious()}" th:href="@{/admin/vouchers(page=${voucherPage.number - 1})}">Trang trước</a><a th:if="${voucherPage.hasNext()}" th:href="@{/admin/vouchers(page=${voucherPage.number + 1})}">Trang sau</a></div>
+    </section>
+    <section class="voucher-panel voucher-table" th:if="${history != null}">
+        <h2>Lịch sử sử dụng</h2>
+        <table><thead><tr><th>Đơn hàng</th><th>Tài khoản</th><th>Trạng thái</th><th>Giảm (đồng)</th><th>Thời điểm tạo</th></tr></thead>
+            <tbody><tr th:each="r : ${history.content}"><td th:text="${r.orderId}"></td><td th:text="${r.userId}"></td><td th:text="${r.state}"></td><td th:text="${r.discount}"></td><td th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}"></td></tr></tbody></table>
+        <p th:if="${history.empty}">Chưa có lượt sử dụng.</p>
+        <div class="voucher-actions"><a th:if="${history.hasPrevious()}" th:href="@{/admin/vouchers(historyId=${historyId},historyPage=${history.number - 1})}">Trang trước</a><a th:if="${history.hasNext()}" th:href="@{/admin/vouchers(historyId=${historyId},historyPage=${history.number + 1})}">Trang sau</a></div>
+    </section>
+</main>
+</body>
+</html>

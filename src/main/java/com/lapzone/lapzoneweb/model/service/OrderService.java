@@ -38,11 +38,19 @@ public class OrderService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private VoucherService voucherService;
+
     // ====================================================================
     // CỔNG 1: DÀNH CHO LUỒNG THANH TOÁN TỪ GIỎ HÀNG (Sử dụng List ID)
     // ====================================================================
     @Transactional
     public Order placeOrder(User user, String customerName, String customerPhone, String address, List<Long> selectedItemIds, String paymentMethod) {
+        return placeOrder(user, customerName, customerPhone, address, selectedItemIds, paymentMethod, null, null);
+    }
+
+    @Transactional
+    public Order placeOrder(User user, String customerName, String customerPhone, String address, List<Long> selectedItemIds, String paymentMethod, String voucherCode, String checkoutKey) {
         if (user == null || user.getId() == null) {
             throw new IllegalArgumentException("Vui lòng đăng nhập để thanh toán giỏ hàng.");
         }
@@ -54,7 +62,7 @@ public class OrderService {
             throw new IllegalArgumentException("Không tìm thấy sản phẩm hợp lệ trong giỏ hàng của bạn.");
         }
         // Gọi hàm lõi và báo là "Đến từ giỏ hàng" (để còn xóa khỏi giỏ)
-        return createOrderCore(user, customerName, customerPhone, address, selectedItems, paymentMethod, true);
+        return createOrderCore(user, customerName, customerPhone, address, selectedItems, paymentMethod, true, voucherCode, checkoutKey);
     }
 
     // ====================================================================
@@ -62,6 +70,11 @@ public class OrderService {
     // ====================================================================
     @Transactional
     public Order placeOrderBuyNow(User user, String customerName, String customerPhone, String address, CartItem buyNowItem, String paymentMethod) {
+        return placeOrderBuyNow(user, customerName, customerPhone, address, buyNowItem, paymentMethod, null, null);
+    }
+
+    @Transactional
+    public Order placeOrderBuyNow(User user, String customerName, String customerPhone, String address, CartItem buyNowItem, String paymentMethod, String voucherCode, String checkoutKey) {
         if (buyNowItem == null || buyNowItem.getProduct() == null || buyNowItem.getProduct().getId() == null) {
             throw new IllegalArgumentException("Không tìm thấy sản phẩm mua ngay.");
         }
@@ -82,14 +95,18 @@ public class OrderService {
         trustedItem.setProduct(product);
         trustedItem.setQuantity(quantity);
         // Gọi hàm lõi và báo là "Không đến từ giỏ hàng"
-        return createOrderCore(user, customerName, customerPhone, address, List.of(trustedItem), paymentMethod, false);
+        return createOrderCore(user, customerName, customerPhone, address, List.of(trustedItem), paymentMethod, false, voucherCode, checkoutKey);
     }
 
 
     // ====================================================================
     // HÀM LÕI: XỬ LÝ CHUNG CHO CẢ 2 LUỒNG
     // ====================================================================
-    private Order createOrderCore(User user, String customerName, String customerPhone, String address, List<CartItem> items, String paymentMethod, boolean isFromCart) {
+    private Order createOrderCore(User user, String customerName, String customerPhone, String address, List<CartItem> items, String paymentMethod, boolean isFromCart, String voucherCode, String checkoutKey) {
+        VoucherService.Prepared voucher = voucherCode == null || voucherCode.isBlank() ? null
+                : voucherService.prepare(voucherCode, user, items, checkoutKey);
+        if (voucher != null && !java.util.Set.of("COD", "VNPAY", "MOMO").contains(paymentMethod))
+            throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ.");
         for (CartItem item : items) {
             Product product = item.getProduct();
             Integer quantity = item.getQuantity();
@@ -123,9 +140,16 @@ public class OrderService {
             totalAmount += PromotionService.getDiscountedPrice(item.getProduct()) * item.getQuantity();
         }
         newOrder.setTotalAmount(totalAmount);
+        if (voucher != null) {
+            newOrder.setVoucherCode(voucher.voucher().getCode());
+            newOrder.setSubtotalBeforeVoucher(voucher.quote().subtotal());
+            newOrder.setVoucherDiscount(voucher.quote().discount());
+            newOrder.setTotalAmount(voucher.quote().total().doubleValue());
+        }
 
         // Lưu Hóa đơn
         Order savedOrder = orderRepository.save(newOrder);
+        if (voucher != null) voucherService.reserve(voucher, user, savedOrder, checkoutKey);
 
         // Lưu Chi tiết hóa đơn
         for (CartItem item : items) {
@@ -133,7 +157,8 @@ public class OrderService {
             detail.setOrder(savedOrder);
             detail.setProduct(item.getProduct());
             detail.setQuantity(item.getQuantity());
-            detail.setPrice(PromotionService.getDiscountedPrice(item.getProduct()));
+            detail.setPrice(voucher == null ? PromotionService.getDiscountedPrice(item.getProduct())
+                    : voucher.quote().prices().get(item.getProduct().getId()).doubleValue());
             orderDetailRepository.save(detail);
 
             // Xóa món hàng khỏi DB giỏ hàng CHỈ KHI nó xuất phát từ giỏ hàng
@@ -179,8 +204,19 @@ public class OrderService {
         }
 
         private void updateStatusAndRestock(Order order, String newStatus) {
-            boolean shouldRestock = !CANCELLED_STATUS.equals(order.getStatus())
-                    && CANCELLED_STATUS.equals(newStatus);
+            boolean voucherOrder = order.getVoucherCode() != null;
+            if (voucherOrder) {
+                if (!java.util.Set.of("CHỜ THANH TOÁN", "CHỜ XÁC NHẬN", "ĐANG ĐÓNG GÓI", "ĐANG GIAO HÀNG", "ĐÃ THANH TOÁN", "HOÀN THÀNH", CANCELLED_STATUS, "THANH TOÁN THẤT BẠI").contains(newStatus))
+                    throw new IllegalArgumentException("Trạng thái đơn hàng không hợp lệ.");
+                if (java.util.Set.of(CANCELLED_STATUS, "THANH TOÁN THẤT BẠI", "HOÀN THÀNH").contains(order.getStatus()) && !order.getStatus().equals(newStatus))
+                    throw new IllegalArgumentException("Không thể mở lại đơn hàng đã kết thúc.");
+                if ("THANH TOÁN THẤT BẠI".equals(newStatus) && !"CHỜ THANH TOÁN".equals(order.getStatus()) && !newStatus.equals(order.getStatus()))
+                    throw new IllegalArgumentException("Chỉ đơn chờ thanh toán được xác nhận thanh toán thất bại.");
+                voucherService.onOrderStatus(order, newStatus);
+            }
+            boolean wasClosed = CANCELLED_STATUS.equals(order.getStatus()) || "THANH TOÁN THẤT BẠI".equals(order.getStatus());
+            boolean shouldRestock = !wasClosed && (CANCELLED_STATUS.equals(newStatus)
+                    || (voucherOrder && "THANH TOÁN THẤT BẠI".equals(newStatus)));
             order.setStatus(newStatus);
             orderRepository.save(order);
 
@@ -223,6 +259,8 @@ public class OrderService {
                 order.setCustomerName(name);
                 order.setCustomerPhone(phone);
                 order.setAddress(address);
+                if (order.getVoucherCode() != null && !java.util.Objects.equals(order.getTotalAmount(), totalAmount))
+                    throw new IllegalArgumentException("Không được sửa tổng tiền của đơn có mã giảm giá.");
                 order.setTotalAmount(totalAmount);
                 updateStatusAndRestock(order, status);
             }
@@ -232,8 +270,10 @@ public class OrderService {
             // ====================================================================
             @Transactional
             public void deleteInvoiceAndDetails(Long orderId) {
-                Order order = orderRepository.findById(orderId)
+                Order order = orderRepository.findByIdForUpdate(orderId)
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn số #" + orderId));
+                if (order.getVoucherCode() != null)
+                    throw new IllegalArgumentException("Không được xóa đơn có lịch sử mã giảm giá. Hãy hủy đơn nếu cần.");
                 
                 // Nếu hóa đơn có danh sách chi tiết sản phẩm, xóa sạch chúng trong DB trước để tránh lỗi ràng buộc khóa ngoại (Foreign Key)
                 if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty()) {

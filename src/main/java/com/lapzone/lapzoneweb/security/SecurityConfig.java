@@ -42,7 +42,12 @@ public class SecurityConfig {
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             )
-            .csrf(csrf -> csrf.disable());
+            .csrf(csrf -> csrf.requireCsrfProtectionMatcher(request -> {
+                String path = request.getRequestURI().substring(request.getContextPath().length());
+                return !java.util.Set.of("GET", "HEAD", "OPTIONS", "TRACE").contains(request.getMethod())
+                        && (path.startsWith("/admin/") || path.equals("/checkout/process")
+                            || path.equals("/checkout/voucher-preview"));
+            }));
 
         return http.build();
     }

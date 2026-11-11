@@ -118,6 +118,26 @@
 .store-card__action:hover { background: var(--accent-button-secondary); color: #fff; }
 .store-card__action--disabled { background: var(--bg-card-hover); color: var(--text-secondary); cursor: not-allowed; }
 
+.store-branches { display: grid; gap: 14px; margin: 16px 0 20px; }
+.store-branch { padding: 16px; border: 1px solid var(--border-glass); border-radius: var(--radius-md); background: var(--bg-card-hover); }
+.store-branch h3 { color: var(--text-primary); font-size: 1rem; }
+.store-branch__details { display: grid; gap: 12px; margin: 14px 0 16px; }
+.store-branch__details div { display: grid; grid-template-columns: minmax(100px, .35fr) 1fr; gap: 8px 12px; }
+.store-branch__details dt { color: var(--text-secondary); font-size: .85rem; font-weight: 700; }
+.store-branch__details dt i { width: 16px; color: var(--accent-neon); }
+.store-branch__details dd { min-width: 0; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+.store-branch__details dd a { color: var(--accent-neon); }
+.store-map-unavailable { color: var(--text-secondary); font-size: .85rem; }
+
+.store-vouchers { display: grid; gap: 12px; margin: 12px 0 18px; }
+.store-voucher { min-width: 0; padding: 16px; border: 1px solid var(--border-glass); border-radius: var(--radius-md); background: var(--bg-card-hover); color: var(--text-primary); }
+.store-voucher__heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 8px; }
+.store-voucher__heading strong { color: var(--accent-indigo); font-size: 1.12rem; }
+.store-voucher__heading code { padding: 5px 8px; border-radius: 6px; color: var(--text-primary); background: var(--bg-card); font-weight: 800; overflow-wrap: anywhere; }
+.store-voucher p { margin: 4px 0; color: var(--text-secondary); font-size: .88rem; overflow-wrap: anywhere; }
+.store-voucher p strong, .store-voucher p span { color: var(--text-primary); }
+.store-voucher-empty, .store-voucher-note { margin: 10px 0 16px; color: var(--text-secondary); font-size: .9rem; }
+
 @media (max-width: 680px) {
     .store-grid { grid-template-columns: 1fr; gap: 14px; }
     .store-card__description { min-height: 0; }

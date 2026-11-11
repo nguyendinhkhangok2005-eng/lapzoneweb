@@ -4,6 +4,7 @@ import com.lapzone.lapzoneweb.model.entity.CartItem;
 import com.lapzone.lapzoneweb.model.entity.Order;
 import com.lapzone.lapzoneweb.model.entity.OrderDetail;
 import com.lapzone.lapzoneweb.model.entity.Product;
+import com.lapzone.lapzoneweb.model.entity.User;
 import com.lapzone.lapzoneweb.model.repository.CartItemRepository;
 import com.lapzone.lapzoneweb.model.repository.OrderDetailRepository;
 import com.lapzone.lapzoneweb.model.repository.OrderRepository;
@@ -46,32 +47,34 @@ class OrderServiceTest {
     @InjectMocks
     private OrderService orderService;
 
+    private User owner() { User user = new User(); user.setId(7L); return user; }
+
     @Test
     void placeOrderDecrementsStockByRequestedQuantity() {
         Product product = product(1L, "Laptop", 5);
         CartItem item = cartItem(10L, product, 2);
-        when(cartItemRepository.findAllById(List.of(10L))).thenReturn(List.of(item));
+        when(cartItemRepository.findByIdInAndUserIdWithProduct(List.of(10L), 7L)).thenReturn(List.of(item));
         when(productRepository.decrementStockIfAvailable(1L, 2)).thenReturn(1);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Order order = orderService.placeOrder(null, "Khách hàng", "0123", "Địa chỉ",
+        Order order = orderService.placeOrder(owner(), "Khách hàng", "0123", "Địa chỉ",
                 List.of(10L), "COD");
 
         assertEquals("CHỜ XÁC NHẬN", order.getStatus());
         verify(productRepository).decrementStockIfAvailable(1L, 2);
         verify(orderDetailRepository).save(any(OrderDetail.class));
-        verify(cartItemRepository).delete(item);
+        verify(cartItemRepository).deleteByIdAndUserId(10L, 7L);
     }
 
     @Test
     void placeOrderRejectsInsufficientStockWithoutSavingOrder() {
         Product product = product(1L, "Laptop", 1);
         CartItem item = cartItem(10L, product, 2);
-        when(cartItemRepository.findAllById(List.of(10L))).thenReturn(List.of(item));
+        when(cartItemRepository.findByIdInAndUserIdWithProduct(List.of(10L), 7L)).thenReturn(List.of(item));
         when(productRepository.decrementStockIfAvailable(1L, 2)).thenReturn(0);
 
         InsufficientStockException exception = assertThrows(InsufficientStockException.class,
-                () -> orderService.placeOrder(null, "Khách hàng", "0123", "Địa chỉ",
+                () -> orderService.placeOrder(owner(), "Khách hàng", "0123", "Địa chỉ",
                         List.of(10L), "COD"));
 
         assertTrue(exception.getMessage().contains("Laptop"));
@@ -87,12 +90,12 @@ class OrderServiceTest {
         Product unavailable = product(2L, "Laptop B", 0);
         CartItem firstItem = cartItem(10L, available, 2);
         CartItem secondItem = cartItem(11L, unavailable, 1);
-        when(cartItemRepository.findAllById(List.of(10L, 11L))).thenReturn(List.of(firstItem, secondItem));
+        when(cartItemRepository.findByIdInAndUserIdWithProduct(List.of(10L, 11L), 7L)).thenReturn(List.of(firstItem, secondItem));
         when(productRepository.decrementStockIfAvailable(1L, 2)).thenReturn(1);
         when(productRepository.decrementStockIfAvailable(2L, 1)).thenReturn(0);
 
         InsufficientStockException exception = assertThrows(InsufficientStockException.class,
-                () -> orderService.placeOrder(null, "Khách hàng", "0123", "Địa chỉ",
+                () -> orderService.placeOrder(owner(), "Khách hàng", "0123", "Địa chỉ",
                         List.of(10L, 11L), "COD"));
 
         assertTrue(exception.getMessage().contains("Laptop B"));
@@ -106,6 +109,7 @@ class OrderServiceTest {
     void buyNowForGuestDecrementsStock() {
         Product product = product(3L, "Laptop mua ngay", 4);
         CartItem buyNowItem = cartItem(null, product, 1);
+        when(productRepository.findById(3L)).thenReturn(Optional.of(product));
         when(productRepository.decrementStockIfAvailable(3L, 1)).thenReturn(1);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

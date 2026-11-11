@@ -133,6 +133,9 @@
                                         <form th:action="@{/admin/orders/update-status}" method="POST" class="d-flex gap-1">
                                             <input type="hidden" name="orderId" th:value="${order.id}">
                                             <select name="newStatus" class="form-select form-select-sm" style="width: 130px;">
+                                                <option th:if="${order.voucherCode != null}" value="CHỜ THANH TOÁN" th:selected="${order.status == 'CHỜ THANH TOÁN'}">Chờ thanh toán</option>
+                                                <option th:if="${order.voucherCode != null}" value="ĐÃ THANH TOÁN" th:selected="${order.status == 'ĐÃ THANH TOÁN'}">Đã đối soát thanh toán</option>
+                                                <option th:if="${order.voucherCode != null}" value="THANH TOÁN THẤT BẠI" th:selected="${order.status == 'THANH TOÁN THẤT BẠI'}">Thanh toán thất bại</option>
                                                 <option value="CHỜ XÁC NHẬN" th:selected="${order.status == 'CHỜ XÁC NHẬN'}">Xác nhận</option>
                                                 <option value="ĐANG ĐÓNG GÓI" th:selected="${order.status == 'ĐANG ĐÓNG GÓI'}">Đóng gói</option>
                                                 <option value="ĐANG GIAO HÀNG" th:selected="${order.status == 'ĐANG GIAO HÀNG'}">Giao hàng</option>

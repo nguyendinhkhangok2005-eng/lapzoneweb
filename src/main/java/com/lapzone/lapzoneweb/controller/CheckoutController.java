@@ -33,6 +33,11 @@ public class CheckoutController {
     @Autowired
     private ProductService productService;
 
+    @Autowired
+    private com.lapzone.lapzoneweb.model.service.VoucherService voucherService;
+    @Autowired
+    private com.lapzone.lapzoneweb.model.service.VoucherCatalogService voucherCatalog;
+
     // ==========================================
     // 1. ĐÓN KHÁCH BẤM "MUA NGAY"
     // ==========================================
@@ -114,6 +119,13 @@ public class CheckoutController {
         model.addAttribute("cartTotal", total);
         model.addAttribute("checkoutMode", "buynow".equals(mode) ? "buynow" : "cart");
         model.addAttribute("user", session.getAttribute("currentUser")); // Truyền null cũng không sao
+        String checkoutKey = java.util.UUID.randomUUID().toString();
+        session.setAttribute("VOUCHER_CHECKOUT_KEY", checkoutKey);
+        model.addAttribute("checkoutKey", checkoutKey);
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        var details = authentication != null && authentication.getPrincipal() instanceof com.lapzone.lapzoneweb.security.CustomUserDetails customer
+                ? customer : null;
+        model.addAttribute("availableVouchers", voucherCatalog.availableFor(details == null ? null : details.getUser()));
 
         return "checkout";
     }
@@ -121,6 +133,11 @@ public class CheckoutController {
     // ==========================================
     // 3. XỬ LÝ CHỐT ĐƠN VÀ LƯU DATABASE
     // ==========================================
+    public String processCheckout(String customerName, String customerPhone, String address, String paymentMethod,
+            List<Long> selectedItemIds, String mode, HttpSession session, RedirectAttributes redirectAttributes) {
+        return processCheckout(customerName, customerPhone, address, paymentMethod, selectedItemIds, mode, null, null, session, redirectAttributes);
+    }
+
     @PostMapping("/checkout/process")
     public String processCheckout(
             @RequestParam("customerName") String customerName,
@@ -129,6 +146,8 @@ public class CheckoutController {
             @RequestParam("paymentMethod") String paymentMethod,
             @RequestParam(value = "selectedItemIds", required = false) List<Long> selectedItemIds,
             @RequestParam(value = "mode", required = false) String mode,
+            @RequestParam(value = "voucherCode", required = false) String voucherCode,
+            @RequestParam(value = "checkoutKey", required = false) String checkoutKey,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         User currentUser = (User) session.getAttribute("currentUser");
@@ -141,6 +160,12 @@ public class CheckoutController {
             return "redirect:/cart";
         }
         try {
+            boolean withVoucher = voucherCode != null && !voucherCode.isBlank();
+            if (withVoucher) {
+                currentUser = voucherUser();
+                if (checkoutKey == null || !checkoutKey.equals(session.getAttribute("VOUCHER_CHECKOUT_KEY")))
+                    throw new IllegalArgumentException("Phiên thanh toán không hợp lệ. Vui lòng tải lại trang thanh toán.");
+            }
             Order newOrder;
             
             if (buyNowMode) {
@@ -148,11 +173,16 @@ public class CheckoutController {
                 if (buyNowItem == null) {
                     throw new IllegalArgumentException("Không tìm thấy dữ liệu mua ngay.");
                 }
-                newOrder = orderService.placeOrderBuyNow(currentUser, customerName, customerPhone, address, buyNowItem, paymentMethod);
+                newOrder = withVoucher
+                        ? orderService.placeOrderBuyNow(currentUser, customerName, customerPhone, address, buyNowItem, paymentMethod, voucherCode, checkoutKey)
+                        : orderService.placeOrderBuyNow(currentUser, customerName, customerPhone, address, buyNowItem, paymentMethod);
                 session.removeAttribute("BUY_NOW_ITEM");
             } else {
-                newOrder = orderService.placeOrder(currentUser, customerName, customerPhone, address, selectedItemIds, paymentMethod);
+                newOrder = withVoucher
+                        ? orderService.placeOrder(currentUser, customerName, customerPhone, address, selectedItemIds, paymentMethod, voucherCode, checkoutKey)
+                        : orderService.placeOrder(currentUser, customerName, customerPhone, address, selectedItemIds, paymentMethod);
             }
+            if (withVoucher) session.removeAttribute("VOUCHER_CHECKOUT_KEY");
 
             session.setAttribute("CHECKOUT_SUCCESS_ORDER_ID", newOrder.getId());
             // Gửi dữ liệu sang trang báo thành công để hiện QR
@@ -168,10 +198,49 @@ public class CheckoutController {
                 return "redirect:/checkout";
             }
             return "redirect:/checkout?mode=buynow";
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            redirectAttributes.addFlashAttribute("error", "Yêu cầu đã được xử lý hoặc mã giảm giá không còn khả dụng. Vui lòng kiểm tra đơn hàng trước khi thử lại.");
+            return "redirect:/store";
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Có lỗi xảy ra: " + e.getMessage());
+            String message = voucherCode != null && !voucherCode.isBlank() && !(e instanceof IllegalArgumentException)
+                    ? "Không thể hoàn tất đơn hàng. Vui lòng kiểm tra đơn hàng trước khi thử lại."
+                    : "Có lỗi xảy ra: " + e.getMessage();
+            redirectAttributes.addFlashAttribute("error", message);
             return buyNowMode ? "redirect:/checkout?mode=buynow" : "redirect:/cart";
         }
+    }
+
+    @PostMapping("/checkout/voucher-preview")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public org.springframework.http.ResponseEntity<?> previewVoucher(
+            @RequestParam String voucherCode, @RequestParam(required = false) String mode,
+            @RequestParam(required = false) List<Long> selectedItemIds, HttpSession session) {
+        try {
+            User user = voucherUser();
+            List<CartItem> items;
+            if ("buynow".equals(mode)) {
+                CartItem item = (CartItem) session.getAttribute("BUY_NOW_ITEM");
+                if (item == null) throw new IllegalArgumentException("Không tìm thấy sản phẩm mua ngay.");
+                items = List.of(item);
+            } else {
+                if (selectedItemIds == null || selectedItemIds.isEmpty())
+                    throw new IllegalArgumentException("Vui lòng chọn sản phẩm trong giỏ hàng.");
+                items = cartService.getSelectedCartItems(selectedItemIds, user.getId());
+            }
+            var quote = voucherService.preview(voucherCode, user, items);
+            return org.springframework.http.ResponseEntity.ok(java.util.Map.of(
+                    "subtotal", quote.subtotal(), "discount", quote.discount(), "total", quote.total()));
+        } catch (IllegalArgumentException e) {
+            return org.springframework.http.ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
+
+    private User voucherUser() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof com.lapzone.lapzoneweb.security.CustomUserDetails details)
+            return details.getUser();
+        throw new IllegalArgumentException("Vui lòng đăng nhập để sử dụng mã giảm giá.");
     }
 
     // ==========================================
