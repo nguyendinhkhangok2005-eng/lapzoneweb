@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,6 +42,16 @@ class SecurityConfigTest {
         mockMvc.perform(get("/cart"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/dangnhap"));
+    }
+
+    @Test
+    void unauthenticatedRemovalCannotReachCartService() throws Exception {
+        mockMvc.perform(post("/cart/remove").header("X-Requested-With", "XMLHttpRequest")
+                        .param("cartItemId", "1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/dangnhap"));
+        org.mockito.Mockito.verify(cartService, org.mockito.Mockito.never()).removeFromCart(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test

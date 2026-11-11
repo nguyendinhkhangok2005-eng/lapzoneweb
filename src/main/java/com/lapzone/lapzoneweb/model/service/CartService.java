@@ -2,6 +2,7 @@ package com.lapzone.lapzoneweb.model.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.lapzone.lapzoneweb.model.entity.CartItem;
 import com.lapzone.lapzoneweb.model.entity.Product;
 import com.lapzone.lapzoneweb.model.repository.CartItemRepository;
@@ -79,8 +80,24 @@ public class CartService {
         return Math.min(requestedQuantity, Math.max(product.getStock(), 0));
     }
 
-    public void removeFromCart(Long userId, Long cartItemId) {
-        cartItemRepository.deleteByIdAndUserId(cartItemId, userId);
+    public record RemovalResult(int cartItemCount, double cartTotal) {}
+
+    @Transactional
+    public RemovalResult removeFromCart(Long userId, Long cartItemId) {
+        if (userId == null || userId <= 0 || cartItemId == null || cartItemId <= 0) {
+            return null;
+        }
+        if (cartItemRepository.deleteByIdAndUserId(cartItemId, userId) != 1) {
+            return null;
+        }
+        List<CartItem> remaining = cartItemRepository.findByUserIdWithProduct(userId);
+        int count = 0;
+        double total = 0;
+        for (CartItem item : remaining) {
+            count += item.getQuantity();
+            total += PromotionService.getDiscountedPrice(item.getProduct()) * item.getQuantity();
+        }
+        return new RemovalResult(count, total);
     }
 
     // [FIX N+1] Dùng JOIN FETCH: lấy Cart + Product trong 1 query, không lazy load

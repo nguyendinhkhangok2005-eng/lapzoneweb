@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class HomeController {
 
+    @GetMapping("/store")
+    public String showStoreDashboard() {
+        return "store";
+    }
+
     @Autowired
     private CategoryRepository categoryRepository;
     

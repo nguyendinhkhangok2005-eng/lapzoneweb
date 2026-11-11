@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" th:href="@{/css/store.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Cửa hàng - LAPZONE</title>
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+</head>
+<body>
+<div th:replace="~{fragments/header :: header_lapzone}"></div>
+<main class="store-page">
+    <div class="container">
+        <header class="store-heading">
+            <div>
+                <p class="store-eyebrow">LAPZONE · KHU VỰC KHÁCH HÀNG</p>
+                <h1>Cửa hàng</h1>
+                <p class="store-intro">Theo dõi đơn hàng và khám phá các tiện ích dành cho bạn.</p>
+            </div>
+        </header>
+
+        <div class="store-grid">
+            <section class="store-card store-card--orders" aria-labelledby="orders-heading">
+                <div class="store-card__top">
+                    <span class="store-icon store-icon--blue"><i class="fa-solid fa-box" aria-hidden="true"></i></span>
+                    <span class="store-status store-status--ready">Đang hoạt động</span>
+                </div>
+                <h2 id="orders-heading">Đơn hàng</h2>
+                <p class="store-card__description">Tra cứu đơn hàng hiện có bằng mã đơn và số điện thoại đặt hàng.</p>
+                <p class="store-order-states__label">Bộ lọc đơn hàng sắp có</p>
+                <div class="store-order-states" aria-label="Các mục đơn hàng sắp có">
+                    <span>Tất cả</span><span>Chờ xác nhận</span><span>Chờ vận chuyển</span>
+                    <span>Cần đánh giá</span><span>Trả hàng</span>
+                </div>
+                <a class="store-card__action" th:href="@{/tracuudonhang}">Tra cứu đơn hàng <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </section>
+
+            <section class="store-card" aria-labelledby="voucher-heading">
+                <div class="store-card__top">
+                    <span class="store-icon store-icon--violet"><i class="fa-solid fa-ticket" aria-hidden="true"></i></span>
+                    <span class="store-status">Sắp ra mắt</span>
+                </div>
+                <h2 id="voucher-heading">Voucher giảm giá</h2>
+                <p class="store-card__description">Khu vực quản lý và sử dụng voucher sẽ được cập nhật sau.</p>
+                <button class="store-card__action store-card__action--disabled" type="button" disabled>Chưa khả dụng <i class="fa-solid fa-lock" aria-hidden="true"></i></button>
+            </section>
+
+            <section class="store-card" aria-labelledby="messages-heading">
+                <div class="store-card__top">
+                    <span class="store-icon store-icon--green"><i class="fa-regular fa-comments" aria-hidden="true"></i></span>
+                    <span class="store-status">Sắp ra mắt</span>
+                </div>
+                <h2 id="messages-heading">Tin nhắn</h2>
+                <p class="store-card__description">Hộp thư hỗ trợ và trao đổi trực tiếp với LAPZONE sẽ sớm có mặt.</p>
+                <button class="store-card__action store-card__action--disabled" type="button" disabled>Chưa khả dụng <i class="fa-solid fa-lock" aria-hidden="true"></i></button>
+            </section>
+
+            <section class="store-card" aria-labelledby="address-heading">
+                <div class="store-card__top">
+                    <span class="store-icon store-icon--orange"><i class="fa-solid fa-location-dot" aria-hidden="true"></i></span>
+                    <span class="store-status">Sắp ra mắt</span>
+                </div>
+                <h2 id="address-heading">Địa chỉ cửa hàng</h2>
+                <p class="store-card__description">Danh sách cửa hàng và thông tin địa chỉ chính thức sẽ được bổ sung sau.</p>
+                <button class="store-card__action store-card__action--disabled" type="button" disabled>Chưa khả dụng <i class="fa-solid fa-lock" aria-hidden="true"></i></button>
+            </section>
+        </div>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+</body>
+</html>

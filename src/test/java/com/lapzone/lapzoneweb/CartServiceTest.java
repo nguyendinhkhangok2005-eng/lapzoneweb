@@ -7,6 +7,8 @@ import org.mockito.InjectMocks;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -50,8 +52,46 @@ public class CartServiceTest {
     // TH2: Xóa sản phẩm khỏi giỏ → gọi deleteById
     @Test
     public void testRemoveFromCart() {
-        cartService.removeFromCart(7L, 1L);
+        Product product = new Product();
+        product.setId(1L);
+        product.setPrice(25_000_000.0);
+        CartItem remaining = new CartItem();
+        remaining.setId(2L);
+        remaining.setQuantity(2);
+        remaining.setProduct(product);
+        when(cartItemRepository.deleteByIdAndUserId(1L, 7L)).thenReturn(1);
+        when(cartItemRepository.findByUserIdWithProduct(7L)).thenReturn(List.of(remaining));
+
+        CartService.RemovalResult result = cartService.removeFromCart(7L, 1L);
+
+        assertEquals(2, result.cartItemCount());
+        assertEquals(45_000_000.0, result.cartTotal());
+        assertEquals(2, remaining.getQuantity());
         verify(cartItemRepository, times(1)).deleteByIdAndUserId(1L, 7L);
+    }
+
+    @Test
+    void removingLastItemReturnsEmptyCart() {
+        when(cartItemRepository.deleteByIdAndUserId(1L, 7L)).thenReturn(1);
+        when(cartItemRepository.findByUserIdWithProduct(7L)).thenReturn(List.of());
+        assertEquals(new CartService.RemovalResult(0, 0), cartService.removeFromCart(7L, 1L));
+    }
+
+    @Test
+    void invalidRemovalIdsDoNotAccessRepository() {
+        assertNull(cartService.removeFromCart(7L, null));
+        assertNull(cartService.removeFromCart(7L, 0L));
+        assertNull(cartService.removeFromCart(7L, -1L));
+        assertNull(cartService.removeFromCart(null, 1L));
+        verify(cartItemRepository, never()).deleteByIdAndUserId(any(), any());
+    }
+
+    @Test
+    void failedDeletionIsPropagatedToTransactionBoundary() {
+        when(cartItemRepository.deleteByIdAndUserId(1L, 7L))
+                .thenThrow(new IllegalStateException("database unavailable"));
+        assertThrows(IllegalStateException.class, () -> cartService.removeFromCart(7L, 1L));
+        verify(cartItemRepository, never()).findByUserIdWithProduct(any());
     }
 
     // TH3: Lấy danh sách giỏ hàng cùng sản phẩm bằng một fetch join
@@ -135,9 +175,10 @@ public class CartServiceTest {
 
     @Test
     public void testAnotherUsersItemCannotBeRemoved() {
-        cartService.removeFromCart(7L, 1L);
+        assertNull(cartService.removeFromCart(7L, 1L));
 
         verify(cartItemRepository).deleteByIdAndUserId(1L, 7L);
+        verify(cartItemRepository, never()).findByUserIdWithProduct(any());
     }
 
     @Test
