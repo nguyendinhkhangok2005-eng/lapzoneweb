@@ -2,6 +2,7 @@ package com.lapzone.lapzoneweb.controller;
 
 import com.lapzone.lapzoneweb.config.StoreDirectoryProperties;
 import com.lapzone.lapzoneweb.model.service.VoucherCatalogService;
+import com.lapzone.lapzoneweb.model.service.SupportService;
 import com.lapzone.lapzoneweb.security.CustomUserDetails;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -13,10 +14,12 @@ public class StoreDirectoryController {
 
     private final StoreDirectoryProperties storeDirectory;
     private final VoucherCatalogService voucherCatalog;
+    private final SupportService support;
 
-    public StoreDirectoryController(StoreDirectoryProperties storeDirectory, VoucherCatalogService voucherCatalog) {
+    public StoreDirectoryController(StoreDirectoryProperties storeDirectory, VoucherCatalogService voucherCatalog, SupportService support) {
         this.storeDirectory = storeDirectory;
         this.voucherCatalog = voucherCatalog;
+        this.support = support;
     }
 
     @GetMapping("/store")
@@ -24,6 +27,7 @@ public class StoreDirectoryController {
         CustomUserDetails details = authentication != null && authentication.getPrincipal() instanceof CustomUserDetails user
                 ? user : null;
         model.addAttribute("availableVouchers", voucherCatalog.availableFor(details == null ? null : details.getUser()));
+        model.addAttribute("supportUnread", details == null ? 0L : support.unreadCount(false));
         model.addAttribute("storeBranches", storeDirectory.getBranches().stream()
                 .filter(branch -> branch != null)
                 .filter(StoreDirectoryProperties.Branch::hasInformation)

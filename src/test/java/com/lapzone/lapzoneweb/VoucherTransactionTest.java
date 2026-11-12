@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @DataJpaTest(showSql = false, properties = {"spring.jpa.hibernate.ddl-auto=create-drop", "spring.jpa.show-sql=false"})
-@Import({VoucherService.class, VoucherCatalogService.class, OrderService.class})
+@Import({VoucherService.class, VoucherCatalogService.class, OrderService.class, OrderAuthorization.class})
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class VoucherTransactionTest {
     @Autowired VoucherService service;
@@ -43,6 +43,11 @@ class VoucherTransactionTest {
 
     @BeforeEach
     void setup() {
+        User administrator = new User(); administrator.setEmail(UUID.randomUUID() + "@admin.test"); administrator.setRole("ADMIN");
+        administrator = users.saveAndFlush(administrator);
+        var principal = new com.lapzone.lapzoneweb.security.CustomUserDetails(administrator);
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(principal, "", principal.getAuthorities()));
         user = new User();
         user.setEmail(UUID.randomUUID() + "@example.test"); user.setRole("USER");
         user = users.saveAndFlush(user);
@@ -59,6 +64,9 @@ class VoucherTransactionTest {
     }
 
     CartItem item() { CartItem item = new CartItem(); item.setProduct(product); item.setQuantity(1); return item; }
+
+    @org.junit.jupiter.api.AfterEach
+    void clearAuthentication() { org.springframework.security.core.context.SecurityContextHolder.clearContext(); }
 
     @Test
     void catalogShowsOnlyUsableVouchersAndRealConditions() {

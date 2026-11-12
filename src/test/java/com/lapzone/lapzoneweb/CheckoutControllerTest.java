@@ -9,11 +9,16 @@ import com.lapzone.lapzoneweb.model.service.CartService;
 import com.lapzone.lapzoneweb.model.service.OrderService;
 import com.lapzone.lapzoneweb.model.service.ProductService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpSession;
+import com.lapzone.lapzoneweb.security.CustomUserDetails;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
@@ -29,6 +34,15 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CheckoutControllerTest {
+
+    @BeforeEach @AfterEach
+    void clearAuthentication() { SecurityContextHolder.clearContext(); }
+
+    void login(User user) {
+        user.setRole("USER");
+        var principal = new CustomUserDetails(user);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(principal, "", principal.getAuthorities()));
+    }
 
     @Mock
     private CartService cartService;
@@ -46,6 +60,7 @@ class CheckoutControllerTest {
     void cartCheckoutWithNoOwnedItemsReturnsToCartWithoutCreatingOrder() {
         User user = new User();
         user.setId(7L);
+        login(user);
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("currentUser", user);
         when(cartService.getSelectedCartItems(List.of(81L), 7L)).thenReturn(List.of());
@@ -80,6 +95,7 @@ class CheckoutControllerTest {
     void cartCheckoutWithEmptyIdsReturnsToCartWithoutCreatingOrder() {
         User user = new User();
         user.setId(7L);
+        login(user);
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("currentUser", user);
         RedirectAttributesModelMap redirects = new RedirectAttributesModelMap();
@@ -99,6 +115,7 @@ class CheckoutControllerTest {
     void cartCheckoutRejectsWhenServiceFindsNoItemsOwnedByCurrentUser() {
         User user = new User();
         user.setId(7L);
+        login(user);
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("currentUser", user);
         when(orderService.placeOrder(eq(user), eq("User"), eq("0900"), eq("Address"),
@@ -148,5 +165,38 @@ class CheckoutControllerTest {
         ExtendedModelMap model = new ExtendedModelMap();
         assertEquals("checkout_success", checkoutController.showSuccessPage(session, model));
         assertEquals(42L, model.get("successOrderId"));
+    }
+
+    @Test
+    void authenticatedBuyNowWithoutLegacySessionStillOwnsTheOrder() {
+        User authenticated = new User(); authenticated.setId(7L); login(authenticated);
+        assertCheckoutOwner(new MockHttpSession(), authenticated);
+    }
+
+    @Test
+    void staleLegacySessionCannotAssignTheOrderToAnotherAccount() {
+        User authenticated = new User(); authenticated.setId(7L); login(authenticated);
+        User stale = new User(); stale.setId(99L);
+        MockHttpSession session = new MockHttpSession(); session.setAttribute("currentUser", stale);
+        assertCheckoutOwner(session, authenticated);
+    }
+
+    @Test
+    void sessionOnlyUserDoesNotClaimAGuestPurchase() {
+        User stale = new User(); stale.setId(99L);
+        MockHttpSession session = new MockHttpSession(); session.setAttribute("currentUser", stale);
+        assertCheckoutOwner(session, null);
+    }
+
+    void assertCheckoutOwner(MockHttpSession session, User expectedOwner) {
+        Product product = new Product(); product.setId(3L);
+        CartItem item = new CartItem(); item.setProduct(product); item.setQuantity(1);
+        session.setAttribute("BUY_NOW_ITEM", item);
+        Order saved = new Order(); saved.setId(42L);
+        when(orderService.placeOrderBuyNow(org.mockito.ArgumentMatchers.nullable(User.class), eq("Khách"), eq("0900"),
+                eq("Địa chỉ"), eq(item), eq("COD"))).thenReturn(saved);
+        assertEquals("redirect:/checkout/success", checkoutController.processCheckout("Khách", "0900", "Địa chỉ", "COD",
+                List.of(), "buynow", session, new RedirectAttributesModelMap()));
+        verify(orderService).placeOrderBuyNow(eq(expectedOwner), eq("Khách"), eq("0900"), eq("Địa chỉ"), eq(item), eq("COD"));
     }
 }

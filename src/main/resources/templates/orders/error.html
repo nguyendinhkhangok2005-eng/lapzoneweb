@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Không thể mở đơn hàng - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/orders.css}">
+</head>
+<body><main class="container orders-page"><section class="orders-empty">
+    <h1>Không thể mở đơn hàng</h1>
+    <p th:text="${message}"></p>
+    <a class="orders-primary" th:href="@{/store/orders}">Về đơn hàng của tôi</a>
+</section></main></body>
+</html>

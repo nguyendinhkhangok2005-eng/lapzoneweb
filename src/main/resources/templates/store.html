@@ -28,13 +28,14 @@
                     <span class="store-status store-status--ready">Đang hoạt động</span>
                 </div>
                 <h2 id="orders-heading">Đơn hàng</h2>
-                <p class="store-card__description">Tra cứu đơn hàng hiện có bằng mã đơn và số điện thoại đặt hàng.</p>
-                <p class="store-order-states__label">Bộ lọc đơn hàng sắp có</p>
-                <div class="store-order-states" aria-label="Các mục đơn hàng sắp có">
+                <p class="store-card__description">Xem đơn hàng của bạn, theo dõi trạng thái và kiểm tra từng sản phẩm đã mua.</p>
+                <p class="store-order-states__label">Nhóm đơn hàng</p>
+                <div class="store-order-states" aria-label="Các nhóm đơn hàng">
                     <span>Tất cả</span><span>Chờ xác nhận</span><span>Chờ vận chuyển</span>
-                    <span>Cần đánh giá</span><span>Trả hàng</span>
+                    <span>Cần đánh giá</span><span>Trả hàng</span><span>Đã hủy</span><span>Hoàn thành</span>
                 </div>
-                <a class="store-card__action" th:href="@{/tracuudonhang}">Tra cứu đơn hàng <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                <a class="store-card__action" th:href="@{/store/orders}">Xem đơn hàng của tôi <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                <a class="store-order-lookup" th:href="@{/tracuudonhang}">Tra cứu bằng mã đơn và số điện thoại</a>
             </section>
 
             <section class="store-card" aria-labelledby="voucher-heading">
@@ -68,11 +69,11 @@
             <section class="store-card" aria-labelledby="messages-heading">
                 <div class="store-card__top">
                     <span class="store-icon store-icon--green"><i class="fa-regular fa-comments" aria-hidden="true"></i></span>
-                    <span class="store-status">Sắp ra mắt</span>
+                    <span class="store-status store-status--ready" th:text="${supportUnread > 0 ? supportUnread + ' tin chưa đọc' : 'Hỗ trợ khách hàng'}">Hỗ trợ khách hàng</span>
                 </div>
                 <h2 id="messages-heading">Tin nhắn</h2>
-                <p class="store-card__description">Hộp thư hỗ trợ và trao đổi trực tiếp với LAPZONE sẽ sớm có mặt.</p>
-                <button class="store-card__action store-card__action--disabled" type="button" disabled>Chưa khả dụng <i class="fa-solid fa-lock" aria-hidden="true"></i></button>
+                <p class="store-card__description">Gửi yêu cầu hỗ trợ và theo dõi phản hồi từ nhân viên LAPZONE. Đăng nhập để xem lịch sử trao đổi của bạn.</p>
+                <a class="store-card__action" th:href="@{/support}">Mở hộp thư hỗ trợ <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
             </section>
 
             <section class="store-card" aria-labelledby="address-heading">

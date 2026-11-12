@@ -1,0 +1,33 @@
+<article xmlns:th="http://www.thymeleaf.org" th:fragment="line(item, order)" class="orders-line" th:with="imageUrl=${@orderViewFormat.imageUrl(item.productImage)}">
+    <div class="orders-line__image">
+        <img th:if="${imageUrl != null}" th:src="@{${imageUrl}}" th:alt="${item.productName}" loading="lazy">
+        <span th:if="${imageUrl == null}"><i class="fa-regular fa-image" aria-hidden="true"></i> Chưa có ảnh sản phẩm</span>
+    </div>
+    <div class="orders-line__content">
+        <h3 th:text="${item.productName}">Tên sản phẩm</h3>
+        <div class="orders-line__meta">
+            <span th:text="|Số lượng: ${item.quantity}|">Số lượng: 1</span>
+            <span>Đơn giá: <strong th:text="${@orderViewFormat.money(item.unitPrice)}">0 ₫</strong></span>
+            <span>Thành tiền: <strong th:text="${@orderViewFormat.money(item.lineTotal)}">0 ₫</strong></span>
+        </div>
+        <div class="orders-line__actions">
+            <a class="orders-return-action" th:if="${order.status == 'HOÀN THÀNH' && #lists.isEmpty(item.returnCaseIds) && item.quantity != null && item.quantity > 0}"
+               th:href="@{/store/orders/{orderId}/items/{itemId}/return-request(orderId=${order.id},itemId=${item.id})}">Yêu cầu hoàn tiền</a>
+            <a class="orders-return-action" th:if="${item.needsReview}"
+               th:href="@{/store/orders/{orderId}/items/{itemId}/review(orderId=${order.id},itemId=${item.id})}">Đánh giá</a>
+            <form th:if="${item.repurchaseAvailable}" method="post"
+                  th:action="@{/store/orders/{orderId}/items/{itemId}/repurchase(orderId=${order.id},itemId=${item.id})}">
+                <button class="orders-return-action" type="submit">Mua lại</button>
+            </form>
+        </div>
+        <div class="orders-line__review" th:if="${item.review != null}">
+            <strong th:text="|Đã đánh giá: ${item.review.rating}/5 sao|"></strong>
+            <p th:if="${item.review.content != null}" th:text="${item.review.content}"></p>
+        </div>
+        <div class="orders-line__tags">
+            <span th:if="${item.needsReview}">Chưa đánh giá</span>
+            <span th:if="${item.review != null}">Đã đánh giá</span>
+            <span th:if="${!#lists.isEmpty(item.returnCaseIds)}">Có hồ sơ trả hàng hoặc hoàn tiền</span>
+        </div>
+    </div>
+</article>

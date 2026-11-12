@@ -41,6 +41,12 @@ public class OrderService {
     @Autowired
     private VoucherService voucherService;
 
+    @Autowired
+    private OrderAuthorization orderAuthorization;
+
+    @Autowired
+    private com.lapzone.lapzoneweb.model.repository.OrderStatusChangeRepository statusChanges;
+
     // ====================================================================
     // CỔNG 1: DÀNH CHO LUỒNG THANH TOÁN TỪ GIỎ HÀNG (Sử dụng List ID)
     // ====================================================================
@@ -198,25 +204,23 @@ public class OrderService {
         // Hàm cập nhật trạng thái
         @Transactional
         public void updateOrderStatus(Long orderId, String newStatus) {
+            User actor = orderAuthorization.requireAdmin();
             Order order = orderRepository.findByIdForUpdate(orderId)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
-            updateStatusAndRestock(order, newStatus);
+            updateStatusAndRestock(order, newStatus, actor);
         }
 
-        private void updateStatusAndRestock(Order order, String newStatus) {
+        private void updateStatusAndRestock(Order order, String newStatus, User actor) {
+            OrderStatusPolicy.validate(order, newStatus);
+            if (java.util.Objects.equals(order.getStatus(), newStatus)) return;
+            String previousStatus = order.getStatus();
             boolean voucherOrder = order.getVoucherCode() != null;
             if (voucherOrder) {
-                if (!java.util.Set.of("CHỜ THANH TOÁN", "CHỜ XÁC NHẬN", "ĐANG ĐÓNG GÓI", "ĐANG GIAO HÀNG", "ĐÃ THANH TOÁN", "HOÀN THÀNH", CANCELLED_STATUS, "THANH TOÁN THẤT BẠI").contains(newStatus))
-                    throw new IllegalArgumentException("Trạng thái đơn hàng không hợp lệ.");
-                if (java.util.Set.of(CANCELLED_STATUS, "THANH TOÁN THẤT BẠI", "HOÀN THÀNH").contains(order.getStatus()) && !order.getStatus().equals(newStatus))
-                    throw new IllegalArgumentException("Không thể mở lại đơn hàng đã kết thúc.");
-                if ("THANH TOÁN THẤT BẠI".equals(newStatus) && !"CHỜ THANH TOÁN".equals(order.getStatus()) && !newStatus.equals(order.getStatus()))
-                    throw new IllegalArgumentException("Chỉ đơn chờ thanh toán được xác nhận thanh toán thất bại.");
                 voucherService.onOrderStatus(order, newStatus);
             }
             boolean wasClosed = CANCELLED_STATUS.equals(order.getStatus()) || "THANH TOÁN THẤT BẠI".equals(order.getStatus());
             boolean shouldRestock = !wasClosed && (CANCELLED_STATUS.equals(newStatus)
-                    || (voucherOrder && "THANH TOÁN THẤT BẠI".equals(newStatus)));
+                    || "THANH TOÁN THẤT BẠI".equals(newStatus));
             order.setStatus(newStatus);
             orderRepository.save(order);
 
@@ -230,6 +234,11 @@ public class OrderService {
                     }
                 }
             }
+            var change = new com.lapzone.lapzoneweb.model.entity.OrderStatusChange();
+            change.setOrder(order); change.setActor(actor); change.setPreviousStatus(previousStatus);
+            change.setNewStatus(newStatus);
+            change.setChangedAt(java.time.LocalDateTime.now(java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
+            statusChanges.save(change);
         }
         // [C\u0168 - gi\u1eef cho export/in b\u00e1o c\u00e1o]
         public List<Order> getValidInvoices(java.util.Date startDate, java.util.Date endDate) {
@@ -253,6 +262,7 @@ public class OrderService {
             // ====================================================================
             @Transactional
             public void updateInvoiceDetails(Long orderId, String name, String phone, String address, Double totalAmount, String status) {
+                User actor = orderAuthorization.requireAdmin();
                 Order order = orderRepository.findByIdForUpdate(orderId)
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn số #" + orderId));
                 
@@ -262,7 +272,7 @@ public class OrderService {
                 if (order.getVoucherCode() != null && !java.util.Objects.equals(order.getTotalAmount(), totalAmount))
                     throw new IllegalArgumentException("Không được sửa tổng tiền của đơn có mã giảm giá.");
                 order.setTotalAmount(totalAmount);
-                updateStatusAndRestock(order, status);
+                updateStatusAndRestock(order, status, actor);
             }
 
             // ====================================================================
@@ -270,6 +280,7 @@ public class OrderService {
             // ====================================================================
             @Transactional
             public void deleteInvoiceAndDetails(Long orderId) {
+                orderAuthorization.requireAdmin();
                 Order order = orderRepository.findByIdForUpdate(orderId)
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn số #" + orderId));
                 if (order.getVoucherCode() != null)

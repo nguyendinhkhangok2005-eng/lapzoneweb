@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết đơn hàng - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/orders.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header_lapzone}"></div>
+<main class="container orders-page orders-detail" th:with="order=${detail.order}">
+    <a class="orders-back" th:href="@{/store/orders(category=${activeCategory})}">← Đơn hàng của tôi</a>
+    <header class="orders-heading">
+        <div><p class="orders-eyebrow">CHI TIẾT ĐƠN HÀNG</p>
+            <h1 th:text="|Đơn hàng #${order.id}|">Đơn hàng #1</h1>
+            <p th:if="${order.orderDate != null}">Ngày đặt: <time th:datetime="${order.orderDate}" th:text="${@orderViewFormat.date(order.orderDate)}"></time></p>
+            <p th:if="${order.orderDate == null}">Ngày đặt chưa được ghi nhận.</p></div>
+        <div th:replace="~{orders/status :: badges(${order})}"></div>
+    </header>
+
+    <p th:if="${success}" class="orders-notice" role="status" th:text="${success}"></p>
+    <p th:if="${error}" class="orders-notice orders-notice--error" role="alert" th:text="${error}"></p>
+    <div class="orders-detail__grid">
+        <div class="orders-detail__main">
+            <section class="orders-panel" aria-labelledby="detail-items-title">
+                <h2 id="detail-items-title">Sản phẩm trong đơn</h2>
+                <div class="orders-card__lines">
+                    <th:block th:each="item : ${order.items}"><div th:replace="~{orders/line :: line(${item},${order})}"></div></th:block>
+                    <p class="orders-card__no-items" th:if="${#lists.isEmpty(order.items)}">Đơn hàng chưa có thông tin sản phẩm.</p>
+                </div>
+            </section>
+            <section class="orders-panel" aria-labelledby="history-title">
+                <h2 id="history-title">Lịch sử trạng thái</h2>
+                <p class="orders-hint" th:if="${#lists.isEmpty(detail.statusHistory)}">Chưa có lịch sử cập nhật trạng thái. Trạng thái hiện tại được hiển thị ở đầu trang.</p>
+                <ol class="orders-history" th:if="${!#lists.isEmpty(detail.statusHistory)}">
+                    <li th:each="change : ${detail.statusHistory}">
+                        <strong th:text="${change.newStatus}">ĐANG ĐÓNG GÓI</strong>
+                        <time th:if="${change.changedAt != null}" th:datetime="${change.changedAt}" th:text="${@orderViewFormat.date(change.changedAt)}"></time>
+                    </li>
+                </ol>
+            </section>
+            <section class="orders-panel" th:if="${!#lists.isEmpty(order.returnCases)}" aria-labelledby="returns-title">
+                <h2 id="returns-title">Hồ sơ trả hàng và hoàn tiền</h2>
+                <div class="orders-case" th:each="caseItem : ${order.returnCases}">
+                    <div><strong th:text="|${@orderViewFormat.caseType(caseItem.type)} #${caseItem.id}|"></strong>
+                        <span th:text="${caseItem.orderDetailId == null ? 'Toàn bộ đơn hàng' : 'Sản phẩm trong đơn'}"></span></div>
+                    <span th:text="${@orderViewFormat.caseStatus(caseItem.status)}"></span>
+                    <p th:if="${caseItem.quantity != null}" th:text="|Số lượng yêu cầu: ${caseItem.quantity}|"></p>
+                    <p th:if="${caseItem.createdAt != null}" th:text="|Ngày gửi: ${@orderViewFormat.date(caseItem.createdAt)}|"></p>
+                    <p th:if="${caseItem.reason != null}" th:text="${caseItem.reason}"></p>
+                    <p th:if="${caseItem.adminNote != null}" th:text="|Phản hồi quản trị viên: ${caseItem.adminNote}|"></p>
+                    <p th:if="${caseItem.completionNote != null}" th:text="|Ghi nhận hoàn tất: ${caseItem.completionNote}|"></p>
+                </div>
+                <p class="orders-hint">Trạng thái hồ sơ không tự động thực hiện giao dịch hoàn tiền.</p>
+            </section>
+        </div>
+        <aside class="orders-detail__side" aria-label="Tóm tắt đơn hàng">
+            <section class="orders-panel">
+                <h2>Thanh toán</h2>
+                <dl class="orders-facts">
+                    <div><dt>Phương thức</dt><dd th:text="${@orderViewFormat.paymentMethod(order.paymentMethod)}"></dd></div>
+                    <div th:if="${order.subtotalBeforeVoucher != null}"><dt>Tạm tính trước voucher</dt><dd th:text="${@orderViewFormat.money(order.subtotalBeforeVoucher)}"></dd></div>
+                    <div th:if="${order.voucherCode != null}"><dt>Mã giảm giá</dt><dd th:text="${order.voucherCode}"></dd></div>
+                    <div th:if="${order.voucherDiscount != null}"><dt>Số tiền giảm</dt><dd th:text="|−${@orderViewFormat.money(order.voucherDiscount)}|"></dd></div>
+                    <div class="orders-facts__total"><dt>Tổng thanh toán</dt><dd th:text="${@orderViewFormat.money(order.totalAmount)}"></dd></div>
+                </dl>
+            </section>
+            <section class="orders-panel">
+                <h2>Thông tin nhận hàng</h2>
+                <dl class="orders-facts">
+                    <div><dt>Người nhận</dt><dd th:text="${order.customerName != null ? order.customerName : 'Chưa ghi nhận'}"></dd></div>
+                    <div><dt>Số điện thoại</dt><dd th:text="${order.customerPhone != null ? order.customerPhone : 'Chưa ghi nhận'}"></dd></div>
+                    <div><dt>Địa chỉ</dt><dd th:text="${order.address != null ? order.address : 'Chưa ghi nhận'}"></dd></div>
+                </dl>
+            </section>
+        </aside>
+    </div>
+</main>
+<div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+</body>
+</html>

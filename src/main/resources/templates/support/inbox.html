@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hộp thư hỗ trợ - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/support.css}">
+</head>
+<body>
+<div th:if="${!adminView}" th:insert="~{fragments/header :: header_lapzone}"></div>
+<main class="container support-page">
+    <a class="support-back" th:href="${adminView} ? @{/admin/dashboard} : @{/store}" th:text="${adminView ? '← Trang quản trị' : '← Cửa hàng'}">← Cửa hàng</a>
+    <header class="support-heading">
+        <div><p class="support-eyebrow">LAPZONE · HỖ TRỢ KHÁCH HÀNG</p><h1>Hộp thư hỗ trợ</h1>
+            <p th:text="${adminView ? 'Theo dõi yêu cầu và trả lời khách hàng.' : 'Gửi yêu cầu và theo dõi trao đổi với nhân viên LAPZONE.'}"></p></div>
+        <span class="support-unread" th:text="|${unreadCount} tin chưa đọc|">0 tin chưa đọc</span>
+    </header>
+    <p th:if="${error}" class="support-notice support-notice--error" role="alert" th:text="${error}"></p>
+    <div class="support-layout" th:classappend="${adminView ? 'support-layout--admin' : ''}">
+        <section class="support-panel" th:if="${!adminView}" aria-labelledby="new-request">
+            <h2 id="new-request"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i> Tạo yêu cầu hỗ trợ</h2>
+            <form th:action="@{/support}" method="post" class="support-form">
+                <label for="subject">Tiêu đề</label>
+                <input id="subject" name="subject" maxlength="120" required th:value="${draftSubject}" placeholder="Bạn cần LAPZONE hỗ trợ điều gì?">
+                <label for="content">Nội dung</label>
+                <textarea id="content" name="content" rows="7" maxlength="4000" required th:text="${draftContent}" placeholder="Mô tả yêu cầu của bạn"></textarea>
+                <p class="support-hint">Tối đa 120 ký tự cho tiêu đề và 4.000 ký tự cho nội dung. Không gửi mật khẩu hoặc mã xác thực.</p>
+                <button class="support-button" type="submit">Gửi yêu cầu</button>
+            </form>
+        </section>
+        <section class="support-panel" aria-labelledby="history-heading">
+            <h2 id="history-heading" th:text="${adminView ? 'Yêu cầu của khách hàng' : 'Hội thoại của bạn'}">Hội thoại của bạn</h2>
+            <p class="support-empty" th:if="${conversations.empty}">Chưa có hội thoại nào trên trang này.</p>
+            <div class="support-inbox">
+                <a class="support-conversation" th:each="item : ${conversations.content}" th:href="@{${supportBase + '/' + item.id}}">
+                    <div class="support-conversation__top"><h3 th:text="${item.subject}">Tiêu đề yêu cầu</h3>
+                        <span class="support-unread" th:if="${item.unread > 0}" th:text="|${item.unread} chưa đọc|"></span></div>
+                    <p th:if="${adminView}" th:text="${item.customerName}"></p>
+                    <div class="support-conversation__meta"><span class="support-status" th:attr="data-status=${item.status.name()}" th:text="${item.status.label}"></span>
+                        <time th:datetime="${item.updatedAt}" th:text="${#temporals.format(item.updatedAt, 'dd/MM/yyyy HH:mm')}"></time></div>
+                </a>
+            </div>
+            <nav class="support-pagination" aria-label="Phân trang hội thoại">
+                <a th:if="${conversations.hasPrevious()}" th:href="@{${supportBase}(page=${conversations.number - 1})}">← Trang trước</a>
+                <span th:text="|Trang ${conversations.number + 1}|"></span>
+                <a th:if="${conversations.hasNext()}" th:href="@{${supportBase}(page=${conversations.number + 1})}">Trang sau →</a>
+            </nav>
+            <p class="support-hint">Thời gian hiển thị theo giờ Việt Nam. Tải lại trang để xem tin nhắn mới.</p>
+        </section>
+    </div>
+</main>
+<div th:if="${!adminView}" th:insert="~{fragments/footer :: footer_lapzone}"></div>
+</body>
+</html>

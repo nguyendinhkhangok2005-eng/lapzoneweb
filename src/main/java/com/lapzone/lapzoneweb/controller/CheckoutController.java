@@ -96,7 +96,7 @@ public class CheckoutController {
         } 
         // Nếu là luồng Giỏ hàng (lấy từ DB)
         else {
-            User currentUser = (User) session.getAttribute("currentUser");
+            User currentUser = authenticatedCheckoutUser();
             if (currentUser == null) return "redirect:/dangnhap"; // Chỉ luồng này mới đòi đăng nhập
 
             if (selectedItems == null || selectedItems.isEmpty()) {
@@ -118,7 +118,7 @@ public class CheckoutController {
         model.addAttribute("cartItems", itemsToPay);
         model.addAttribute("cartTotal", total);
         model.addAttribute("checkoutMode", "buynow".equals(mode) ? "buynow" : "cart");
-        model.addAttribute("user", session.getAttribute("currentUser")); // Truyền null cũng không sao
+        model.addAttribute("user", authenticatedCheckoutUser());
         String checkoutKey = java.util.UUID.randomUUID().toString();
         session.setAttribute("VOUCHER_CHECKOUT_KEY", checkoutKey);
         model.addAttribute("checkoutKey", checkoutKey);
@@ -150,7 +150,7 @@ public class CheckoutController {
             @RequestParam(value = "checkoutKey", required = false) String checkoutKey,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
-        User currentUser = (User) session.getAttribute("currentUser");
+        User currentUser = authenticatedCheckoutUser();
         boolean buyNowMode = "buynow".equals(mode);
         if (!buyNowMode && currentUser == null) {
             return "redirect:/dangnhap";
@@ -236,11 +236,18 @@ public class CheckoutController {
     }
 
     private User voucherUser() {
+        User user = authenticatedCheckoutUser();
+        if (user != null) return user;
+        throw new IllegalArgumentException("Vui lòng đăng nhập để sử dụng mã giảm giá.");
+    }
+
+    private User authenticatedCheckoutUser() {
         var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof com.lapzone.lapzoneweb.security.CustomUserDetails details)
+                && authentication.getPrincipal() instanceof com.lapzone.lapzoneweb.security.CustomUserDetails details
+                && details.getUser().getId() != null)
             return details.getUser();
-        throw new IllegalArgumentException("Vui lòng đăng nhập để sử dụng mã giảm giá.");
+        return null;
     }
 
     // ==========================================

@@ -13,6 +13,7 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/admin/orders")
+@org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
 public class AdminOrderController {
 
     @Autowired
@@ -45,6 +46,9 @@ public class AdminOrderController {
         if (endDate != null) model.addAttribute("endDate", sdf.format(endDate));
 
         model.addAttribute("orders", orderPage.getContent());      // Chỉ 20 bản ghi
+        model.addAttribute("orderStatuses", com.lapzone.lapzoneweb.model.service.OrderStatusPolicy.ALL);
+        model.addAttribute("statusOptions", orderPage.stream().collect(java.util.stream.Collectors.toMap(
+                order -> order.getId(), com.lapzone.lapzoneweb.model.service.OrderStatusPolicy::allowed)));
         model.addAttribute("currentPage", page);                   // Trang hiện tại
         model.addAttribute("totalPages", orderPage.getTotalPages()); // Tổng số trang
         model.addAttribute("totalElements", orderPage.getTotalElements()); // Tổng số đơn hàng

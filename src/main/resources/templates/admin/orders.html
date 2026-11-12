@@ -74,11 +74,7 @@
                         <div class="col-md-2">
                             <select name="status" class="form-select">
                                 <option value="">-- Trạng thái --</option>
-                                <option value="CHỜ XÁC NHẬN" th:selected="${status == 'CHỜ XÁC NHẬN'}">Chờ xác nhận</option>
-                                <option value="ĐANG ĐÓNG GÓI" th:selected="${status == 'ĐANG ĐÓNG GÓI'}">Đang đóng gói</option>
-                                <option value="ĐANG GIAO HÀNG" th:selected="${status == 'ĐANG GIAO HÀNG'}">Đang giao hàng</option>
-                                <option value="HOÀN THÀNH" th:selected="${status == 'HOÀN THÀNH'}">Hoàn thành</option>
-                                <option value="ĐÃ HỦY" th:selected="${status == 'ĐÃ HỦY'}">Đã hủy</option>
+                                <option th:each="value : ${orderStatuses}" th:value="${value}" th:selected="${status == value}" th:text="${value}"></option>
                             </select>
                         </div>
                         <div class="col-md-3">
@@ -96,6 +92,8 @@
                         <span th:text="${success}"></span>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
+                    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+                    <p class="text-muted small">Xác nhận đơn bằng bước ĐANG ĐÓNG GÓI, tiếp theo ĐANG GIAO HÀNG và HOÀN THÀNH khi đã giao. Chỉ xác nhận ĐÃ THANH TOÁN sau khi đối soát thực tế.</p>
 
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
@@ -132,17 +130,11 @@
                                     <td>
                                         <form th:action="@{/admin/orders/update-status}" method="POST" class="d-flex gap-1">
                                             <input type="hidden" name="orderId" th:value="${order.id}">
-                                            <select name="newStatus" class="form-select form-select-sm" style="width: 130px;">
-                                                <option th:if="${order.voucherCode != null}" value="CHỜ THANH TOÁN" th:selected="${order.status == 'CHỜ THANH TOÁN'}">Chờ thanh toán</option>
-                                                <option th:if="${order.voucherCode != null}" value="ĐÃ THANH TOÁN" th:selected="${order.status == 'ĐÃ THANH TOÁN'}">Đã đối soát thanh toán</option>
-                                                <option th:if="${order.voucherCode != null}" value="THANH TOÁN THẤT BẠI" th:selected="${order.status == 'THANH TOÁN THẤT BẠI'}">Thanh toán thất bại</option>
-                                                <option value="CHỜ XÁC NHẬN" th:selected="${order.status == 'CHỜ XÁC NHẬN'}">Xác nhận</option>
-                                                <option value="ĐANG ĐÓNG GÓI" th:selected="${order.status == 'ĐANG ĐÓNG GÓI'}">Đóng gói</option>
-                                                <option value="ĐANG GIAO HÀNG" th:selected="${order.status == 'ĐANG GIAO HÀNG'}">Giao hàng</option>
-                                                <option value="HOÀN THÀNH" th:selected="${order.status == 'HOÀN THÀNH'}">Hoàn thành</option>
-                                                <option value="ĐÃ HỦY" th:selected="${order.status == 'ĐÃ HỦY'}">Hủy đơn</option>
+                                            <select name="newStatus" class="form-select form-select-sm" style="width: 170px;" th:disabled="${#lists.isEmpty(statusOptions[order.id])}" aria-label="Trạng thái tiếp theo">
+                                                <option th:each="next : ${statusOptions[order.id]}" th:value="${next}" th:text="${next}"></option>
+                                                <option th:if="${#lists.isEmpty(statusOptions[order.id])}">Không còn bước xử lý</option>
                                             </select>
-                                            <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-save"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-success" th:disabled="${#lists.isEmpty(statusOptions[order.id])}" aria-label="Cập nhật trạng thái"><i class="fas fa-save"></i></button>
                                         </form>
                                     </td>
                                 </tr>

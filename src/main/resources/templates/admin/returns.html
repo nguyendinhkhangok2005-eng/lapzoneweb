@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý trả hàng và hoàn tiền - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/orders.css}">
+</head>
+<body>
+<main class="container orders-page">
+    <a class="orders-back" th:href="@{/admin/dashboard}">← Trang quản trị</a>
+    <header class="orders-heading"><div><p class="orders-eyebrow">LAPZONE · QUẢN TRỊ</p><h1>Trả hàng và hoàn tiền</h1>
+        <p>Xem xét yêu cầu của khách hàng và ghi nhận kết quả xử lý.</p></div></header>
+    <p th:if="${success}" class="orders-notice" role="status" th:text="${success}"></p>
+    <p th:if="${error}" class="orders-notice orders-notice--error" role="alert" th:text="${error}"></p>
+    <form class="returns-filter" method="get" th:action="@{/admin/returns}">
+        <label for="return-status">Trạng thái</label>
+        <select id="return-status" name="status"><option value="">Tất cả</option>
+            <option th:each="value : ${statuses}" th:value="${value}" th:selected="${selectedStatus == value}" th:text="${@orderViewFormat.caseStatus(value)}"></option></select>
+        <button class="orders-primary" type="submit">Lọc yêu cầu</button>
+    </form>
+    <p class="orders-hint">Chấp nhận yêu cầu không tự động hoàn tiền hoặc nhập lại tồn kho. Chỉ hoàn tất hồ sơ sau khi đã đối soát và xử lý ngoài hệ thống.</p>
+    <p class="orders-empty" th:if="${requests.empty}">Chưa có yêu cầu phù hợp.</p>
+    <div class="orders-list">
+        <article class="orders-panel" th:each="request : ${requests.content}">
+            <div class="orders-card__head"><div><h2 th:text="|Yêu cầu #${request.id} · ${@orderViewFormat.caseType(request.type)}|"></h2>
+                <a class="orders-back" th:href="@{/order/detail/{id}(id=${request.orderId})}" th:text="|Đơn hàng #${request.orderId}|"></a></div>
+                <span class="orders-status" th:text="${@orderViewFormat.caseStatus(request.status)}"></span></div>
+            <dl class="orders-facts">
+                <div><dt>Khách hàng</dt><dd th:text="${request.customerName != null ? request.customerName : 'Chưa ghi nhận'}"></dd></div>
+                <div><dt>Sản phẩm</dt><dd th:text="${request.productName}"></dd></div>
+                <div><dt>Số lượng yêu cầu</dt><dd th:text="${request.quantity != null ? request.quantity : 'Chưa ghi nhận'}"></dd></div>
+                <div><dt>Ngày gửi</dt><dd th:text="${@orderViewFormat.date(request.createdAt)}"></dd></div>
+            </dl>
+            <p class="returns-reason"><strong>Lý do:</strong> <span th:text="${request.reason}"></span></p>
+            <p th:if="${request.adminNote != null}" class="returns-reason"><strong>Phản hồi:</strong> <span th:text="${request.adminNote}"></span></p>
+            <p th:if="${request.completionNote != null}" class="returns-reason"><strong>Ghi nhận hoàn tất:</strong> <span th:text="${request.completionNote}"></span></p>
+            <form class="returns-form" th:if="${request.status == 'REQUESTED'}" th:action="@{/admin/returns/{id}/decision(id=${request.id})}" method="post">
+                <label th:for="|note-${request.id}|">Ghi chú xử lý</label>
+                <textarea th:id="|note-${request.id}|" name="note" rows="3" maxlength="2000" placeholder="Bắt buộc nêu lý do nếu từ chối"></textarea>
+                <div class="returns-actions"><button class="orders-primary" type="submit" name="status" value="APPROVED">Chấp nhận yêu cầu</button>
+                    <button class="orders-primary returns-reject" type="submit" name="status" value="REJECTED">Từ chối</button></div>
+            </form>
+            <form class="returns-form" th:if="${request.status == 'APPROVED'}" th:action="@{/admin/returns/{id}/decision(id=${request.id})}" method="post">
+                <input type="hidden" name="status" value="COMPLETED">
+                <label th:for="|complete-${request.id}|">Kết quả xử lý hoặc mã chứng từ đối soát</label>
+                <textarea th:id="|complete-${request.id}|" name="note" rows="3" maxlength="2000" required placeholder="Ghi nhận việc xử lý ngoài hệ thống"></textarea>
+                <label class="returns-confirm"><input type="checkbox" name="manualProcessingConfirmed" value="true" required> Tôi xác nhận đã đối soát và xử lý hồ sơ ngoài hệ thống.</label>
+                <button class="orders-primary" type="submit">Hoàn tất hồ sơ</button>
+            </form>
+        </article>
+    </div>
+    <nav class="orders-pages" aria-label="Phân trang yêu cầu" th:if="${requests.totalPages > 1}">
+        <a th:if="${requests.hasPrevious()}" th:href="@{/admin/returns(page=${requests.number - 1},status=${selectedStatus})}">← Trang trước</a>
+        <span th:text="|Trang ${requests.number + 1} / ${requests.totalPages}|"></span>
+        <a th:if="${requests.hasNext()}" th:href="@{/admin/returns(page=${requests.number + 1},status=${selectedStatus})}">Trang sau →</a>
+    </nav>
+</main>
+</body>
+</html>

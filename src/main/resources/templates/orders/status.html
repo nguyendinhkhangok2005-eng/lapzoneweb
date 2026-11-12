@@ -1,0 +1,9 @@
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="badges(order)" class="orders-status-group"
+     role="group" aria-label="Trạng thái thanh toán và giao nhận" th:with="state=${@orderViewFormat.customerStatus(order.status)}">
+    <span th:if="${state.paymentLabel != null}" class="orders-status" data-kind="payment"
+          th:attr="data-status=${state.paymentCode},aria-label=|Thanh toán: ${state.paymentLabel}|"
+          th:text="${state.paymentLabel}"></span>
+    <span th:if="${state.fulfillmentLabel != null}" class="orders-status" data-kind="fulfillment"
+          th:attr="data-status=${state.fulfillmentCode},aria-label=|Giao nhận: ${state.fulfillmentLabel}|"
+          th:text="${state.fulfillmentLabel}"></span>
+</div>

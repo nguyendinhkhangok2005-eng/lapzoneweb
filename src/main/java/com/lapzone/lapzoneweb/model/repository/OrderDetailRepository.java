@@ -10,4 +10,8 @@ import java.util.List;
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> {
     // Lấy ra danh sách các máy tính trong một đơn hàng cụ thể
     List<OrderDetail> findByOrderId(Long orderId);
+    java.util.Optional<OrderDetail> findByIdAndOrderId(Long id, Long orderId);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"order", "product"})
+    List<OrderDetail> findByOrderIdIn(java.util.Collection<Long> orderIds);
 }

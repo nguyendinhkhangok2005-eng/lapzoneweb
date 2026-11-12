@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hội thoại hỗ trợ - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/support.css}">
+</head>
+<body>
+<div th:if="${!adminView}" th:insert="~{fragments/header :: header_lapzone}"></div>
+<main class="container support-page support-thread-page">
+    <a class="support-back" th:href="@{${supportBase}}">← Hộp thư hỗ trợ</a>
+    <header class="support-heading">
+        <div><p class="support-eyebrow" th:text="|HỘI THOẠI #${thread.conversation.id}|"></p>
+            <h1 th:text="${thread.conversation.subject}">Yêu cầu hỗ trợ</h1>
+            <p th:if="${adminView}" th:text="${thread.conversation.customerName}"></p>
+            <p>Tạo lúc <time th:datetime="${thread.conversation.createdAt}" th:text="${#temporals.format(thread.conversation.createdAt, 'dd/MM/yyyy HH:mm')}"></time> · Giờ Việt Nam</p></div>
+        <span class="support-status" th:attr="data-status=${thread.conversation.status.name()}" th:text="${thread.conversation.status.label}"></span>
+    </header>
+    <p th:if="${error}" class="support-notice support-notice--error" role="alert" th:text="${error}"></p>
+    <p th:if="${success}" class="support-notice" role="status" th:text="${success}"></p>
+    <section class="support-panel" aria-label="Lịch sử tin nhắn">
+        <nav class="support-pagination" aria-label="Phân trang tin nhắn">
+            <a th:if="${thread.older}" th:href="@{${supportBase + '/' + thread.conversation.id}(page=${thread.page + 1})}">← Tin nhắn cũ hơn</a>
+            <a th:if="${thread.newer}" th:href="@{${supportBase + '/' + thread.conversation.id}(page=${thread.page - 1})}">Tin nhắn mới hơn →</a>
+            <a th:href="@{${supportBase + '/' + thread.conversation.id}}">Tin nhắn mới nhất</a>
+        </nav>
+        <p class="support-empty" th:if="${#lists.isEmpty(thread.messages)}">Không có tin nhắn trên trang này.</p>
+        <div class="support-messages">
+            <article class="support-message" th:each="message : ${thread.messages}" th:classappend="${message.adminMessage == adminView ? 'support-message--outgoing' : ''}">
+                <div class="support-message__meta"><strong th:text="${message.adminMessage ? 'Nhân viên LAPZONE' : thread.conversation.customerName}"></strong>
+                    <time th:datetime="${message.sentAt}" th:text="${#temporals.format(message.sentAt, 'dd/MM/yyyy HH:mm:ss')}"></time></div>
+                <p class="support-message__body" th:text="${message.content}"></p>
+            </article>
+        </div>
+        <form class="support-read-form" th:if="${thread.conversation.unread > 0 && thread.throughId != null}" th:action="@{${supportBase + '/' + thread.conversation.id + '/read'}}" method="post">
+            <input type="hidden" name="throughId" th:value="${thread.throughId}">
+            <input type="hidden" name="page" th:value="${thread.page}">
+            <button type="submit" class="support-button support-button--secondary">Đánh dấu tin nhắn đã hiển thị là đã đọc</button>
+        </form>
+        <p class="support-read-status support-hint" role="status" aria-live="polite"></p>
+        <form class="support-form support-reply" th:if="${thread.conversation.status.name() != 'CLOSED'}" th:action="@{${supportBase + '/' + thread.conversation.id + '/messages'}}" method="post">
+            <label for="reply">Nội dung trả lời</label>
+            <textarea id="reply" name="content" rows="4" maxlength="4000" required th:text="${draftContent}" placeholder="Nhập tin nhắn của bạn"></textarea>
+            <p class="support-hint">Tối đa 4.000 ký tự. Tải lại trang để xem phản hồi mới.</p>
+            <button class="support-button" type="submit">Gửi tin nhắn</button>
+        </form>
+        <p class="support-closed" th:if="${thread.conversation.status.name() == 'CLOSED'}">Hội thoại đã đóng. <a th:if="${!adminView}" th:href="@{/support}">Tạo yêu cầu hỗ trợ mới</a></p>
+        <form class="support-status-form" th:if="${adminView}" th:action="@{/admin/support/{id}/status(id=${thread.conversation.id})}" method="post">
+            <input type="hidden" name="closed" th:value="${thread.conversation.status.name() != 'CLOSED'}">
+            <button class="support-button support-button--secondary" type="submit" th:text="${thread.conversation.status.name() == 'CLOSED' ? 'Mở lại hội thoại' : 'Đóng hội thoại'}"></button>
+        </form>
+    </section>
+</main>
+<div th:if="${!adminView}" th:insert="~{fragments/footer :: footer_lapzone}"></div>
+<script defer th:src="@{/js/support.js}"></script>
+</body>
+</html>

@@ -117,6 +117,8 @@
 
 .store-card__action:hover { background: var(--accent-button-secondary); color: #fff; }
 .store-card__action--disabled { background: var(--bg-card-hover); color: var(--text-secondary); cursor: not-allowed; }
+.store-order-lookup { width: fit-content; margin-top: 12px; color: var(--accent-neon); font-size: .88rem; text-decoration: underline; text-underline-offset: 3px; }
+.store-order-lookup:hover { color: var(--accent-blue); }
 
 .store-branches { display: grid; gap: 14px; margin: 16px 0 20px; }
 .store-branch { padding: 16px; border: 1px solid var(--border-glass); border-radius: var(--radius-md); background: var(--bg-card-hover); }

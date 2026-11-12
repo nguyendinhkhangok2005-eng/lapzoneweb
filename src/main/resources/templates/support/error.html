@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Không thể mở hội thoại - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/support.css}">
+</head>
+<body><main class="container support-page"><section class="support-panel">
+    <h1>Không thể mở hội thoại</h1><p class="support-notice support-notice--error" th:text="${message}"></p>
+    <a class="support-back" th:href="@{/support}">← Hộp thư hỗ trợ</a>
+</section></main></body>
+</html>

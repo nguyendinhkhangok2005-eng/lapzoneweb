@@ -44,6 +44,11 @@ class OrderServiceTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private com.lapzone.lapzoneweb.model.service.OrderAuthorization orderAuthorization;
+    @Mock
+    private com.lapzone.lapzoneweb.model.repository.OrderStatusChangeRepository statusChanges;
+
     @InjectMocks
     private OrderService orderService;
 

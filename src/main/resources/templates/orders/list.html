@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng của tôi - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/orders.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header_lapzone}"></div>
+<main class="container orders-page">
+    <a class="orders-back" th:href="@{/store}">← Cửa hàng</a>
+    <header class="orders-heading">
+        <div><p class="orders-eyebrow">LAPZONE · KHU VỰC KHÁCH HÀNG</p>
+            <h1>Đơn hàng của tôi</h1>
+            <p>Xem trạng thái và sản phẩm trong các đơn hàng đã đặt.</p></div>
+        <a class="orders-lookup" th:href="@{/tracuudonhang}">Tra cứu bằng mã đơn</a>
+    </header>
+
+    <nav class="orders-tabs" aria-label="Nhóm đơn hàng">
+        <a th:each="tab : ${orderCategories}" th:href="@{/store/orders(category=${tab.key})}"
+           th:classappend="${activeCategory == tab.key} ? 'orders-tabs__active'"
+           th:attr="aria-current=${activeCategory == tab.key ? 'page' : null},aria-label=|${tab.label}: ${orderPage.categoryCounts[tab.key] ?: 0} đơn hàng|">
+            <span th:text="${tab.label}">Tất cả</span>
+            <span class="orders-tabs__count" th:text="${orderPage.categoryCounts[tab.key] ?: 0}">0</span>
+        </a>
+    </nav>
+
+    <p class="orders-category-note">Số trên mỗi tab là số đơn hàng trong nhóm, không phải số sản phẩm. Một đơn có thể thuộc nhiều nhóm; không cộng các nhóm để tính tổng đơn hàng.</p>
+    <p class="orders-hint" th:if="${activeCategory == 'PENDING'}">Bao gồm đơn COD chờ xác nhận, đơn VNPay chờ thanh toán và đơn đã thanh toán đang chờ xác nhận đơn hàng.</p>
+    <p class="orders-hint" th:if="${activeCategory == 'REVIEW'}">Chỉ hiển thị sản phẩm còn cần đánh giá; tổng tiền là của toàn bộ đơn hàng.</p>
+    <p class="orders-count" th:text="|${orderPage.totalElements} đơn hàng · Mới nhất trước|">0 đơn hàng · Mới nhất trước</p>
+
+    <section class="orders-empty" th:if="${#lists.isEmpty(orderPage.content)}" aria-live="polite">
+        <span class="orders-empty__icon"><i class="fa-regular fa-clipboard" aria-hidden="true"></i></span>
+        <h2 th:switch="${activeCategory}">
+            <span th:case="'ALL'">Bạn chưa có đơn hàng nào</span>
+            <span th:case="'PENDING'">Không có đơn chờ xác nhận</span>
+            <span th:case="'SHIPPING'">Không có đơn chờ vận chuyển</span>
+            <span th:case="'REVIEW'">Không có sản phẩm cần đánh giá</span>
+            <span th:case="'RETURNS'">Chưa có hồ sơ trả hàng hoặc hoàn tiền</span>
+            <span th:case="'CANCELLED'">Không có đơn hàng đã hủy</span>
+            <span th:case="'COMPLETED'">Chưa có đơn hoàn thành không còn cần đánh giá</span>
+        </h2>
+        <p th:if="${orderPage.page > 0}">Trang này không có đơn hàng. Bạn có thể xem trang trước.</p>
+        <p th:if="${orderPage.page == 0}">Khi có đơn hàng phù hợp, thông tin sẽ hiển thị tại đây.</p>
+        <a th:if="${orderPage.page == 0}" class="orders-primary" th:href="@{/}">Tiếp tục mua sắm</a>
+    </section>
+
+    <div class="orders-list" th:if="${!#lists.isEmpty(orderPage.content)}">
+        <article class="orders-card" th:each="order : ${orderPage.content}">
+            <div class="orders-card__head">
+                <div><p class="orders-card__id" th:text="|Đơn hàng #${order.id}|">Đơn hàng #1</p>
+                    <time th:if="${order.orderDate != null}" th:datetime="${order.orderDate}" th:text="${@orderViewFormat.date(order.orderDate)}"></time>
+                    <span th:if="${order.orderDate == null}">Chưa có ngày đặt</span>
+                    <p class="orders-line__meta">Phương thức thanh toán: <strong th:text="${@orderViewFormat.paymentMethod(order.paymentMethod)}"></strong></p></div>
+                <div th:replace="~{orders/status :: badges(${order})}"></div>
+            </div>
+            <div class="orders-card__lines">
+                <th:block th:each="item : ${order.items}"><th:block th:if="${activeCategory != 'REVIEW' || item.needsReview}"><div th:replace="~{orders/line :: line(${item},${order})}"></div></th:block></th:block>
+                <p class="orders-card__no-items" th:if="${#lists.isEmpty(order.items)}">Đơn hàng chưa có thông tin sản phẩm.</p>
+            </div>
+            <div class="orders-card__foot">
+                <p>Tổng thanh toán: <strong th:text="${@orderViewFormat.money(order.totalAmount)}">0 ₫</strong></p>
+                <a class="orders-primary" th:href="@{/store/orders/{id}(id=${order.id},category=${activeCategory})}">Xem chi tiết <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+            </div>
+            <div class="orders-return-summary" th:if="${!#lists.isEmpty(order.returnCases)}">
+                <p th:each="request : ${order.returnCases}"><strong th:text="|Yêu cầu #${request.id} · ${@orderViewFormat.caseType(request.type)}|"></strong>
+                    <span th:text="${@orderViewFormat.caseStatus(request.status)}"></span></p>
+            </div>
+        </article>
+    </div>
+
+    <nav class="orders-pages" th:if="${orderPage.totalPages > 1}" aria-label="Phân trang đơn hàng">
+        <a th:if="${orderPage.page > 0}" th:href="@{/store/orders(category=${activeCategory},page=${orderPage.page - 1})}">← Trang trước</a>
+        <span th:text="|Trang ${orderPage.page + 1} / ${orderPage.totalPages}|"></span>
+        <a th:if="${orderPage.page + 1 < orderPage.totalPages}" th:href="@{/store/orders(category=${activeCategory},page=${orderPage.page + 1})}">Trang sau →</a>
+    </nav>
+</main>
+<div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+</body>
+</html>

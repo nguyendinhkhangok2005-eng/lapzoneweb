@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yêu cầu hoàn tiền - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/orders.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header_lapzone}"></div>
+<main class="container orders-page return-request-page">
+    <a class="orders-back" th:href="@{/store/orders/{id}(id=${item.orderId})}">← Chi tiết đơn hàng</a>
+    <header class="orders-heading"><div><p class="orders-eyebrow" th:text="|ĐƠN HÀNG #${item.orderId}|"></p>
+        <h1>Yêu cầu hoàn tiền</h1><p>Gửi thông tin để LAPZONE kiểm tra và hỗ trợ bạn.</p></div></header>
+    <p th:if="${error}" class="orders-notice orders-notice--error" role="alert" th:text="${error}"></p>
+    <section class="orders-panel">
+        <h2 th:text="${item.productName}"></h2>
+        <p>Đơn giá lúc mua: <strong th:text="${@orderViewFormat.money(item.unitPrice)}"></strong></p>
+        <form class="returns-form" method="post" th:action="@{/store/orders/{orderId}/items/{itemId}/return-request(orderId=${item.orderId},itemId=${item.itemId})}">
+            <label for="request-type">Nội dung cần hỗ trợ</label>
+            <select id="request-type" name="type"><option value="REFUND" th:selected="${draftType != 'RETURN'}">Hoàn tiền</option><option value="RETURN" th:selected="${draftType == 'RETURN'}">Trả hàng và xem xét hoàn tiền</option></select>
+            <label for="request-quantity">Số lượng yêu cầu</label>
+            <input id="request-quantity" name="quantity" type="number" min="1" th:max="${item.maximumQuantity}"
+                   th:value="${draftQuantity != null ? draftQuantity : item.maximumQuantity}" required>
+            <p class="orders-hint" th:text="|Bạn đã mua ${item.maximumQuantity} sản phẩm. Mỗi sản phẩm trong đơn chỉ được gửi một yêu cầu; vui lòng chọn đủ số lượng cần xử lý.|"></p>
+            <label for="request-reason">Lý do</label>
+            <textarea id="request-reason" name="reason" rows="5" maxlength="2000" required th:text="${draftReason}" placeholder="Mô tả vấn đề và lý do yêu cầu"></textarea>
+            <p class="orders-hint">Tối đa 2.000 ký tự. Việc gửi yêu cầu chưa làm thay đổi số tiền đã thanh toán. LAPZONE sẽ phản hồi sau khi kiểm tra.</p>
+            <button class="orders-primary" type="submit">Gửi yêu cầu</button>
+        </form>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+</body>
+</html>

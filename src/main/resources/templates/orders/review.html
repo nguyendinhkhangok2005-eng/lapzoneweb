@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đánh giá sản phẩm - LAPZONE</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/orders.css}">
+</head>
+<body>
+<div th:replace="~{fragments/header :: header_lapzone}"></div>
+<main class="container orders-page return-request-page">
+    <a class="orders-back" th:href="@{/store/orders/{id}(id=${item.orderId},category='REVIEW')}">← Chi tiết đơn hàng</a>
+    <header class="orders-heading"><div><p class="orders-eyebrow" th:text="|ĐƠN HÀNG #${item.orderId}|"></p>
+        <h1>Đánh giá sản phẩm</h1><p>Chia sẻ trải nghiệm của bạn về sản phẩm đã nhận.</p></div></header>
+    <p th:if="${error}" class="orders-notice orders-notice--error" role="alert" th:text="${error}"></p>
+    <section class="orders-panel">
+        <h2 th:text="${item.productName}"></h2>
+        <form class="returns-form" method="post" th:action="@{/store/orders/{orderId}/items/{itemId}/review(orderId=${item.orderId},itemId=${item.itemId})}">
+            <label for="review-rating">Số sao</label>
+            <select id="review-rating" name="rating" required>
+                <option value="">Chọn số sao</option>
+                <option th:each="star : ${#numbers.sequence(1,5)}" th:value="${star}" th:text="|${star} sao|" th:selected="${draftRating == star}"></option>
+            </select>
+            <label for="review-content">Nội dung đánh giá</label>
+            <textarea id="review-content" name="content" rows="6" maxlength="4000" required
+                      th:text="${draftContent}" placeholder="Viết đánh giá về sản phẩm"></textarea>
+            <p class="orders-hint">Mỗi sản phẩm trong đơn được đánh giá một lần. Nội dung tối đa 4.000 ký tự.</p>
+            <button class="orders-primary" type="submit">Gửi đánh giá</button>
+        </form>
+    </section>
+</main>
+<div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+</body>
+</html>

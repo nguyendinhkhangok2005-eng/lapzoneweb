@@ -23,10 +23,23 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/", "/dangnhap", "/dangki", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
-                .requestMatchers("/cart/**", "/profile", "/profile/**").authenticated()
+                .requestMatchers("/cart/**", "/profile", "/profile/**", "/support", "/support/**", "/store/orders", "/store/orders/**", "/api/orders", "/api/orders/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().permitAll() 
             )
+            .exceptionHandling(errors -> {
+                errors.defaultAuthenticationEntryPointFor((request, response, error) -> {
+                response.setStatus(401);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"message\":\"Vui lòng đăng nhập để xem đơn hàng.\"}");
+                }, request -> {
+                    String path = request.getRequestURI().substring(request.getContextPath().length());
+                    return path.equals("/api/orders") || path.startsWith("/api/orders/");
+                });
+                errors.defaultAuthenticationEntryPointFor(
+                    new org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint("/dangnhap"),
+                    request -> true);
+            })
             .formLogin(form -> form
                 .loginPage("/dangnhap")
                 .loginProcessingUrl("/dangnhap")
@@ -45,7 +58,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.requireCsrfProtectionMatcher(request -> {
                 String path = request.getRequestURI().substring(request.getContextPath().length());
                 return !java.util.Set.of("GET", "HEAD", "OPTIONS", "TRACE").contains(request.getMethod())
-                        && (path.startsWith("/admin/") || path.equals("/checkout/process")
+                        && (path.startsWith("/admin/") || path.startsWith("/store/orders/") || path.startsWith("/api/orders/")
+                            || path.equals("/support") || path.startsWith("/support/") || path.equals("/checkout/process")
                             || path.equals("/checkout/voucher-preview"));
             }));
 

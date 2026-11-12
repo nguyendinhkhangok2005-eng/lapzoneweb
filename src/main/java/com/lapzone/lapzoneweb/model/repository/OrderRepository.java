@@ -21,6 +21,41 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     // Tìm tất cả đơn hàng của một khách hàng (dùng cho trang Lịch sử mua hàng sau này)
     List<Order> findByUserId(Long userId);
+    Optional<Order> findByIdAndUserId(Long id, Long userId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select o from Order o where o.id = :id and o.user.id = :userId")
+    Optional<Order> lockOwnedOrder(@Param("id") Long id, @Param("userId") Long userId);
+
+    // One owner/category predicate for both pagination and DISTINCT count badges.
+    String UNREVIEWED_ITEM = """
+        exists (select d.id from OrderDetail d where d.order = o and d.quantity > 0 and not exists (
+            select r.id from OrderItemReview r where r.orderDetail = d))
+        """;
+    String CUSTOMER_ORDER_FILTER = """
+        where o.user.id = :userId and (
+            :category = 'ALL'
+            or (:category = 'PENDING' and o.status in :pending)
+            or (:category = 'SHIPPING' and o.status in :shipping)
+            or (:category = 'REVIEW' and o.status in :delivered and
+        """ + UNREVIEWED_ITEM + ")" + """
+            or (:category = 'COMPLETED' and o.status in :delivered and not
+        """ + UNREVIEWED_ITEM + ")" + """
+            or (:category = 'RETURNS' and exists (select c.id from OrderReturnCase c where c.order = o))
+            or (:category = 'CANCELLED' and o.status = :cancelled)
+        )
+        """;
+
+    @Query(value = "select distinct o from Order o " + CUSTOMER_ORDER_FILTER,
+            countQuery = "select count(distinct o.id) from Order o " + CUSTOMER_ORDER_FILTER)
+    Page<Order> customerOrders(@Param("userId") Long userId, @Param("category") String category,
+            @Param("pending") List<String> pending, @Param("shipping") List<String> shipping,
+            @Param("delivered") List<String> delivered, @Param("cancelled") String cancelled, Pageable pageable);
+
+    @Query("select count(distinct o.id) from Order o " + CUSTOMER_ORDER_FILTER)
+    long countCustomerOrders(@Param("userId") Long userId, @Param("category") String category,
+            @Param("pending") List<String> pending, @Param("shipping") List<String> shipping,
+            @Param("delivered") List<String> delivered, @Param("cancelled") String cancelled);
     // [CŨ - giữ lại để tương thích, nhưng CHỈ dùng cho export/in báo cáo]
     @Query("SELECT o FROM Order o WHERE " +
            "(:status IS NULL OR o.status = :status) AND " +
