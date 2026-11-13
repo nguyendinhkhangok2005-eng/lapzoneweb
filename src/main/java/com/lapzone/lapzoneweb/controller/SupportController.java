@@ -1,6 +1,8 @@
 package com.lapzone.lapzoneweb.controller;
 
 import com.lapzone.lapzoneweb.model.service.SupportService;
+import com.lapzone.lapzoneweb.model.service.AppointmentService;
+import com.lapzone.lapzoneweb.model.entity.AppointmentStatus;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -16,13 +18,40 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @PreAuthorize("isAuthenticated()")
 public class SupportController {
     private final SupportService support;
-    public SupportController(SupportService support) { this.support = support; }
+    private final AppointmentService appointments;
+    public SupportController(SupportService support, AppointmentService appointments) {
+        this.support = support; this.appointments = appointments;
+    }
 
     @GetMapping({"/support", "/admin/support"})
-    public String inbox(@RequestParam(defaultValue = "0") int page, HttpServletRequest request, Model model) {
+    public String inbox(@RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "messages") String tab,
+                        @RequestParam(defaultValue = "") String status,
+                        @RequestParam(required = false) Long appointmentId,
+                        HttpServletRequest request, HttpServletResponse response, Model model) {
         boolean admin = admin(request);
         model.addAttribute("conversations", support.inbox(admin, page));
         model.addAttribute("unreadCount", support.unreadCount(admin));
+        model.addAttribute("activeAdminTab", admin && "appointments".equals(tab) ? "appointments" : "messages");
+        if (admin) model.addAttribute("pendingAppointmentCount", appointments.adminPendingCount());
+        if (admin && "appointments".equals(tab)) {
+            var appointmentPage = appointments.adminAppointments(status, page, 20);
+            if (appointmentPage.content().isEmpty() && appointmentPage.number() > 0
+                    && appointmentPage.number() >= appointmentPage.totalPages()) {
+                appointmentPage = appointments.adminAppointments(status, Math.max(0, appointmentPage.totalPages() - 1), 20);
+            }
+            model.addAttribute("appointments", appointmentPage);
+            model.addAttribute("appointmentStatuses", AppointmentStatus.values());
+            model.addAttribute("appointmentStatus", status);
+            if (appointmentId != null) {
+                try {
+                    model.addAttribute("appointmentDetails", appointments.adminDetail(appointmentId));
+                } catch (ResponseStatusException error) {
+                    response.setStatus(error.getStatusCode().value());
+                    model.addAttribute("error", error.getReason());
+                }
+            }
+        }
         layout(model, admin);
         return "support/inbox";
     }

@@ -45,15 +45,22 @@ public class Appointment {
     private String description;
 
     @Column(nullable = false, length = 30)
-    private String status = "PENDING";
+    private String status = AppointmentStatus.PENDING.name();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // Inverse association adds no column to the existing appointments table.
+    @jakarta.persistence.OneToOne(mappedBy = "appointment", fetch = jakarta.persistence.FetchType.LAZY)
+    private AppointmentManagement management;
+
+    public AppointmentManagement getManagement() { return management; }
+    public void setManagement(AppointmentManagement management) { this.management = management; }
+
     @PrePersist
     protected void prepareForInsert() {
         if (status == null || status.isBlank()) {
-            status = "PENDING";
+            status = AppointmentStatus.PENDING.name();
         }
         if (createdAt == null) {
             createdAt = LocalDateTime.now();

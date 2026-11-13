@@ -9,6 +9,7 @@
     <link th:if="${adminView}" rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <link rel="stylesheet" th:href="@{/css/support.css}">
     <th:block th:if="${adminView}"><th:block th:replace="~{admin/theme :: head}"></th:block></th:block>
+    <script th:if="${adminView}" defer th:src="@{/js/admin-appointments.js}"></script>
 </head>
 <body th:classappend="${adminView} ? 'admin-standalone-page' : ''">
 <div th:if="${!adminView}" th:insert="~{fragments/header :: header_lapzone}"></div>
@@ -20,8 +21,21 @@
             <p th:text="${adminView ? 'Theo dõi yêu cầu và trả lời khách hàng.' : 'Gửi yêu cầu và theo dõi trao đổi với nhân viên LAPZONE.'}"></p></div>
         <span class="support-unread" th:text="|${unreadCount} tin chưa đọc|">0 tin chưa đọc</span>
     </header>
+    <nav class="support-admin-tabs" th:if="${adminView}" aria-label="Danh mục hỗ trợ">
+        <a th:href="@{/admin/support(tab='messages')}" th:classappend="${activeAdminTab == 'messages' ? ' is-active' : ''}"
+           th:attr="aria-current=${activeAdminTab == 'messages' ? 'page' : null}">
+            <i class="fa-regular fa-comments" aria-hidden="true"></i><span>Tin nhắn khách hàng</span>
+        </a>
+        <a th:href="@{/admin/support(tab='appointments')}" th:classappend="${activeAdminTab == 'appointments' ? ' is-active' : ''}"
+           th:attr="aria-current=${activeAdminTab == 'appointments' ? 'page' : null}">
+            <i class="fa-regular fa-calendar-check" aria-hidden="true"></i><span>Quản lý lịch hẹn</span>
+            <span class="support-tab-count" th:text="${pendingAppointmentCount}"
+                  th:attr="aria-label=|${pendingAppointmentCount} lịch hẹn chờ xác nhận|"></span>
+        </a>
+    </nav>
     <p th:if="${error}" class="support-notice support-notice--error" role="alert" th:text="${error}"></p>
-    <div class="support-layout" th:classappend="${adminView ? 'support-layout--admin' : ''}">
+    <p th:if="${appointmentActionSuccess}" class="support-notice" role="status" th:text="${appointmentActionSuccess}"></p>
+    <div class="support-layout" th:if="${!adminView || activeAdminTab == 'messages'}" th:classappend="${adminView ? 'support-layout--admin' : ''}">
         <section class="support-panel" th:if="${!adminView}" aria-labelledby="new-request">
             <h2 id="new-request"><i class="fa-regular fa-pen-to-square" aria-hidden="true"></i> Tạo yêu cầu hỗ trợ</h2>
             <form th:action="@{/support}" method="post" class="support-form">
@@ -53,6 +67,93 @@
             <p class="support-hint">Thời gian hiển thị theo giờ Việt Nam. Tải lại trang để xem tin nhắn mới.</p>
         </section>
     </div>
+    <section class="support-panel support-appointments" th:if="${adminView && activeAdminTab == 'appointments'}" aria-labelledby="appointments-heading">
+        <header class="support-appointments__heading">
+            <div><h2 id="appointments-heading">Quản lý lịch hẹn</h2>
+                <p class="support-hint" th:text="|${appointments.totalElements} lịch hẹn phù hợp · Thời gian theo giờ Việt Nam|"></p></div>
+            <span class="support-appointment-pending" th:text="|${pendingAppointmentCount} chờ xác nhận|"></span>
+        </header>
+        <form class="support-appointment-filters" aria-label="Lọc lịch hẹn theo trạng thái" method="get" th:action="@{/admin/support}">
+            <input type="hidden" name="tab" value="appointments">
+            <label for="appointment-status-filter">Trạng thái</label>
+            <select id="appointment-status-filter" name="status">
+                <option value="">Tất cả</option>
+                <option th:each="value : ${appointmentStatuses}" th:value="${value.name()}" th:selected="${appointmentStatus == value.name()}" th:text="${value.label}"></option>
+            </select>
+            <button type="submit" class="support-button support-button--secondary">Lọc lịch hẹn</button>
+        </form>
+        <section class="support-appointment-detail" id="appointment-detail-panel" aria-labelledby="appointment-detail-title"
+                 th:if="${appointmentDetails != null}" th:with="record=${appointmentDetails.appointment}">
+            <header class="support-appointment-detail__heading">
+                <div><h3 id="appointment-detail-title" th:text="|Chi tiết lịch hẹn #${record.id}|"></h3>
+                    <span class="support-status" th:attr="data-status=${record.status}" th:text="${record.statusLabel}"></span></div>
+                <a class="support-appointment-detail-link" th:href="@{/admin/support(tab='appointments',status=${appointmentStatus},page=${appointments.number})}">Đóng chi tiết</a>
+            </header>
+            <dl class="support-appointment-detail__facts">
+                <div><dt>Khách hàng</dt><dd th:text="${record.fullName}"></dd></div>
+                <div><dt>Số điện thoại</dt><dd th:text="${record.phone}"></dd></div>
+                <div><dt>Email</dt><dd th:text="${record.email}"></dd></div>
+                <div><dt>Tài khoản sở hữu</dt><dd th:text="${record.customerId == null ? 'Chưa liên kết tài khoản' : 'Tài khoản #' + record.customerId}"></dd></div>
+                <div><dt>Loại hỗ trợ</dt><dd th:text="${record.supportType}"></dd></div>
+                <div><dt>Cửa hàng mong muốn</dt><dd th:text="${record.showroom != null ? record.showroom : 'Chưa chọn cửa hàng'}"></dd></div>
+                <div><dt>Thời gian hẹn</dt><dd th:text="${#temporals.format(record.appointmentDate, 'dd/MM/yyyy') + ' ' + #temporals.format(record.appointmentTime, 'HH:mm')}"></dd></div>
+                <div><dt>Ngày gửi yêu cầu</dt><dd th:text="${#temporals.format(record.createdAt, 'dd/MM/yyyy HH:mm')}"></dd></div>
+                <div th:if="${record.durationMinutes != null}"><dt>Thời lượng</dt><dd th:text="|${record.durationMinutes} phút|"></dd></div>
+                <div><dt>Cập nhật gần nhất</dt><dd th:text="${#temporals.format(record.updatedAt, 'dd/MM/yyyy HH:mm')}"></dd></div>
+                <div class="support-appointment-detail__wide"><dt>Nội dung hỗ trợ</dt><dd th:text="${record.description != null ? record.description : 'Chưa có ghi chú'}"></dd></div>
+                <div class="support-appointment-detail__wide" th:if="${record.statusReason}"><dt>Lý do cập nhật</dt><dd th:text="${record.statusReason}"></dd></div>
+            </dl>
+            <h4>Lịch sử cập nhật</h4>
+            <p class="support-hint" th:if="${#lists.isEmpty(appointmentDetails.history)}">Chưa có lịch sử cập nhật cho lịch hẹn này.</p>
+            <ol class="support-appointment-timeline" th:if="${!#lists.isEmpty(appointmentDetails.history)}">
+                <li th:each="event : ${appointmentDetails.history}">
+                    <strong th:text="${event.statusLabel}"></strong>
+                    <span class="support-hint" th:text="${#temporals.format(event.changedAt, 'dd/MM/yyyy HH:mm') + ' · ' + (event.actorRole == 'ADMIN' ? 'Nhân viên LAPZONE' : (event.actorRole == 'USER' ? 'Khách hàng' : 'Khách vãng lai'))}"></span>
+                    <p th:if="${event.reason}" th:text="${event.reason}"></p>
+                </li>
+            </ol>
+        </section>
+        <div class="support-appointment-table-wrap">
+            <table class="support-appointment-table">
+                <thead><tr><th scope="col">Mã lịch hẹn</th><th scope="col">Khách hàng</th><th scope="col">Thời gian hẹn</th><th scope="col">Nhu cầu hỗ trợ</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
+                <tbody><tr th:each="item : ${appointments.content}">
+                    <td><a class="support-appointment-detail-link" th:href="@{/admin/support(tab='appointments',status=${appointmentStatus},page=${appointments.number},appointmentId=${item.id})} + '#appointment-detail-panel'" th:text="|#${item.id}|"></a></td>
+                    <td><strong th:text="${item.fullName}"></strong><p class="support-hint" th:text="${item.phone}"></p><p class="support-hint" th:text="${item.email}"></p></td>
+                    <td><time th:text="${#temporals.format(item.appointmentDate, 'dd/MM/yyyy') + ' ' + #temporals.format(item.appointmentTime, 'HH:mm')}"></time>
+                        <p class="support-hint" th:text="${item.showroom != null ? item.showroom : 'Chưa chọn cửa hàng'}"></p></td>
+                    <td><span th:text="${item.supportType}"></span><p class="support-hint" th:if="${item.description}" th:text="${item.description}"></p></td>
+                    <td><span class="support-status" th:attr="data-status=${item.status}" th:text="${item.statusLabel}"></span>
+                        <p class="support-hint" th:if="${item.statusReason}" th:text="${item.statusReason}"></p></td>
+                    <td><a class="support-appointment-detail-link" th:href="@{/admin/support(tab='appointments',status=${appointmentStatus},page=${appointments.number},appointmentId=${item.id})} + '#appointment-detail-panel'">Xem chi tiết</a>
+                        <details class="support-appointment-action" th:if="${!#lists.isEmpty(item.adminActions)}"><summary>Cập nhật trạng thái</summary>
+                        <form class="support-form" data-appointment-status-form th:attr="data-appointment-id=${item.id}" method="post" th:action="@{/admin/support/appointments/{id}/status(id=${item.id})}">
+                            <input type="hidden" name="filterStatus" th:value="${appointmentStatus}">
+                            <input type="hidden" name="page" th:value="${appointments.number}">
+                            <input type="hidden" name="appointmentId" th:value="${item.id}" th:if="${appointmentDetails != null && appointmentDetails.appointment.id == item.id}">
+                            <label th:for="|appointment-action-${item.id}|">Trạng thái mới</label>
+                            <select name="status" th:id="|appointment-action-${item.id}|" required>
+                                <th:block th:each="value : ${appointmentStatuses}"><option th:if="${#lists.contains(item.adminActions, value.name())}" th:value="${value.name()}" th:text="${value.label}"></option></th:block>
+                            </select>
+                            <label th:if="${item.showroom == null && #lists.contains(item.adminActions, 'CONFIRMED')}" th:for="|appointment-showroom-${item.id}|">Cửa hàng xác nhận</label>
+                            <input th:if="${item.showroom == null && #lists.contains(item.adminActions, 'CONFIRMED')}" th:id="|appointment-showroom-${item.id}|" name="showroom" maxlength="200" placeholder="Tên cửa hàng khi xác nhận">
+                            <label th:for="|appointment-reason-${item.id}|">Lý do <span class="support-hint">(bắt buộc khi từ chối)</span></label>
+                            <textarea name="reason" th:id="|appointment-reason-${item.id}|" rows="2" maxlength="2000" th:required="${item.adminActions[0] == 'REJECTED'}"></textarea>
+                            <button class="support-button" type="submit">Lưu trạng thái</button>
+                        </form>
+                    </details><p class="support-hint" th:if="${#lists.isEmpty(item.adminActions)}" th:text="${item.status == 'CONFIRMED' ? 'Chỉ có thể hoàn thành khi đã đến giờ hẹn.' : 'Không còn thao tác cập nhật.'}"></p></td>
+                </tr><tr th:if="${#lists.isEmpty(appointments.content)}"><td colspan="6"><div class="support-appointment-empty">
+                    <i class="fa-regular fa-calendar-xmark" aria-hidden="true"></i>
+                    <strong>Chưa có lịch hẹn phù hợp</strong>
+                    <span>Lịch hẹn gửi từ trang đặt lịch sẽ xuất hiện tại đây. Bạn có thể chọn trạng thái khác để xem thêm.</span>
+                </div></td></tr></tbody>
+            </table>
+        </div>
+        <nav class="support-pagination" aria-label="Phân trang lịch hẹn" th:if="${appointments.totalPages > 1}">
+            <a th:if="${appointments.hasPrevious}" th:href="@{/admin/support(tab='appointments',status=${appointmentStatus},page=${appointments.number - 1})}">← Trang trước</a>
+            <span th:text="|Trang ${appointments.number + 1} / ${appointments.totalPages}|"></span>
+            <a th:if="${appointments.hasNext}" th:href="@{/admin/support(tab='appointments',status=${appointmentStatus},page=${appointments.number + 1})}">Trang sau →</a>
+        </nav>
+    </section>
 </main>
 <div th:if="${!adminView}" th:insert="~{fragments/footer :: footer_lapzone}"></div>
 </body>

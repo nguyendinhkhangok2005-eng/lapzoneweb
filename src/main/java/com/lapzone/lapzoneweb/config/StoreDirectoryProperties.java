@@ -27,6 +27,26 @@ public class StoreDirectoryProperties {
         private String address;
         private String phone;
         private String openingHours;
+        // Optional booking rules. No capacity or duration is assumed when absent.
+        private Integer appointmentCapacity;
+        private Integer appointmentDurationMinutes;
+        private java.time.LocalTime appointmentOpensAt;
+        private java.time.LocalTime appointmentClosesAt;
+        private java.util.Set<java.time.DayOfWeek> appointmentDays;
+        private boolean appointmentsEnabled = true;
+
+        public Integer getAppointmentCapacity() { return appointmentCapacity; }
+        public void setAppointmentCapacity(Integer value) { appointmentCapacity = value; }
+        public Integer getAppointmentDurationMinutes() { return appointmentDurationMinutes; }
+        public void setAppointmentDurationMinutes(Integer value) { appointmentDurationMinutes = value; }
+        public java.time.LocalTime getAppointmentOpensAt() { return appointmentOpensAt; }
+        public void setAppointmentOpensAt(java.time.LocalTime value) { appointmentOpensAt = value; }
+        public java.time.LocalTime getAppointmentClosesAt() { return appointmentClosesAt; }
+        public void setAppointmentClosesAt(java.time.LocalTime value) { appointmentClosesAt = value; }
+        public java.util.Set<java.time.DayOfWeek> getAppointmentDays() { return appointmentDays; }
+        public void setAppointmentDays(java.util.Set<java.time.DayOfWeek> value) { appointmentDays = value; }
+        public boolean isAppointmentsEnabled() { return appointmentsEnabled; }
+        public void setAppointmentsEnabled(boolean value) { appointmentsEnabled = value; }
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }

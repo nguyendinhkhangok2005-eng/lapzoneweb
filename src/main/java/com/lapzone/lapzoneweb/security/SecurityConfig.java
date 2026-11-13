@@ -25,9 +25,18 @@ public class SecurityConfig {
                 .requestMatchers("/", "/dangnhap", "/dangki", "/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                 .requestMatchers("/cart/**", "/profile", "/profile/**", "/support", "/support/**", "/store/orders", "/store/orders/**", "/api/orders", "/api/orders/**").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/appointments", "/api/appointments/**").authenticated()
                 .anyRequest().permitAll() 
             )
             .exceptionHandling(errors -> {
+                errors.defaultAuthenticationEntryPointFor((request, response, error) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\":\"Vui lòng đăng nhập để xem lịch hẹn.\"}");
+                }, request -> {
+                    String path = request.getRequestURI().substring(request.getContextPath().length());
+                    return path.equals("/api/appointments") || path.startsWith("/api/appointments/");
+                });
                 errors.defaultAuthenticationEntryPointFor((request, response, error) -> {
                     response.setStatus(401);
                     response.setContentType("application/json;charset=UTF-8");
@@ -67,7 +76,8 @@ public class SecurityConfig {
                         && (path.startsWith("/admin/") || path.startsWith("/store/orders/") || path.startsWith("/api/orders/")
                             || (path.startsWith("/api/ai/conversations/") && (path.endsWith("/feedback") || path.endsWith("/support")))
                             || path.equals("/support") || path.startsWith("/support/") || path.equals("/checkout/process")
-                            || path.equals("/checkout/voucher-preview"));
+                            || path.equals("/checkout/voucher-preview") || path.equals("/datlich")
+                            || path.equals("/api/appointments") || path.startsWith("/api/appointments/"));
             }));
 
         return http.build();

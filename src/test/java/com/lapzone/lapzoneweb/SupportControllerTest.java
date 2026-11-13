@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SupportControllerTest {
     @Autowired MockMvc mvc;
     @MockitoBean SupportService support;
+    @MockitoBean AppointmentService appointments;
     @MockitoBean CartService carts;
     @MockitoBean CategoryRepository categories;
     @MockitoBean org.springframework.cache.CacheManager cacheManager;

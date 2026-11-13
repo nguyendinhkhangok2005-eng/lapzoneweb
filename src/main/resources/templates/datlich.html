@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <title>Đặt lịch hẹn hỗ trợ - LAPZONE</title>
     <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/appointments-customer.css}">
+    <script defer th:src="@{/js/appointments-customer.js}"></script>
 
     <style>
         .appointment-page {
@@ -207,6 +209,22 @@
                 LAPZONE luôn sẵn sàng hỗ trợ và đồng hành cùng bạn.
             </p>
 
+            <nav class="appointment-tabs" aria-label="Nội dung lịch hẹn">
+                <a th:href="@{/datlich(tab='booking')}" data-appointment-tab="booking"
+                   th:classappend="${appointmentTab == 'booking' ? ' is-active' : ''}"
+                   th:attr="aria-current=${appointmentTab == 'booking' ? 'page' : null}">
+                    <i class="fa-regular fa-calendar-plus" aria-hidden="true"></i> Đặt lịch hẹn
+                </a>
+                <a th:href="@{/datlich(tab='history')}" data-appointment-tab="history"
+                   th:classappend="${appointmentTab == 'history' ? ' is-active' : ''}"
+                   th:attr="aria-current=${appointmentTab == 'history' ? 'page' : null}">
+                    <i class="fa-regular fa-calendar-check" aria-hidden="true"></i> Lịch hẹn của tôi
+                </a>
+            </nav>
+
+            <section id="appointment-booking-panel" class="appointment-tab-panel" data-appointment-panel="booking"
+                     aria-label="Đặt lịch hẹn" th:attr="hidden=${appointmentTab == 'history' ? 'hidden' : null}">
+
             <div class="appointment-message appointment-message--success" role="status"
                  th:if="${appointmentSuccess}" th:text="${appointmentSuccess}"></div>
             <div class="appointment-message appointment-message--error" role="alert"
@@ -297,11 +315,82 @@
 
             </form>
 
+            </section>
+
+            <section id="appointment-history-panel" class="appointment-tab-panel" data-appointment-panel="history"
+                     aria-label="Lịch hẹn của tôi"
+                     th:attr="hidden=${appointmentTab == 'history' ? null : 'hidden'},data-appointments-url=@{/api/appointments},data-csrf-url=@{/api/appointments/csrf}">
+                <div class="appointment-history-heading">
+                    <div><h2>Lịch hẹn của tôi</h2><p>Xem trạng thái, thông tin chi tiết và quản lý lịch hẹn của bạn.</p></div>
+                    <span class="appointment-history-count" id="appointment-history-count" hidden></span>
+                </div>
+                <form id="appointment-history-filter" class="appointment-history-filter" action="/datlich" method="get" th:action="@{/datlich}">
+                    <input type="hidden" name="tab" value="history">
+                    <label for="appointment-history-status">Trạng thái</label>
+                    <select id="appointment-history-status" name="status">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="PENDING">Chờ xác nhận</option>
+                        <option value="CONFIRMED">Đã xác nhận</option>
+                        <option value="COMPLETED">Hoàn thành</option>
+                        <option value="REJECTED">Đã từ chối</option>
+                        <option value="CANCELLED">Đã hủy</option>
+                    </select>
+                    <button type="submit">Lọc lịch hẹn</button>
+                </form>
+                <div id="appointment-history-feedback" class="appointment-history-notice" role="status" aria-live="polite" hidden></div>
+                <div id="appointment-history-notice" class="appointment-history-notice" role="status" aria-live="polite">
+                    <span id="appointment-history-notice-text">Đang tải lịch hẹn của bạn…</span>
+                    <a id="appointment-history-login" th:href="@{/dangnhap}" hidden>Đăng nhập</a>
+                </div>
+                <div id="appointment-history-list" class="appointment-history-list" aria-live="polite"></div>
+                <nav id="appointment-history-pagination" class="appointment-history-pagination" aria-label="Phân trang lịch hẹn" hidden>
+                    <button type="button" id="appointment-history-previous">← Trang trước</button>
+                    <span id="appointment-history-page"></span>
+                    <button type="button" id="appointment-history-next">Trang sau →</button>
+                </nav>
+                <noscript><p class="appointment-history-notice">Vui lòng bật JavaScript để xem và quản lý lịch hẹn của bạn.</p></noscript>
+            </section>
+
         </div>
 
     </main>
 
     <div th:replace="~{fragments/footer :: footer_lapzone}"></div>
+
+    <template id="appointment-history-item">
+        <article class="appointment-history-item">
+            <header class="appointment-history-item__header">
+                <div><span class="appointment-history-caption">Mã lịch hẹn</span><h3 data-history-code></h3></div>
+                <span class="appointment-history-status" data-history-status></span>
+            </header>
+            <dl class="appointment-history-facts">
+                <div><dt>Ngày hẹn</dt><dd data-history-date></dd></div>
+                <div><dt>Giờ hẹn</dt><dd data-history-time></dd></div>
+                <div><dt>Loại hỗ trợ</dt><dd data-history-type></dd></div>
+                <div><dt>Cửa hàng</dt><dd data-history-showroom></dd></div>
+            </dl>
+            <p class="appointment-history-reason" data-history-reason hidden><strong>Lý do:</strong> <span></span></p>
+            <div class="appointment-history-actions">
+                <button type="button" data-history-detail aria-expanded="false">Xem chi tiết</button>
+                <button type="button" class="appointment-history-cancel" data-history-cancel hidden>Hủy lịch hẹn</button>
+            </div>
+            <section class="appointment-history-detail" data-history-detail-panel hidden></section>
+        </article>
+    </template>
+
+    <dialog id="appointment-cancel-dialog" class="appointment-cancel-dialog" aria-labelledby="appointment-cancel-title">
+        <h2 id="appointment-cancel-title">Xác nhận hủy lịch hẹn</h2>
+        <p>Bạn chỉ có thể hủy lịch đang chờ xác nhận và chưa đến giờ hẹn.</p>
+        <form id="appointment-cancel-form">
+            <label for="appointment-cancel-reason">Lý do hủy <span class="required">*</span></label>
+            <textarea id="appointment-cancel-reason" maxlength="2000" rows="4" required placeholder="Nhập lý do hủy lịch hẹn"></textarea>
+            <p id="appointment-cancel-error" class="appointment-message appointment-message--error" role="alert" hidden></p>
+            <div class="appointment-cancel-actions">
+                <button type="button" id="appointment-cancel-close">Giữ lịch hẹn</button>
+                <button type="submit" id="appointment-cancel-submit">Xác nhận hủy</button>
+            </div>
+        </form>
+    </dialog>
 
     <script>
         // Không cho phép chọn ngày trong quá khứ
