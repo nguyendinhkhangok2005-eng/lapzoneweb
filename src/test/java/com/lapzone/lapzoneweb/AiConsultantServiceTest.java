@@ -59,7 +59,14 @@ class AiConsultantServiceTest {
     @Test
     void shouldIncludeAvailableProductFactsAndConversationHistoryInGeminiRequest() {
         Product product = product(1L, "Laptop Gaming Acer Nitro", 21_990_000d, 3, "NVIDIA RTX 3050");
-        when(productRepository.findAvailableProductsForAi()).thenReturn(List.of(product));
+        AiCatalogFixture.stub(productRepository, List.of(product));
+        var facts = new java.util.HashMap<String, Object>();
+        facts.put("id", 1L); facts.put("name", product.getName()); facts.put("price", product.getPrice());
+        facts.put("stock", 3); facts.put("cpu", "Intel Core i5"); facts.put("ram", "16GB");
+        facts.put("gpu", "NVIDIA RTX 3050");
+        when(productRepository.findCurrentAiProducts(List.of(1L))).thenReturn(List.of(
+            new org.springframework.data.projection.SpelAwareProxyProjectionFactory()
+                .createProjection(ProductRepository.AiProductRow.class, facts)));
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenReturn(ResponseEntity.ok("""
                 {"candidates":[{"content":{"parts":[{"text":"{\\\"message\\\":\\\"Acer Nitro phù hợp.\\\",\\\"productIds\\\":[1]}"}]}}]}
@@ -77,9 +84,9 @@ class AiConsultantServiceTest {
         String systemText = (String) instructionPart.get("text");
         List<?> contents = (List<?>) payload.get("contents");
 
-        assertTrue(reply.startsWith("Acer Nitro phù hợp."));
+        assertTrue(reply.startsWith("Các sản phẩm phù hợp"));
         assertTrue(reply.contains("**Laptop Gaming Acer Nitro**"));
-        assertTrue(reply.contains("21.990.000 VNĐ"));
+        assertTrue(reply.contains("19.791.000 VNĐ"));
         assertTrue(reply.contains("/product_detail?id=1"));
         assertEquals("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent",
             urlCaptor.getValue());
@@ -88,7 +95,7 @@ class AiConsultantServiceTest {
             requestCaptor.getValue().getHeaders().getFirst(HttpHeaders.CONTENT_TYPE));
         assertTrue(systemText.contains("[DỮ LIỆU SẢN PHẨM HIỆN CÓ]"));
         assertTrue(systemText.contains("ID: 1"));
-        assertTrue(systemText.contains("21.990.000 VNĐ"));
+        assertTrue(systemText.contains("19.791.000 VNĐ"));
         assertTrue(systemText.contains("RAM: 16GB"));
         assertTrue(systemText.contains("CPU: Intel Core i5"));
         assertTrue(systemText.contains("NVIDIA RTX 3050"));
@@ -107,7 +114,7 @@ class AiConsultantServiceTest {
         for (long id = 1; id <= 49; id++) {
             products.add(product(id, "Laptop " + id, 10_000_000d, 1, "Integrated graphics"));
         }
-        when(productRepository.findAvailableProductsForAi()).thenReturn(products);
+        AiCatalogFixture.stub(productRepository, products);
 
         String context = aiConsultantService.buildProductContext();
 
@@ -124,9 +131,7 @@ class AiConsultantServiceTest {
             matchingProducts.add(product(id, "Gaming Acer RTX " + id, 19_000_000d, 2, "RTX 4050"));
         }
         matchingProducts.add(product(11L, "Gaming Acer RTX 11", 25_000_000d, 2, "RTX 4050"));
-        when(productRepository.countAvailableProductsForAi()).thenReturn(50L);
-        when(productRepository.findTopAvailableProductsForAi(eq("gaming"), any(Pageable.class)))
-            .thenReturn(matchingProducts);
+        AiCatalogFixture.stub(productRepository, matchingProducts);
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenReturn(ResponseEntity.ok("""
                 {"candidates":[{"content":{"parts":[{"text":"{\\\"message\\\":\\\"Gợi ý đã sẵn sàng.\\\",\\\"productIds\\\":[]}"}]}}]}
@@ -148,7 +153,7 @@ class AiConsultantServiceTest {
 
     @Test
     void shouldSwitchToFallbackImmediatelyAfterReadTimeout() {
-        when(productRepository.findAvailableProductsForAi()).thenReturn(
+        AiCatalogFixture.stub(productRepository,
             List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenThrow(new ResourceAccessException("I/O error: Read timed out",
@@ -162,14 +167,14 @@ class AiConsultantServiceTest {
         ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
         verify(restTemplate, times(2))
             .exchange(urlCaptor.capture(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class));
-        assertEquals("Đã thử lại thành công.", reply);
+        assertTrue(reply.contains("Chưa có gợi ý sản phẩm được xác thực"));
         assertTrue(urlCaptor.getAllValues().get(0).contains("/models/gemini-3.1-flash-lite:"));
         assertTrue(urlCaptor.getAllValues().get(1).contains("/models/gemini-flash-lite-latest:"));
     }
 
     @Test
     void shouldStopRetriesAndFallbackWhenTotalDeadlineExpires() {
-        when(productRepository.findAvailableProductsForAi()).thenReturn(
+        AiCatalogFixture.stub(productRepository,
             List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenAnswer(invocation -> {
@@ -188,7 +193,7 @@ class AiConsultantServiceTest {
 
     @Test
     void shouldRetryServiceUnavailableAndSucceed() {
-        when(productRepository.findAvailableProductsForAi()).thenReturn(
+        AiCatalogFixture.stub(productRepository,
             List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenThrow(serviceUnavailable())
@@ -198,14 +203,14 @@ class AiConsultantServiceTest {
 
         String reply = aiConsultantService.consult("Tư vấn laptop", List.of());
 
-        assertEquals("Gemini đã hồi phục.", reply);
+        assertTrue(reply.contains("Chưa có gợi ý sản phẩm được xác thực"));
         verify(restTemplate, times(2))
             .exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class));
     }
 
     @Test
     void shouldRetryTooManyRequestsOnce() {
-        when(productRepository.findAvailableProductsForAi()).thenReturn(
+        AiCatalogFixture.stub(productRepository,
             List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenThrow(HttpClientErrorException.create(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests",
@@ -218,14 +223,14 @@ class AiConsultantServiceTest {
 
         String reply = aiConsultantService.consult("Tư vấn laptop", List.of());
 
-        assertEquals("Đã thử lại sau giới hạn.", reply);
+        assertTrue(reply.contains("Chưa có gợi ý sản phẩm được xác thực"));
         verify(restTemplate, times(2))
             .exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class));
     }
 
     @Test
     void shouldUseFallbackModelAfterOneServiceUnavailableRetry() {
-        when(productRepository.findAvailableProductsForAi()).thenReturn(
+        AiCatalogFixture.stub(productRepository,
             List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenThrow(serviceUnavailable())
@@ -239,7 +244,7 @@ class AiConsultantServiceTest {
         ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
         verify(restTemplate, times(3))
             .exchange(urlCaptor.capture(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class));
-        assertEquals("Phản hồi từ model dự phòng.", reply);
+        assertTrue(reply.contains("Chưa có gợi ý sản phẩm được xác thực"));
         assertTrue(urlCaptor.getAllValues().subList(0, 2).stream()
             .allMatch(url -> url.contains("/models/gemini-3.1-flash-lite:")));
         assertTrue(urlCaptor.getValue().contains("/models/gemini-flash-lite-latest:"));
@@ -247,7 +252,7 @@ class AiConsultantServiceTest {
 
     @Test
     void shouldNotRetryBadRequest() {
-        when(productRepository.findAvailableProductsForAi()).thenReturn(
+        AiCatalogFixture.stub(productRepository,
             List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
         when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
             .thenThrow(HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "Bad Request",
@@ -266,7 +271,7 @@ class AiConsultantServiceTest {
 
     @Test
     void shouldNotCallGeminiWithoutAnApiKey() {
-        when(productRepository.findAvailableProductsForAi()).thenReturn(
+        AiCatalogFixture.stub(productRepository,
             List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
         AiConsultantService serviceWithoutKey =
             new AiConsultantService(productRepository, " ", restTemplate, new ObjectMapper());
@@ -279,7 +284,7 @@ class AiConsultantServiceTest {
 
     @Test
     void shouldNotSuggestProductsOutsideAnExplicitBudget() {
-        when(productRepository.findAvailableProductsForAi()).thenReturn(
+        AiCatalogFixture.stub(productRepository,
             List.of(product(1L, "Laptop Lapzone", 15_000_000d, 1, "Integrated graphics")));
 
         String reply = aiConsultantService.consult("Laptop dưới 10 triệu", List.of());

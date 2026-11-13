@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{admin/ai-knowledge-list :: knowledgeHead('Cấu hình AI | LAPZONE')}"></head>
+<body>
+<div th:replace="~{admin/sidebar :: adminSidebar}"></div>
+<main class="main-content">
+    <a class="btn btn-outline-primary mb-3" th:href="@{/admin/ai}">← Quản lý Chatbot AI</a>
+    <h1 class="h3">Cấu hình AI</h1>
+    <p class="text-muted">Tùy chỉnh cách trình bày và số sản phẩm gợi ý. Quyền truy cập, kiểm tra sản phẩm và quy tắc an toàn luôn có hiệu lực. Trang này không chứa khóa API hoặc thông tin đăng nhập.</p>
+    <section class="panel">
+        <form method="post" th:action="@{/admin/ai/settings}">
+            <input type="hidden" name="expectedVersion" th:value="${form.expectedVersion}">
+            <div class="row g-3">
+                <div class="col-md-6"><label for="style" class="form-label">Phong cách trả lời</label>
+                    <select id="style" name="style" class="form-select" required>
+                        <option th:each="style : ${styles}" th:value="${style.name()}" th:text="${style.label}" th:selected="${form.style == style.name()}"></option>
+                    </select></div>
+                <div class="col-md-6"><label for="responseLength" class="form-label">Độ dài trả lời</label>
+                    <select id="responseLength" name="responseLength" class="form-select" required>
+                        <option th:each="length : ${lengths}" th:value="${length.name()}" th:text="${length.label}" th:selected="${form.responseLength == length.name()}"></option>
+                    </select></div>
+                <div class="col-md-6"><label for="maxRecommendations" class="form-label">Số sản phẩm gợi ý tối đa</label>
+                    <input id="maxRecommendations" name="maxRecommendations" type="number" min="1" max="5" step="1" required class="form-control" th:value="${form.maxRecommendations}"></div>
+                <div class="col-md-6"><label for="highlightPromotions" class="form-label">Đánh dấu ưu đãi đủ điều kiện</label>
+                    <select id="highlightPromotions" name="highlightPromotions" class="form-select">
+                        <option value="false" th:selected="${!form.highlightPromotions}">Không</option><option value="true" th:selected="${form.highlightPromotions}">Có</option>
+                    </select></div>
+                <div class="col-md-6"><label for="suggestRelatedProducts" class="form-label">Gợi ý thêm sản phẩm liên quan</label>
+                    <select id="suggestRelatedProducts" name="suggestRelatedProducts" class="form-select">
+                        <option value="false" th:selected="${!form.suggestRelatedProducts}">Không</option><option value="true" th:selected="${form.suggestRelatedProducts}">Có</option>
+                    </select></div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+                <button type="submit" class="btn btn-outline-primary" th:formaction="@{/admin/ai/settings/preview}">Xem trước, không gọi AI</button>
+            </div>
+        </form>
+    </section>
+    <section th:if="${preview != null}" class="panel" aria-label="Bản xem trước">
+        <h2>Bản xem trước</h2><p style="white-space: pre-wrap" th:text="${preview}"></p>
+        <p class="text-muted small mb-0">Bản xem trước chưa được lưu. Không có sản phẩm hoặc số liệu giả định.</p>
+    </section>
+    <section class="panel">
+        <h2>Khôi phục mặc định</h2>
+        <p class="text-muted">Mặc định: thân thiện, độ dài trung bình, tối đa 3 sản phẩm, không đánh dấu ưu đãi, không thêm sản phẩm liên quan.</p>
+        <form method="post" th:action="@{/admin/ai/settings/reset}">
+            <input type="hidden" name="expectedVersion" th:value="${form.expectedVersion}">
+            <button type="submit" class="btn btn-outline-warning">Khôi phục cấu hình mặc định</button>
+        </form>
+    </section>
+    <section class="panel">
+        <h2>Thử với dữ liệu thật</h2>
+        <p class="text-muted">Mỗi bài kiểm tra cần thao tác riêng và được giới hạn tần suất. Chỉ sử dụng sản phẩm đã xác minh từ danh mục.</p>
+        <a class="btn btn-outline-primary" th:href="@{/admin/ai/inspector}">Mở kiểm tra gợi ý AI</a>
+    </section>
+    <section class="panel">
+        <h2>Thay đổi gần đây</h2>
+        <div class="table-responsive"><table class="table align-middle">
+            <thead><tr><th>Thời gian</th><th>Quản trị viên</th><th>Thao tác</th><th>Trước</th><th>Sau</th></tr></thead>
+            <tbody><tr th:each="entry : ${history.content}">
+                <td th:text="${entry.when}"></td><td th:text="|Mã ${entry.adminId}|"></td><td th:text="${entry.action}"></td>
+                <td style="white-space: normal; min-width: 180px" th:text="${entry.before}"></td><td style="white-space: normal; min-width: 180px" th:text="${entry.after}"></td>
+            </tr><tr th:if="${history.empty}"><td colspan="5">Chưa có lần thay đổi cấu hình nào.</td></tr></tbody>
+        </table></div><a th:href="@{/admin/ai/settings/history}">Xem toàn bộ lịch sử</a>
+    </section>
+</main></body></html>

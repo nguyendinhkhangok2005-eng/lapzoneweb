@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{admin/ai-knowledge-list :: knowledgeHead('Kết quả kiểm tra gợi ý AI | LAPZONE')}"></head>
+<body>
+<div th:replace="~{admin/sidebar :: adminSidebar}"></div>
+<main class="main-content">
+    <a class="btn btn-outline-primary mb-3" th:href="@{/admin/ai/inspector}">← Danh sách kiểm tra</a>
+    <h1 class="h3" th:text="|Bài kiểm tra số ${data.run.id}|"></h1>
+    <section class="panel">
+        <p class="fw-semibold" th:text="${data.run.question}"></p>
+        <p class="text-muted mb-1" th:text="|Bắt đầu: ${data.run.startedAt} · Kết thúc: ${data.run.finishedAt} · Giờ Việt Nam|"></p>
+        <p class="mb-0" th:text="${data.run.state}"></p>
+    </section>
+    <p class="alert alert-danger" th:if="${data.error != null}" th:text="${data.error}"></p>
+    <section th:if="${data.result == null and data.error == null}" class="panel">
+        <p>Chưa có kết quả được lưu. Tải lại trang chỉ đọc trạng thái, không gọi lại AI.</p>
+        <a class="btn btn-outline-primary" th:href="@{/admin/ai/inspector/{id}(id=${data.run.id})}">Tải lại kết quả</a>
+    </section>
+    <div th:if="${data.result != null}">
+        <section class="panel">
+            <h2>Phản hồi tư vấn</h2>
+            <p style="white-space: pre-wrap; overflow-wrap: anywhere" th:text="${data.result.reply}"></p>
+            <p class="text-muted small">Đây là phản hồi qua dịch vụ tư vấn hiện có và các sản phẩm dịch vụ trả về. Mã sản phẩm đã bị loại trước đó không được hiển thị lại.</p>
+        </section>
+        <section class="panel">
+            <h2>Phạm vi xác minh</h2>
+            <p class="small">PASS: trường được đối chiếu khớp. FAIL: có sai lệch hoặc vi phạm điều kiện. NOT VERIFIED: chưa đủ bằng chứng. Kết quả không được tính thành điểm chất lượng chủ quan.</p>
+            <div th:each="check : ${data.result.overallChecks}" class="mb-3">
+                <span class="badge bg-secondary" th:text="${check.status.label}"></span> <strong th:text="${check.label}"></strong>
+                <p class="small mt-2 mb-0" th:text="${check.note}"></p>
+            </div>
+        </section>
+        <section class="panel" th:each="report : ${data.result.products}">
+            <div class="d-flex flex-wrap align-items-start gap-3 mb-3">
+                <img th:if="${report.safeImage != null}" th:src="@{${report.safeImage}}" alt="Ảnh sản phẩm đã đối chiếu" loading="lazy" style="width: 130px; height: 100px; object-fit: contain">
+                <div><h2 th:text="${report.product.name}"></h2><p th:text="|Mã trả về: ${report.product.id}|"></p>
+                    <p th:if="${report.safeImage == null}" class="text-muted">Ảnh chưa được xác minh hoặc không có ảnh.</p>
+                    <a th:if="${report.exists}" th:href="@{/product_detail(id=${report.product.id})}" target="_blank" rel="noopener">Xem sản phẩm hiện tại</a>
+                </div>
+            </div>
+            <div class="table-responsive"><table class="table align-middle">
+                <thead><tr><th>Kiểm tra</th><th>Trạng thái</th><th>Dữ liệu DB hoặc yêu cầu</th><th>Phản hồi và ghi chú</th></tr></thead>
+                <tbody><tr th:each="check : ${report.checks}">
+                    <td style="white-space: normal; min-width: 120px" th:text="${check.label}"></td>
+                    <td><span class="badge" th:classappend="${check.status.name() == 'PASS' ? 'bg-success' : (check.status.name() == 'FAIL' ? 'bg-danger' : 'bg-secondary')}" th:text="${check.status.label}"></span></td>
+                    <td style="white-space: pre-wrap; min-width: 170px; overflow-wrap: anywhere" th:text="${check.expected}"></td>
+                    <td style="white-space: normal; min-width: 200px; overflow-wrap: anywhere"><p th:text="${check.actual}"></p><small class="text-muted" th:text="${check.note}"></small></td>
+                </tr></tbody>
+            </table></div>
+        </section>
+        <p class="small text-muted">Giá, kho và thông số trên đây là dữ liệu lúc kiểm tra; trang sản phẩm hiện tại có thể đã thay đổi. Không sửa dữ liệu sản phẩm và không huấn luyện mô hình từ kết quả này.</p>
+    </div>
+</main></body></html>

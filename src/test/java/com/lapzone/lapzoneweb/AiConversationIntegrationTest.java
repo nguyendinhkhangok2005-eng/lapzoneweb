@@ -45,7 +45,7 @@ class AiConversationIntegrationTest {
         Access owner = owner();
         String id = service.create(owner, "Private").id();
         MockHttpSession session = authenticatedSession(owner);
-        when(consultant.consult(anyString(), anyList())).thenReturn("Recommended laptop");
+        when(consultant.consultWithProducts(anyString(), anyList())).thenReturn(new AiReplyDTO("Recommended laptop"));
         mvc.perform(post("/api/ai/chat").session(session).contentType("application/json")
                 .content("{\"message\":\"laptop\",\"conversationId\":\"" + id + "\"}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.conversationId").value(id))
@@ -66,13 +66,13 @@ class AiConversationIntegrationTest {
                 .content("{\"message\":\"secret\",\"conversationId\":\"" + id + "\"}"))
                 .andExpect(status().isNotFound());
         }
-        verify(consultant, times(1)).consult(anyString(), anyList());
+        verify(consultant, times(1)).consultWithProducts(anyString(), anyList());
     }
 
     @Test
     void guestHttpLifecycleAndLegacyDefaultsStaySeparateAcrossLogin() throws Exception {
         MockHttpSession session = new MockHttpSession();
-        when(consultant.consult(anyString(), anyList())).thenReturn("reply");
+        when(consultant.consultWithProducts(anyString(), anyList())).thenReturn(new AiReplyDTO("reply"));
         mvc.perform(post("/api/ai/conversations").session(session).contentType("application/json")
                 .content("{\"title\":\"Guest title\"}"))
             .andExpect(status().isCreated()).andExpect(header().exists("Location"))
@@ -94,7 +94,7 @@ class AiConversationIntegrationTest {
         mvc.perform(post("/api/ai/chat").session(session).contentType("application/json")
                 .content("{\"message\":\"owner question\"}"))
             .andExpect(status().isOk());
-        verify(consultant).consult("owner question", List.of());
+        verify(consultant).consultWithProducts("owner question", List.of());
         mvc.perform(get("/api/ai/conversations/" + guestId).session(session)).andExpect(status().isNotFound());
         String ownerId = (String) session.getAttribute("lapzoneAiDefaultConversation:" + owner.ownerId());
         mvc.perform(post("/api/chat/reset").session(session).param("conversationId", ownerId))
@@ -119,17 +119,17 @@ class AiConversationIntegrationTest {
         Access access = guest();
         String first = service.create(access, "Gaming").id();
         String second = service.create(access, "Office").id();
-        when(consultant.consult(anyString(), anyList())).thenAnswer(call -> "reply-" + call.getArgument(0));
+        when(consultant.consultWithProducts(anyString(), anyList())).thenAnswer(call -> new AiReplyDTO("reply-" + call.getArgument(0)));
 
         for (int i = 1; i <= 8; i++) service.chat(first, access, "question-" + i);
         service.chat(second, access, "independent");
-        verify(consultant).consult("independent", List.of());
+        verify(consultant).consultWithProducts("independent", List.of());
         List<ChatMessageDTO> expected = new ArrayList<>();
         for (int i = 2; i <= 7; i++) {
             expected.add(new ChatMessageDTO("user", "question-" + i));
             expected.add(new ChatMessageDTO("model", "reply-question-" + i));
         }
-        verify(consultant).consult("question-8", expected);
+        verify(consultant).consultWithProducts(eq("question-8"), argThat(actual -> actual.stream().map(m -> new ChatMessageDTO(m.role(), m.text())).toList().equals(expected)));
 
         entityManager.flush();
         entityManager.clear();
@@ -177,7 +177,7 @@ class AiConversationIntegrationTest {
         Access access = guest();
         String first = service.create(access, null).id();
         String second = service.create(access, "Keep").id();
-        when(consultant.consult(anyString(), anyList())).thenReturn("reply");
+        when(consultant.consultWithProducts(anyString(), anyList())).thenReturn(new AiReplyDTO("reply"));
         service.chat(first, access, "first");
         service.chat(second, access, "second");
         assertEquals("Renamed", service.rename(first, access, " Renamed ").title());

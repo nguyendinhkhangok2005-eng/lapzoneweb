@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{admin/ai-knowledge-list :: knowledgeHead('Lịch sử cấu hình AI | LAPZONE')}"></head>
+<body>
+<div th:replace="~{admin/sidebar :: adminSidebar}"></div>
+<main class="main-content">
+    <a class="btn btn-outline-primary mb-3" th:href="@{/admin/ai/settings}">← Cấu hình AI</a>
+    <h1 class="h3">Lịch sử thay đổi cấu hình AI</h1>
+    <section class="panel"><div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th>Thời gian</th><th>Quản trị viên</th><th>Thao tác</th><th>Trước</th><th>Sau</th></tr></thead>
+        <tbody><tr th:each="entry : ${history.content}">
+            <td th:text="${entry.when}"></td><td th:text="|Mã ${entry.adminId}|"></td><td th:text="${entry.action}"></td>
+            <td style="white-space: normal; min-width: 180px" th:text="${entry.before}"></td><td style="white-space: normal; min-width: 180px" th:text="${entry.after}"></td>
+        </tr><tr th:if="${history.empty}"><td colspan="5">Chưa có lần thay đổi cấu hình nào.</td></tr></tbody>
+    </table></div>
+        <nav class="d-flex justify-content-between align-items-center" aria-label="Trang lịch sử cấu hình">
+            <a th:if="${history.hasPrevious()}" th:href="@{/admin/ai/settings/history(page=${history.number - 1})}">Trước</a><span th:unless="${history.hasPrevious()}"></span>
+            <span th:text="${'Trang ' + (history.number + 1) + ' / ' + (history.totalPages == 0 ? 1 : history.totalPages)}"></span>
+            <a th:if="${history.hasNext()}" th:href="@{/admin/ai/settings/history(page=${history.number + 1})}">Sau</a><span th:unless="${history.hasNext()}"></span>
+        </nav>
+    </section>
+</main></body></html>

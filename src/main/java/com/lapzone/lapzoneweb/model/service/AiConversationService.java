@@ -2,6 +2,7 @@ package com.lapzone.lapzoneweb.model.service;
 
 import com.lapzone.lapzoneweb.model.dto.ChatMessageDTO;
 import com.lapzone.lapzoneweb.model.dto.ConversationDTO;
+import com.lapzone.lapzoneweb.model.dto.AiReplyDTO;
 import com.lapzone.lapzoneweb.model.entity.*;
 import com.lapzone.lapzoneweb.model.repository.*;
 import org.springframework.data.domain.PageRequest;
@@ -14,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Service
-@Transactional
+@Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
 public class AiConversationService {
     public record Access(Long ownerId, String guestKey) {
         public Access {
@@ -56,8 +57,8 @@ public class AiConversationService {
     @Transactional(readOnly = true)
     public ConversationDTO.Detail retrieve(String id, Access access) {
         AiConversation conversation = require(id, access, false);
-        return new ConversationDTO.Detail(dto(conversation),
-            messages.findByConversationIdOrderByIdAsc(id).stream().map(m -> messageDto(id, m)).toList());
+        List<AiMessage> history = messages.findByConversationIdOrderByIdAsc(id);
+        return new ConversationDTO.Detail(dto(conversation), messageDtos(id, history));
     }
 
     public ConversationDTO rename(String id, Access access, String title) {
@@ -79,18 +80,24 @@ public class AiConversationService {
     }
 
     public String chat(String id, Access access, String question) {
+        return chatWithProducts(id, access, question).reply();
+    }
+
+    public AiReplyDTO chatWithProducts(String id, Access access, String question) {
         // Lock the conversation through the AI call and atomic pair insert. Concurrent sends,
         // rename, reset and delete for this ID serialize across application instances.
         AiConversation conversation = require(id, access, true);
         List<AiMessage> recent = new ArrayList<>(messages.findTop12ByConversationIdOrderByIdDesc(id));
         Collections.reverse(recent);
-        List<ChatMessageDTO> context = recent.stream()
-            .map(m -> new ChatMessageDTO(m.getRole(), m.getText())).toList();
-        String reply = consultant.consult(question, context);
+        List<ChatMessageDTO> context = messageDtos(id, recent);
+        AiReplyDTO reply = consultant.consultWithProducts(question, context);
         messages.save(new AiMessage(conversation, "user", question));
-        messages.save(new AiMessage(conversation, "model", reply));
+        AiMessage answer = new AiMessage(conversation, "model", reply.reply());
+        answer.setSupportOffered(reply.supportOffered());
+        answer.setProductIds(reply.products().stream().map(p -> p.id().toString()).collect(java.util.stream.Collectors.joining(",")));
+        messages.save(answer);
         conversation.touch();
-        return reply;
+        return new AiReplyDTO(reply.reply(), reply.products(), answer.getId(), reply.supportOffered());
     }
 
     private AiConversation require(String id, Access access, boolean lock) {
@@ -112,7 +119,21 @@ public class AiConversationService {
         return new ConversationDTO(c.getId(), c.getTitle(), c.getCreatedAt(), c.getUpdatedAt());
     }
 
-    private ChatMessageDTO messageDto(String id, AiMessage m) {
-        return new ChatMessageDTO(m.getRole(), m.getText(), id, m.getCreatedAt());
+    private List<Long> productIds(AiMessage message) {
+        return message.getProductIds() == null || message.getProductIds().isBlank() ? List.of()
+            : java.util.Arrays.stream(message.getProductIds().split(",")).map(Long::valueOf).toList();
+    }
+
+    private List<ChatMessageDTO> messageDtos(String id, List<AiMessage> history) {
+        List<Long> ids = history.stream().flatMap(m -> productIds(m).stream()).distinct().toList();
+        boolean highlight = !ids.isEmpty() && consultant.currentPromotionHighlightEnabled();
+        java.util.Map<Long, com.lapzone.lapzoneweb.model.dto.AiProductDTO> products = new java.util.HashMap<>();
+        for (int start = 0; start < ids.size(); start += 100) {
+            for (var product : consultant.currentProducts(ids.subList(start, Math.min(start + 100, ids.size())), highlight))
+                products.put(product.id(), product);
+        }
+        return history.stream().map(m -> new ChatMessageDTO(m.getRole(), m.getText(), id, m.getCreatedAt(),
+            productIds(m).stream().map(products::get).filter(java.util.Objects::nonNull).toList(),
+            m.getId(), m.isSupportOffered())).toList();
     }
 }

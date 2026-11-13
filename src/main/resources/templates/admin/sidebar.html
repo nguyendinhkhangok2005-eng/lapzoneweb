@@ -1,49 +1,76 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-
-</style>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <body>
-
-  <div th:fragment="adminSidebar" class="sidebar">
+<div th:fragment="adminSidebar" class="sidebar">
+    <link rel="stylesheet" th:href="@{/css/admin-ai-navigation.css}">
     <div class="sidebar-header">LAPZONE ADMIN</div>
-    
+
     <a th:href="@{/admin/dashboard}" class="menu-item">
-        <i class="fas fa-chart-line"></i> Tổng quan
+        <i class="fas fa-chart-line" aria-hidden="true"></i><span>Tổng quan</span>
     </a>
-    
+
     <a th:href="@{/admin/products}" class="menu-item">
-        <i class="fas fa-laptop"></i> Quản lý sản phẩm
+        <i class="fas fa-laptop" aria-hidden="true"></i><span>Quản lý sản phẩm</span>
     </a>
-    
+
     <a th:href="@{/admin/users}" class="menu-item">
-        <i class="fas fa-users-cog"></i> Quản lý khách hàng
+        <i class="fas fa-users-cog" aria-hidden="true"></i><span>Quản lý khách hàng</span>
     </a>
-    
+
     <a th:href="@{/admin/orders}" class="menu-item">
-        <i class="fas fa-boxes"></i> Quản lý Đơn hàng
+        <i class="fas fa-boxes" aria-hidden="true"></i><span>Quản lý Đơn hàng</span>
     </a>
 
     <a th:href="@{/admin/vouchers}" class="menu-item">
-        <i class="fas fa-ticket-alt"></i> Quản lý mã giảm giá
+        <i class="fas fa-ticket-alt" aria-hidden="true"></i><span>Quản lý mã giảm giá</span>
     </a>
 
     <a th:href="@{/admin/support}" class="menu-item">
-        <i class="fas fa-comments"></i> Hỗ trợ khách hàng
+        <i class="fas fa-comments" aria-hidden="true"></i><span>Hỗ trợ khách hàng</span>
     </a>
-    <a th:href="@{/admin/returns}" class="menu-item"><i class="fas fa-rotate-left"></i> Trả hàng và hoàn tiền</a>
+
+    <section class="admin-ai-navigation" data-admin-ai-navigation>
+        <button class="menu-item admin-ai-toggle" type="button" aria-expanded="true" aria-controls="admin-ai-submenu">
+            <i class="fas fa-robot" aria-hidden="true"></i>
+            <span class="admin-ai-toggle__label">Quản lý Chatbot AI</span>
+            <i class="fas fa-chevron-down admin-ai-toggle__chevron" aria-hidden="true"></i>
+        </button>
+        <div class="admin-ai-submenu is-expanded" id="admin-ai-submenu">
+            <div class="admin-ai-submenu__inner">
+                <a th:href="@{/admin/ai}" class="admin-ai-submenu__item" data-ai-route="/admin/ai" data-ai-route-mode="exact">
+                    <i class="fas fa-chart-line" aria-hidden="true"></i><span>Tổng quan AI</span>
+                </a>
+                <a th:href="@{/admin/ai/feedback}" class="admin-ai-submenu__item" data-ai-route="/admin/ai/feedback">
+                    <i class="fas fa-thumbs-up" aria-hidden="true"></i><span>Phản hồi khách hàng</span>
+                </a>
+                <a th:href="@{/admin/ai/knowledge}" class="admin-ai-submenu__item" data-ai-route="/admin/ai/knowledge">
+                    <i class="fas fa-book" aria-hidden="true"></i><span>Kiến thức AI</span>
+                </a>
+                <a th:href="@{/admin/ai/inspector}" class="admin-ai-submenu__item" data-ai-route="/admin/ai/inspector">
+                    <i class="fas fa-check-double" aria-hidden="true"></i><span>Kiểm tra gợi ý AI</span>
+                </a>
+                <a th:href="@{/admin/ai/settings}" class="admin-ai-submenu__item" data-ai-route="/admin/ai/settings">
+                    <i class="fas fa-sliders" aria-hidden="true"></i><span>Cấu hình AI</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <a th:href="@{/admin/returns}" class="menu-item"><i class="fas fa-rotate-left" aria-hidden="true"></i><span>Trả hàng và hoàn tiền</span></a>
 
     <a th:href="@{/admin/invoices}" class="menu-item">
-        <i class="fas fa-file-invoice-dollar"></i> Quản lý Hóa đơn
+        <i class="fas fa-file-invoice-dollar" aria-hidden="true"></i><span>Quản lý Hóa đơn</span>
     </a>
-    
-    <a th:href="@{/admin/categories}" class="menu-item">
-        <i class="fas fa-tags"></i> Quản lý Danh mục
-    </a>
-    
-    <a th:href="@{/}" class="menu-item" style="margin-top: 50px; color: #e74c3c; border-top: 1px solid #3e4f5f; padding-top: 20px;">
-        <i class="fas fa-sign-out-alt"></i> Thoát về trang chủ
-    </a>
-  </div>
 
+    <a th:href="@{/admin/categories}" class="menu-item">
+        <i class="fas fa-tags" aria-hidden="true"></i><span>Quản lý Danh mục</span>
+    </a>
+
+    <a th:href="@{/}" class="menu-item" style="margin-top: 50px; color: #e74c3c; border-top: 1px solid #3e4f5f; padding-top: 20px;">
+        <i class="fas fa-sign-out-alt" aria-hidden="true"></i><span>Thoát về trang chủ</span>
+    </a>
+
+    <script defer th:src="@{/js/admin-ai-navigation.js}"></script>
+</div>
 </body>
 </html>

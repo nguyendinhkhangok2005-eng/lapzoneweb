@@ -1,6 +1,29 @@
 <div th:fragment="chatbot_widget">
     <!-- CSS Tùy chỉnh Chatbot -->
     <style>
+        .chatbot-support { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--chatbot-border); font-size: 12px; }
+        .chatbot-support button, .chatbot-support a { display: inline-block; margin: 4px 6px 4px 0; padding: 7px 9px; border: 1px solid var(--chatbot-border); border-radius: 7px; background: var(--chatbot-input); color: var(--chatbot-text); font: inherit; cursor: pointer; }
+        .chatbot-support button:disabled { opacity: .6; cursor: default; }
+        .chatbot-support [hidden] { display: none; }
+        .chatbot-support blockquote, .chatbot-support-preview { white-space: pre-wrap; overflow-wrap: anywhere; margin: 8px 0; padding: 8px; background: var(--chatbot-canvas); border-radius: 7px; max-height: 180px; overflow-y: auto; font: inherit; }
+        .chatbot-support-context { max-height: 220px; overflow-y: auto; }
+        .chatbot-support label { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .chatbot-support input[type="checkbox"] { flex: 0 0 auto; margin-top: 3px; }
+        .chatbot-support p, .chatbot-support small { color: var(--chatbot-muted); }
+        .chatbot-feedback { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--chatbot-border); display: flex; flex-wrap: wrap; gap: 6px; }
+        .chatbot-feedback button, .chatbot-feedback select { border: 1px solid var(--chatbot-border); border-radius: 7px; padding: 6px 9px; background: var(--chatbot-input); color: var(--chatbot-text); font-size: 12px; max-width: 100%; }
+        .chatbot-feedback button[aria-pressed="true"] { font-weight: 700; border-color: var(--chatbot-text); }
+        .chatbot-feedback button:disabled { opacity: .65; }
+        .chatbot-feedback small { flex-basis: 100%; font-size: 11px; color: var(--chatbot-muted); }
+        #chatbot-messages .chatbot-promotion { display: inline-block; margin: 4px 0 8px; padding: 3px 8px; border: 1px solid var(--chatbot-border); border-radius: 999px; background: var(--chatbot-canvas); color: var(--chatbot-text); font-size: 12px; font-weight: 700; }
+        .chatbot-feedback-reasons { flex-basis: 100%; }
+        #chatbot-messages .chatbot-products { display: grid; gap: 12px; margin-top: 12px; }
+        #chatbot-messages .chatbot-product-card { padding: 12px; min-width: 0; text-align: left; }
+        #chatbot-messages .chatbot-product-card .product-img-wrapper { height: 130px; display: grid; place-items: center; }
+        #chatbot-messages .chatbot-product-card .product-img { max-width: 100%; height: 120px; object-fit: contain; }
+        #chatbot-messages .chatbot-product-card .product-title { height: auto; margin: 8px 0; }
+        #chatbot-messages .chatbot-product-card dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 12px; }
+        #chatbot-messages .chatbot-product-card dd { margin: 0; overflow-wrap: anywhere; }
         /* Only the website preset inherits page colors; explicit palettes use fixed tokens. */
         #chatbot-window, #chatbot-btn, .chatbot-background-preview {
             --chatbot-surface: var(--bg-card, #ffffff);
@@ -616,6 +639,8 @@
 
     <!-- Script điều khiển Bật/Tắt -->
     <!-- Script điều khiển Bật/Tắt & Gửi tin nhắn -->
+<script th:src="@{/js/chatbot-feedback.js}"></script>
+<script th:src="@{/js/chatbot-support.js}"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const btn = document.getElementById("chatbot-btn");
@@ -912,11 +937,17 @@
             messages.replaceChildren();
             try {
                 const detail = await apiRequest(`/api/ai/conversations/${encodeURIComponent(conversationId)}`);
+                const votes = await apiRequest(`/api/ai/conversations/${encodeURIComponent(conversationId)}/feedback`).catch(() => null);
                 if (requestVersion !== selectionVersion) return;
                 activeConversationId = detail.conversation.id;
                 (detail.messages || []).forEach(message => {
                     const bubble = appendMessage(message.text, message.role === "user" ? "user" : "bot");
-                    if (message.role !== "user") bubble.innerHTML = formatBotReply(message.text || "");
+                    if (message.role !== "user") {
+                        renderBotMessage(bubble, message.text, message.products);
+                        window.LapzoneAiFeedback?.attach(bubble, message.id, conversationId,
+                            votes?.find(vote => vote.messageId === message.id), votes === null);
+                        window.LapzoneAiSupport?.attach(bubble, message.id, conversationId, message.supportOffered);
+                    }
                 });
                 if (!detail.messages || !detail.messages.length) showWelcomeMessage();
                 renderConversationList();
@@ -1071,7 +1102,9 @@
                 });
 
                 if (activeConversationId === requestConversationId && loadingDiv.isConnected) {
-                    loadingDiv.innerHTML = formatBotReply(data.reply || "Không có phản hồi từ AI");
+                    renderBotMessage(loadingDiv, data.reply || "Không có phản hồi từ AI", data.products);
+                    window.LapzoneAiFeedback?.attach(loadingDiv, data.messageId, requestConversationId);
+                    window.LapzoneAiSupport?.attach(loadingDiv, data.messageId, requestConversationId, data.supportOffered);
                 }
                 refreshAfterChat();
             } catch (error) {
@@ -1106,6 +1139,67 @@
             messages.appendChild(msgDiv);
             messages.scrollTop = messages.scrollHeight;
             return msgDiv;
+        }
+
+        function renderBotMessage(bubble, text, products) {
+            bubble.innerHTML = formatBotReply(text || "");
+            if (!Array.isArray(products) || !products.length) return;
+            const cards = document.createElement("div");
+            cards.className = "chatbot-products";
+            for (const product of products) {
+                if (!Number.isSafeInteger(product.id) || product.id <= 0
+                    || product.detailUrl !== `/product_detail?id=${product.id}`) continue;
+                // Reuse the storefront card structure/classes; every fact is from the API.
+                const card = document.createElement("article");
+                card.className = "product-card chatbot-product-card";
+                const link = document.createElement("a");
+                link.className = "home-product-link";
+                link.href = product.detailUrl;
+                const imageBox = document.createElement("div");
+                imageBox.className = "product-img-wrapper";
+                if (typeof product.imageUrl === "string" && /^\/(assets|uploads)\//.test(product.imageUrl)) {
+                    const image = document.createElement("img");
+                    image.className = "product-img";
+                    image.src = product.imageUrl;
+                    image.alt = product.name || "";
+                    image.loading = "lazy";
+                    image.addEventListener("error", () => { imageBox.textContent = "Chưa có ảnh"; });
+                    imageBox.appendChild(image);
+                } else imageBox.textContent = "Chưa có ảnh";
+                const title = document.createElement("h3");
+                title.className = "product-title";
+                title.textContent = product.name || "";
+                const price = document.createElement("div");
+                price.className = "product-price";
+                price.textContent = Number.isFinite(product.price) && product.price > 0
+                    ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(product.price)
+                    : "Giá chưa cập nhật";
+                const stock = document.createElement("div");
+                stock.className = "product-meta";
+                stock.textContent = product.available && product.stock > 0 ? `Còn hàng: ${product.stock}`
+                    : product.stock === null ? "Tồn kho chưa cập nhật" : "Hiện không còn hàng";
+                link.append(imageBox, title, price);
+                card.append(link, stock);
+                if (Number.isInteger(product.promotionPercent) && product.promotionPercent > 0 && product.promotionPercent <= 100) {
+                    const promotion = document.createElement("span");
+                    promotion.className = "chatbot-promotion";
+                    promotion.textContent = `Ưu đãi ${product.promotionPercent}%`;
+                    card.appendChild(promotion);
+                }
+                const specs = document.createElement("dl");
+                specs.className = "product-meta";
+                for (const [label, value] of Object.entries(product.specifications || {})) {
+                    const term = document.createElement("dt");
+                    term.textContent = label;
+                    const description = document.createElement("dd");
+                    description.textContent = value;
+                    specs.append(term, description);
+                }
+                card.appendChild(specs);
+                cards.appendChild(card);
+            }
+            bubble.appendChild(cards);
+            messages.scrollTop = messages.scrollHeight;
         }
 
         function escapeHtml(text) {

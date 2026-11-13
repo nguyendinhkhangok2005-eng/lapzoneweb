@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "ai_messages", indexes = @Index(name = "idx_ai_message_conversation", columnList = "conversation_id,id"))
+@Table(name = "ai_messages", indexes = {
+    @Index(name = "idx_ai_message_conversation", columnList = "conversation_id,id"),
+    @Index(name = "idx_ai_message_created", columnList = "created_at,role")
+})
 public class AiMessage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,6 +23,12 @@ public class AiMessage {
     @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String text;
 
+    @Column(name = "product_ids", length = 100)
+    private String productIds;
+
+    @Column(name = "support_offered", nullable = false, columnDefinition = "boolean default false")
+    private boolean supportOffered;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -33,6 +42,11 @@ public class AiMessage {
     }
 
     public String getRole() { return role; }
+    public Long getId() { return id; }
+    public boolean isSupportOffered() { return supportOffered; }
+    public void setSupportOffered(boolean supportOffered) { this.supportOffered = supportOffered; }
+    public String getProductIds() { return productIds; }
+    public void setProductIds(String productIds) { this.productIds = productIds; }
     public String getText() { return text; }
     public Instant getCreatedAt() { return createdAt; }
 }

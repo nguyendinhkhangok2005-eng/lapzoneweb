@@ -12,9 +12,42 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
-    @EntityGraph(attributePaths = {"category", "productDetail"})
-    @Query("SELECT p FROM Product p WHERE p.stock > 0")
-    List<Product> findAvailableProductsForAi();
+    // Scalar projection deliberately reads current database values even when the
+    // conversation transaction has already loaded Product entities before the AI call.
+    interface AiProductRow {
+        Long getId(); String getName(); Double getPrice(); Integer getStock();
+        String getImage(); String getGalleryImage(); String getCategoryName();
+        String getCpu(); String getGpu(); String getRam(); String getStorage();
+        String getScreen(); String getBattery(); String getAudio(); String getPorts();
+        String getWireless(); String getWeight(); String getColor();
+        String getConditionStatus(); String getWarranty(); String getMoreInfo();
+        Long getDetailId();
+    }
+
+    @Query("""
+        select p.id as id, p.name as name, p.price as price, p.stock as stock,
+            p.image as image, pi.imageUrl as galleryImage, c.name as categoryName,
+            d.cpu as cpu, d.gpu as gpu, d.ram as ram, d.storage as storage,
+            d.screen as screen, d.battery as battery, d.audio as audio, d.ports as ports,
+            d.wireless as wireless, d.weight as weight, d.color as color,
+            d.conditionStatus as conditionStatus, d.warranty as warranty, d.moreInfo as moreInfo
+        from Product p left join p.category c left join p.productDetail d left join p.images pi
+        where p.id in :ids order by p.id, pi.id
+        """)
+    List<AiProductRow> findCurrentAiProducts(@Param("ids") List<Long> ids);
+
+    // Keyset batches avoid retaining the full catalog (or managed entities) in a chat transaction.
+    @Query("""
+        select p.id as id, p.name as name, p.price as price, p.stock as stock,
+            c.name as categoryName, d.id as detailId,
+            d.cpu as cpu, d.gpu as gpu, d.ram as ram, d.storage as storage,
+            d.screen as screen, d.battery as battery, d.audio as audio, d.ports as ports,
+            d.wireless as wireless, d.weight as weight, d.color as color,
+            d.conditionStatus as conditionStatus, d.warranty as warranty, d.moreInfo as moreInfo
+        from Product p left join p.category c left join p.productDetail d
+        where p.stock > 0 and p.id > :afterId order by p.id
+        """)
+    List<AiProductRow> findAvailableProductsForAiAfter(@Param("afterId") Long afterId, Pageable pageable);
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.stock > 0")
     long countAvailableProductsForAi();

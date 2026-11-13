@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{admin/ai-knowledge-list :: knowledgeHead('Biên soạn kiến thức AI | LAPZONE')}"></head>
+<body>
+<div th:replace="~{admin/sidebar :: adminSidebar}"></div>
+<main class="main-content">
+    <a class="btn btn-outline-primary mb-3" th:href="@{/admin/ai/knowledge}">← Danh sách kiến thức</a>
+    <h1 class="h3" th:text="${entry == null ? 'Tạo kiến thức AI' : 'Biên soạn kiến thức AI'}"></h1>
+    <p class="text-muted">Nhập văn bản tham khảo, không nhập mã HTML hoặc chỉ lệnh điều khiển AI. Giá, tồn kho, ảnh và cấu hình của từng sản phẩm phải lấy từ danh mục sản phẩm.</p>
+    <div th:if="${entry != null}" class="panel">
+        <strong th:text="${entry.state.label}"></strong> · <span th:text="|Phiên bản mới nhất: ${entry.currentVersion}|"></span><br>
+        <span th:text="${entry.publishedVersion == null ? 'Hiện chưa có phiên bản dùng cho chatbot.' : 'Chatbot đang dùng phiên bản ' + entry.publishedVersion + '.'}"></span>
+        <a class="d-block mt-2" th:href="@{/admin/ai/knowledge/{id}/history(id=${entry.id})}">Xem lịch sử phiên bản</a>
+    </div>
+    <section class="panel">
+        <form method="post" th:action="${entry == null} ? @{/admin/ai/knowledge} : @{/admin/ai/knowledge/{id}(id=${entry.id})}">
+            <input th:if="${entry != null}" type="hidden" name="expectedVersion" th:value="${entry.currentVersion}">
+            <fieldset th:disabled="${entry != null and entry.state.name() == 'ARCHIVED'}">
+                <div class="mb-3"><label for="title" class="form-label">Tiêu đề</label><input id="title" name="title" maxlength="160" required class="form-control" th:value="${entry == null ? '' : entry.title}"></div>
+                <div class="mb-3"><label for="category" class="form-label">Danh mục</label><select id="category" name="category" class="form-select" required>
+                    <option th:each="category : ${categories}" th:value="${category.name()}" th:text="${category.label}" th:selected="${entry != null and entry.category == category.name()}"></option>
+                </select></div>
+                <div class="mb-3"><label for="keywords" class="form-label">Từ khóa tìm kiếm</label><input id="keywords" name="keywords" maxlength="300" class="form-control" th:value="${entry == null ? '' : entry.keywords}" aria-describedby="keywords-help">
+                    <small id="keywords-help" class="text-muted">Thêm cách hỏi và từ đồng nghĩa để khách tìm đúng nội dung.</small></div>
+                <div class="mb-3"><label for="content" class="form-label">Nội dung tham khảo</label><textarea id="content" name="content" rows="12" maxlength="4000" required class="form-control" th:text="${entry == null ? '' : entry.content}"></textarea></div>
+                <button class="btn btn-primary" type="submit">Lưu bản nháp</button>
+            </fieldset>
+        </form>
+    </section>
+    <section th:if="${entry != null and entry.state.name() != 'ARCHIVED'}" class="panel">
+        <h2>Xuất bản và lưu trữ</h2>
+        <p class="text-muted">Hãy lưu bản nháp trước. Các thao tác dưới đây áp dụng cho phiên bản đã lưu trên máy chủ.</p>
+        <form th:if="${entry.publishedVersion == null or entry.publishedVersion != entry.currentVersion}" method="post" th:action="@{/admin/ai/knowledge/{id}/state(id=${entry.id})}" class="mb-3">
+            <input type="hidden" name="expectedVersion" th:value="${entry.currentVersion}"><input type="hidden" name="action" value="PUBLISH">
+            <div class="form-check mb-2"><input class="form-check-input" id="verified" type="checkbox" name="verified" value="true" required>
+                <label class="form-check-label" for="verified">Tôi đã kiểm tra tính chính xác, hiệu lực và nguồn thông tin của nội dung này.</label></div>
+            <button class="btn btn-success" type="submit">Xuất bản bản đã lưu</button>
+        </form>
+        <form th:if="${entry.publishedVersion != null}" method="post" th:action="@{/admin/ai/knowledge/{id}/state(id=${entry.id})}" class="mb-3">
+            <input type="hidden" name="expectedVersion" th:value="${entry.currentVersion}"><input type="hidden" name="action" value="UNPUBLISH">
+            <button class="btn btn-outline-warning" type="submit">Ngừng xuất bản</button>
+        </form>
+        <form method="post" th:action="@{/admin/ai/knowledge/{id}/state(id=${entry.id})}">
+            <input type="hidden" name="expectedVersion" th:value="${entry.currentVersion}"><input type="hidden" name="action" value="ARCHIVE">
+            <button class="btn btn-outline-danger" type="submit">Lưu trữ và ngừng sử dụng</button>
+            <small class="d-block mt-2 text-muted">Mục lưu trữ chỉ còn dùng để đối chiếu lịch sử, không thể xuất bản lại.</small>
+        </form>
+    </section>
+</main></body></html>

@@ -9,6 +9,8 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 public interface SupportConversationRepository extends JpaRepository<SupportConversation, Long> {
+    Optional<SupportConversation> findByAiSourceConversationIdAndAiSourceMessageIdAndCustomerId(
+        String conversationId, Long messageId, Long customerId);
     @EntityGraph(attributePaths = "customer")
     @Query("select c from SupportConversation c where :admin = true or c.customer.id = :userId")
     Page<SupportConversation> inbox(@Param("userId") Long userId, @Param("admin") boolean admin, Pageable pageable);

@@ -34,7 +34,7 @@ public class AiConsultantController {
     }
 
     @PostMapping("/api/ai/chat")
-    public ResponseEntity<Map<String, String>> chat(@RequestBody ChatRequestDTO request,
+    public ResponseEntity<Map<String, Object>> chat(@RequestBody ChatRequestDTO request,
                                                     HttpSession session,
                                                     HttpServletRequest servletRequest) {
         String question = cleanControls(request == null ? null : request.message()).strip();
@@ -68,8 +68,12 @@ public class AiConsultantController {
                 }
             }
         }
-        String reply = conversations.chat(id, access, question);
-        return ResponseEntity.ok(Map.of("reply", reply, "conversationId", id));
+        var reply = conversations.chatWithProducts(id, access, question);
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("reply", reply.reply()); response.put("conversationId", id); response.put("products", reply.products());
+        response.put("messageId", reply.messageId());
+        response.put("supportOffered", reply.supportOffered());
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/api/chat/reset")
@@ -124,7 +128,7 @@ public class AiConsultantController {
         return ResponseEntity.noContent().build();
     }
 
-    private AiConversationService.Access access(HttpSession session) {
+    static AiConversationService.Access access(HttpSession session) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()
                 && !(authentication instanceof AnonymousAuthenticationToken)) {

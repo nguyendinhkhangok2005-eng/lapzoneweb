@@ -29,6 +29,12 @@ public class SecurityConfig {
             )
             .exceptionHandling(errors -> {
                 errors.defaultAuthenticationEntryPointFor((request, response, error) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\":\"Vui lòng đăng nhập để liên hệ nhân viên hỗ trợ.\"}");
+                }, request -> request.getRequestURI().substring(request.getContextPath().length())
+                    .matches("/api/ai/conversations/[^/]+/messages/[^/]+/support"));
+                errors.defaultAuthenticationEntryPointFor((request, response, error) -> {
                 response.setStatus(401);
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write("{\"message\":\"Vui lòng đăng nhập để xem đơn hàng.\"}");
@@ -59,6 +65,7 @@ public class SecurityConfig {
                 String path = request.getRequestURI().substring(request.getContextPath().length());
                 return !java.util.Set.of("GET", "HEAD", "OPTIONS", "TRACE").contains(request.getMethod())
                         && (path.startsWith("/admin/") || path.startsWith("/store/orders/") || path.startsWith("/api/orders/")
+                            || (path.startsWith("/api/ai/conversations/") && (path.endsWith("/feedback") || path.endsWith("/support")))
                             || path.equals("/support") || path.startsWith("/support/") || path.equals("/checkout/process")
                             || path.equals("/checkout/voucher-preview"));
             }));

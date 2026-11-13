@@ -2,8 +2,42 @@
 
 The existing Spring Boot MVC / Spring Data JPA architecture, configured MySQL schema,
 `users` table and Spring Security `CustomUserDetails` principal are reused. No new
-dependencies or frontend changes are required. AI consultation, verified product
+dependencies are required. AI consultation, verified product
 recommendations, question validation and IP/global rate limits remain in place.
+
+## Database backed product recommendations
+
+Chat responses now include `products` alongside the existing `reply` and
+`conversationId`. History messages also include `products`. Each product contains
+`id`, `name`, `price`, `imageUrl`, `specifications`, `stock`, `available`, and
+`detailUrl`. Prices reuse the storefront's `PromotionService`; images use the stored
+main image or a stored `ProductImage` fallback, with no guessed filename. Missing or
+broken images display a text placeholder.
+
+The backend filters the available catalog against budget, purpose and recognized
+CPU/GPU/RAM/storage/display/other catalog requirements before limiting AI context.
+RAM/storage capacity is a minimum by default; `đúng` requires an exact capacity and
+`tối đa`/`không quá` sets a maximum. Recent user messages in this conversation retain
+constraints unless a newer requirement replaces the corresponding field. The AI
+selects structured IDs only. A fresh SQL projection revalidates those IDs, prices,
+specifications and stock after the provider call. Untrusted AI prose never supplies
+displayed product facts. No exact matches and invalidated AI selections receive
+distinct explanations; requirements are never silently relaxed.
+
+New model messages persist up to three selected IDs in `ai_messages.product_ids`.
+Reopening history resolves current catalog facts and labels unavailable items; deleted
+products disappear from the card list. Existing message text, conversation ownership
+and the 12-message AI context window are preserved. Legacy text is not parsed into IDs.
+
+For `ddl-auto=none/validate`, apply
+[the product reference migration](../src/main/resources/db/manual/20261112_ai_product_references.sql)
+before deployment. With `ddl-auto=update`, Hibernate adds the nullable column.
+Do not also run the manual ALTER after the column has already been added.
+
+Focused coverage: `AiProductRecommendationTest`, `AiProductCatalogIntegrationTest`,
+the existing AI/controller/conversation/security tests, and
+`node --test src/test/js/chatbot-products.test.cjs`. Integration tests can run against
+an isolated H2 database with the provider mocked; no live Gemini call is required.
 
 ## Endpoints
 

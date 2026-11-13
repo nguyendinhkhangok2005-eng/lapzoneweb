@@ -7,7 +7,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "ai_conversations", indexes = {
     @Index(name = "idx_ai_conversation_owner", columnList = "owner_id,updated_at"),
-    @Index(name = "idx_ai_conversation_guest", columnList = "guest_key,updated_at")
+    @Index(name = "idx_ai_conversation_guest", columnList = "guest_key,updated_at"),
+    @Index(name = "idx_ai_conversation_created", columnList = "created_at,id")
 })
 public class AiConversation {
     @Id
@@ -43,6 +44,7 @@ public class AiConversation {
 
     public String getId() { return id; }
     public String getTitle() { return title; }
+    public boolean isGuest() { return owner == null; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
     public void touch() { updatedAt = Instant.now(); }

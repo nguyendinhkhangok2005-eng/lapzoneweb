@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản lý Chatbot AI | LAPZONE Admin</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { margin: 0; background: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #24364a; }
+        .sidebar { width: 260px; height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; overflow-y: auto;
+            display: flex; flex-direction: column; background: #2c3e50; color: white; box-shadow: 2px 0 5px #0002; }
+        .sidebar-header { padding: 25px 10px; text-align: center; font-size: 20px; font-weight: 700; letter-spacing: 1.5px;
+            color: #11caa0; border-bottom: 1px solid #34495e; background: #1a252f; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 15px 25px; color: #ecf0f1;
+            text-decoration: none; font-size: 15px; }
+        .menu-item i { width: 24px; text-align: center; }
+        .menu-item:hover, .menu-item:focus { background: #34495e; color: #11caa0; }
+        .main-content { margin-left: 260px; padding: 30px; min-height: 100vh; }
+        .top-bar, .panel, .stat-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px #24364a0d; }
+        .top-bar { padding: 17px 24px; margin-bottom: 24px; }
+        .page-intro { margin-bottom: 26px; }
+        .page-intro h1 { font-size: 1.8rem; font-weight: 750; margin-bottom: 6px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(205px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { padding: 20px; border-left: 5px solid #3498db; min-width: 0; }
+        .stat-card.accent-green { border-left-color: #11caa0; }
+        .stat-card.accent-amber { border-left-color: #e3a12e; }
+        .stat-card.accent-slate { border-left-color: #94a3b8; }
+        .stat-value { font-size: clamp(1.55rem, 3vw, 2rem); line-height: 1.2; font-weight: 700; margin-bottom: 6px; }
+        .stat-label { color: #5d6b7b; font-size: .88rem; font-weight: 600; }
+        .stat-note { color: #687889; font-size: .77rem; margin: 8px 0 0; }
+        .dashboard-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; }
+        .panel { padding: 22px; min-width: 0; margin-bottom: 20px; }
+        .panel h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; }
+        .daily-chart { max-height: 600px; overflow-y: auto; }
+        .daily-row { display: grid; grid-template-columns: 58px minmax(0, 1fr) 32px; gap: 12px;
+            align-items: center; min-height: 32px; font-size: .82rem; }
+        .daily-track { background: #e9f2f4; border-radius: 999px; height: 11px; overflow: hidden; }
+        .daily-bar { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #11caa0, #3498db); }
+        .table-responsive { overflow-x: auto; }
+        .table td, .table th { white-space: nowrap; vertical-align: middle; font-size: .86rem; }
+        .na-panel { border-left: 4px solid #94a3b8; }
+        .metric-na { color: #64748b; }
+        @media (max-width: 1000px) { .dashboard-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 760px) {
+            .sidebar { position: static; width: 100%; height: auto; flex-direction: row; overflow-x: auto; }
+            .sidebar-header { flex: 0 0 auto; padding: 13px; font-size: .9rem; align-content: center; }
+            .menu-item { flex: 0 0 auto; white-space: nowrap; padding: 14px; font-size: .83rem; }
+            .main-content { margin: 0; padding: 16px; }
+            .panel { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{admin/sidebar :: adminSidebar}"></div>
+    <main class="main-content">
+        <div class="top-bar text-muted fw-semibold"><i class="fas fa-home me-2"></i> Bảng điều khiển / Quản lý Chatbot AI</div>
+        <div class="page-intro">
+            <h1>Quản lý Chatbot AI</h1>
+            <p class="text-muted mb-0">Số liệu từ các hội thoại còn lưu trong hệ thống. Thời gian theo Việt Nam (UTC+7).</p>
+        </div>
+        <nav class="mb-3 d-flex flex-wrap gap-2" aria-label="Lọc thời gian">
+            <a th:href="@{/admin/ai(period='today')}" class="btn btn-outline-primary"
+               th:classappend="${dashboard.period == 'today'} ? 'active' : ''">Hôm nay</a>
+            <a th:href="@{/admin/ai(period='7d')}" class="btn btn-outline-primary"
+               th:classappend="${dashboard.period == '7d'} ? 'active' : ''">7 ngày</a>
+            <a th:href="@{/admin/ai(period='30d')}" class="btn btn-outline-primary"
+               th:classappend="${dashboard.period == '30d'} ? 'active' : ''">30 ngày</a>
+        </nav>
+        <p class="text-muted small" th:text="|Từ ${#temporals.format(dashboard.from, 'dd/MM/yyyy')} đến ${#temporals.format(dashboard.through, 'dd/MM/yyyy')} · theo ngày tạo/tin nhắn|">Khoảng thời gian</p>
+
+        <section class="stat-grid" aria-label="Tổng quan hoạt động AI">
+            <div class="stat-card accent-green"><div class="stat-value" th:text="${dashboard.totalConversations}">0</div><div class="stat-label">Tổng hội thoại</div><p class="stat-note">Tạo trong khoảng đã chọn</p></div>
+            <div class="stat-card"><div class="stat-value" th:text="${dashboard.userMessages}">0</div><div class="stat-label">Tin nhắn người dùng</div><p class="stat-note">Tin nhắn hiện còn lưu</p></div>
+            <div class="stat-card"><div class="stat-value" th:text="${dashboard.aiResponses}">0</div><div class="stat-label">Phản hồi AI</div><p class="stat-note">Phản hồi hiện còn lưu</p></div>
+            <div class="stat-card accent-green"><div class="stat-value" th:text="${dashboard.recommendationResponses != null ? dashboard.recommendationResponses : 'N/A'}">N/A</div><div class="stat-label">Lượt gợi ý sản phẩm</div><p class="stat-note">Phản hồi có mã sản phẩm đã lưu; N/A nếu chưa có dữ liệu theo dõi</p></div>
+            <div class="stat-card accent-green"><div class="stat-value" th:text="${dashboard.feedback.positive}">0</div><div class="stat-label">Phản hồi tích cực</div><p class="stat-note">Đánh giá đã lưu trong khoảng chọn</p></div>
+            <div class="stat-card accent-amber"><div class="stat-value" th:text="${dashboard.feedback.negative}">0</div><div class="stat-label">Phản hồi tiêu cực</div><p class="stat-note">Đánh giá đã lưu trong khoảng chọn</p></div>
+            <div class="stat-card accent-amber"><div class="stat-value metric-na">N/A</div><div class="stat-label">Danh mục được hỏi nhiều</div><p class="stat-note">Chưa lưu danh mục yêu cầu có cấu trúc</p></div>
+        </section>
+
+        <div class="dashboard-grid">
+            <section class="panel" aria-labelledby="daily-heading">
+                <h2 id="daily-heading">Hội thoại mới theo ngày</h2>
+                <div class="daily-chart">
+                    <div class="daily-row" th:each="day : ${dashboard.conversationsByDay}">
+                        <span th:text="${#temporals.format(day.date, 'dd/MM')}">01/01</span>
+                        <div class="daily-track" role="img" th:attr="aria-label=|${#temporals.format(day.date, 'dd/MM/yyyy')}: ${day.count} hội thoại|">
+                            <div class="daily-bar" th:style="|width: ${day.barPercent}%|"></div>
+                        </div>
+                        <strong class="text-end" th:text="${day.count}">0</strong>
+                    </div>
+                </div>
+            </section>
+            <div>
+                <section class="panel" aria-labelledby="recent-heading">
+                    <h2 id="recent-heading">Hội thoại gần đây</h2>
+                    <p class="text-muted small">Chỉ hiển thị mã rút gọn và thời gian; nội dung trao đổi được giữ riêng tư.</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead><tr><th>Mã</th><th>Loại</th><th>Ngày tạo</th><th>Hoạt động cuối</th></tr></thead>
+                            <tbody>
+                                <tr th:each="item : ${dashboard.recentConversations.content}">
+                                    <td th:text="${item.shortId}">12345678</td>
+                                    <td th:text="${item.guest ? 'Khách' : 'Thành viên'}">Khách</td>
+                                    <td th:text="${item.createdAt}">01/01/2026</td>
+                                    <td th:text="${item.updatedAt}">01/01/2026</td>
+                                </tr>
+                                <tr th:if="${dashboard.recentConversations.empty}"><td colspan="4" class="text-muted py-3">Chưa có hội thoại trong khoảng đã chọn.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <nav class="d-flex align-items-center justify-content-between gap-2" aria-label="Trang hội thoại">
+                        <a th:if="${dashboard.recentConversations.hasPrevious()}" th:href="@{/admin/ai(period=${dashboard.period},page=${dashboard.recentConversations.number - 1})}" class="btn btn-sm btn-outline-primary">Trước</a>
+                        <span th:unless="${dashboard.recentConversations.hasPrevious()}"></span>
+                        <span class="small text-muted" th:text="${(dashboard.recentConversations.number + 1) + ' / ' + (dashboard.recentConversations.totalPages == 0 ? 1 : dashboard.recentConversations.totalPages)}">1 / 1</span>
+                        <a th:if="${dashboard.recentConversations.hasNext()}" th:href="@{/admin/ai(period=${dashboard.period},page=${dashboard.recentConversations.number + 1})}" class="btn btn-sm btn-outline-primary">Sau</a>
+                        <span th:unless="${dashboard.recentConversations.hasNext()}"></span>
+                    </nav>
+                </section>
+                <section class="panel na-panel" aria-labelledby="issues-heading">
+                    <h2 id="issues-heading">Báo lỗi AI gần đây</h2>
+                    <p class="text-muted" th:if="${#lists.isEmpty(dashboard.feedback.recentIssues)}">Chưa có báo cáo trong khoảng đã chọn.</p>
+                    <ul class="list-unstyled" th:unless="${#lists.isEmpty(dashboard.feedback.recentIssues)}">
+                        <li class="border-bottom py-2" th:each="issue : ${dashboard.feedback.recentIssues}">
+                            <strong th:text="${issue.reason}"></strong><br>
+                            <small class="text-muted" th:text="|${issue.createdAt} · ${issue.reviewed ? 'Đã xem xét' : 'Chưa xem xét'}|"></small>
+                        </li>
+                    </ul>
+                    <a class="btn btn-sm btn-outline-primary" th:href="@{/admin/ai/feedback}">Xem và lọc đánh giá</a>
+                </section>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

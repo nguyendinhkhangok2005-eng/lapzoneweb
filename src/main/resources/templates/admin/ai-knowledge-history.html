@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head th:replace="~{admin/ai-knowledge-list :: knowledgeHead('Lịch sử kiến thức AI | LAPZONE')}"></head>
+<body>
+<div th:replace="~{admin/sidebar :: adminSidebar}"></div>
+<main class="main-content">
+    <a class="btn btn-outline-primary mb-3" th:href="@{/admin/ai/knowledge/{id}(id=${entry.id})}">← Mở mục kiến thức</a>
+    <h1 class="h3">Lịch sử phiên bản</h1>
+    <p class="text-muted">Các bản dưới đây chỉ để đối chiếu. Chatbot chỉ dùng phiên bản đang xuất bản, không dùng toàn bộ lịch sử.</p>
+    <section class="panel" th:each="version : ${versions.content}">
+        <h2 th:text="|Phiên bản ${version.version} · ${version.action}|"></h2>
+        <p class="text-muted" th:text="|${version.createdAt} · ${version.category}|"></p>
+        <h3 class="h5" th:text="${version.title}"></h3>
+        <p style="white-space: pre-wrap; overflow-wrap: anywhere" th:text="${version.content}"></p>
+    </section>
+    <nav class="d-flex justify-content-between align-items-center" aria-label="Trang lịch sử">
+        <a th:if="${versions.hasPrevious()}" th:href="@{/admin/ai/knowledge/{id}/history(id=${entry.id},page=${versions.number - 1})}">Trước</a><span th:unless="${versions.hasPrevious()}"></span>
+        <span th:text="${'Trang ' + (versions.number + 1) + ' / ' + (versions.totalPages == 0 ? 1 : versions.totalPages)}"></span>
+        <a th:if="${versions.hasNext()}" th:href="@{/admin/ai/knowledge/{id}/history(id=${entry.id},page=${versions.number + 1})}">Sau</a><span th:unless="${versions.hasNext()}"></span>
+    </nav>
+</main></body></html>

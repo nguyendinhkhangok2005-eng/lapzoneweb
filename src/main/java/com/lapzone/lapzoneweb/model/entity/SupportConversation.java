@@ -23,6 +23,11 @@ public class SupportConversation {
     private User customer;
     @Column(nullable = false, length = 120)
     private String subject;
+    // Scalar provenance survives AI history deletion; it grants no access to that history.
+    @Column(name = "ai_source_conversation_id", length = 36)
+    private String aiSourceConversationId;
+    @Column(name = "ai_source_message_id", unique = true)
+    private Long aiSourceMessageId;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 16)
     private Status status = Status.WAITING;
     @Column(name = "created_at", nullable = false)

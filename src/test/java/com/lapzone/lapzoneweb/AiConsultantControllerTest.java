@@ -59,12 +59,12 @@ class AiConsultantControllerTest {
         for (int i = 0; i < 6; i++) {
             assertEquals(HttpStatus.OK, send(controller, "question", session, "192.0.2.1").getStatusCode());
         }
-        ResponseEntity<Map<String, String>> limited =
+        ResponseEntity<Map<String, Object>> limited =
             send(controller, "question", session, "192.0.2.1");
 
         assertEquals(HttpStatus.TOO_MANY_REQUESTS, limited.getStatusCode());
-        assertTrue(limited.getBody().get("reply").contains("thử lại sau"));
-        assertTrue(limited.getBody().get("reply").contains("giây"));
+        assertTrue(limited.getBody().get("reply").toString().contains("thử lại sau"));
+        assertTrue(limited.getBody().get("reply").toString().contains("giây"));
 
         clock.advance(Duration.ofMinutes(1));
         assertEquals(HttpStatus.OK,
@@ -95,11 +95,11 @@ class AiConsultantControllerTest {
         AiConversationService service = mock(AiConversationService.class);
         AiConsultantController controller = controller(service, new MutableClock());
 
-        ResponseEntity<Map<String, String>> response =
+        ResponseEntity<Map<String, Object>> response =
             send(controller, "x".repeat(501), new MockHttpSession(), "192.0.2.1");
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertTrue(response.getBody().get("reply").contains("500 ký tự"));
+        assertTrue(response.getBody().get("reply").toString().contains("500 ký tự"));
         verifyNoInteractions(service);
     }
 
@@ -110,7 +110,7 @@ class AiConsultantControllerTest {
         AiConsultantController controller = controller(service, new MutableClock());
         MockHttpSession session = new MockHttpSession();
         controller.chat(new ChatRequestDTO("new\u0007question", "chosen-id"), session, request("192.0.2.1"));
-        verify(service).chat(org.mockito.ArgumentMatchers.eq("chosen-id"), org.mockito.ArgumentMatchers.any(),
+        verify(service).chatWithProducts(org.mockito.ArgumentMatchers.eq("chosen-id"), org.mockito.ArgumentMatchers.any(),
             org.mockito.ArgumentMatchers.eq("newquestion"));
         verify(service, org.mockito.Mockito.never()).create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
@@ -151,7 +151,7 @@ class AiConsultantControllerTest {
         return new AiConsultantController(service, new AiChatRateLimiter(6, 60, 30, clock));
     }
 
-    private ResponseEntity<Map<String, String>> send(AiConsultantController controller, String message,
+    private ResponseEntity<Map<String, Object>> send(AiConsultantController controller, String message,
                                                       MockHttpSession session, String ipAddress) {
         return controller.chat(new ChatRequestDTO(message), session, request(ipAddress));
     }
@@ -163,7 +163,7 @@ class AiConsultantControllerTest {
     }
 
     private void stubChat(AiConversationService service) {
-        when(service.chat(anyString(), org.mockito.ArgumentMatchers.any(), anyString())).thenReturn("reply");
+        when(service.chatWithProducts(anyString(), org.mockito.ArgumentMatchers.any(), anyString())).thenReturn(new com.lapzone.lapzoneweb.model.dto.AiReplyDTO("reply"));
         when(service.create(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.isNull()))
             .thenReturn(new ConversationDTO("default-id", "New", Instant.now(), Instant.now()));
     }
