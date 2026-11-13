@@ -5,11 +5,14 @@
     <title>Hộp thư hỗ trợ - LAPZONE</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <th:block th:unless="${adminView}"><th:block th:replace="~{fragments/theme :: head}"></th:block></th:block>
+    <link th:if="${adminView}" rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <link rel="stylesheet" th:href="@{/css/support.css}">
+    <th:block th:if="${adminView}"><th:block th:replace="~{admin/theme :: head}"></th:block></th:block>
 </head>
-<body>
+<body th:classappend="${adminView} ? 'admin-standalone-page' : ''">
 <div th:if="${!adminView}" th:insert="~{fragments/header :: header_lapzone}"></div>
+<th:block th:if="${adminView}"><div th:replace="~{admin/sidebar :: adminSidebar}"></div></th:block>
 <main class="container support-page">
     <a class="support-back" th:href="${adminView} ? @{/admin/dashboard} : @{/store}" th:text="${adminView ? '← Trang quản trị' : '← Cửa hàng'}">← Cửa hàng</a>
     <header class="support-heading">

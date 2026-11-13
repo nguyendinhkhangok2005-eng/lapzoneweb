@@ -1,0 +1,274 @@
+/* Shared sidebar state and the collapsible Admin AI group. */
+.sidebar :is(.menu-item[data-admin-route], .admin-ai-submenu__item) {
+    position: relative;
+}
+
+.sidebar :is(.menu-item[data-admin-route], .admin-ai-submenu__item)[aria-current="page"],
+.sidebar .admin-ai-navigation.has-active-page > .admin-ai-toggle {
+    background: var(--admin-nav-selected, #203a46);
+    color: var(--admin-nav-text, #56e1bf);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.sidebar :is(.menu-item[data-admin-route], .admin-ai-submenu__item)[aria-current="page"]::before,
+.sidebar .admin-ai-navigation.has-active-page > .admin-ai-toggle::before {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: 4px;
+    background: var(--admin-nav-indicator, #11caa0);
+    content: "";
+}
+
+.sidebar :is(.menu-item[data-admin-route], .admin-ai-submenu__item)[aria-current="page"] > i:first-child,
+.sidebar .admin-ai-navigation.has-active-page > .admin-ai-toggle > i:first-child {
+    color: var(--admin-nav-text, #56e1bf);
+}
+
+.sidebar :is(.menu-item[data-admin-route], .admin-ai-submenu__item)[aria-current="page"]:is(:hover, :focus-visible),
+.sidebar .admin-ai-navigation.has-active-page > .admin-ai-toggle:is(:hover, :focus-visible) {
+    background: color-mix(in srgb, var(--admin-nav-selected, #203a46) 85%, var(--admin-nav-hover, #34495e));
+    color: var(--admin-nav-text, #56e1bf);
+}
+
+.sidebar :is(.menu-item[data-admin-route], .admin-ai-submenu__item, .admin-ai-toggle):focus-visible {
+    outline: 2px solid var(--admin-focus, #11caa0);
+    outline-offset: -3px;
+}
+
+.sidebar .admin-ai-navigation {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+.sidebar .admin-ai-toggle {
+    appearance: none;
+    width: 100%;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #ecf0f1;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.sidebar .admin-ai-toggle:focus-visible,
+.sidebar .admin-ai-submenu__item:focus-visible { z-index: 1; }
+
+.sidebar .admin-ai-toggle__label {
+    flex: 1 1 auto;
+}
+
+.sidebar .admin-ai-toggle__chevron {
+    width: 16px;
+    font-size: 12px;
+    transition: transform 180ms ease;
+}
+
+.sidebar .admin-ai-navigation.is-expanded .admin-ai-toggle__chevron {
+    transform: rotate(180deg);
+}
+
+.sidebar .admin-ai-submenu {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 180ms ease;
+}
+
+.sidebar .admin-ai-submenu.is-expanded {
+    grid-template-rows: 1fr;
+}
+
+.sidebar .admin-ai-submenu__inner {
+    min-height: 0;
+    overflow: hidden;
+    border-inline-start: 1px solid #506174;
+    margin-inline-start: 36px;
+    transition: opacity 160ms ease;
+}
+
+.sidebar .admin-ai-submenu[aria-hidden="true"] .admin-ai-submenu__inner {
+    opacity: 0;
+}
+
+.sidebar .admin-ai-submenu__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 9px 12px 9px 17px;
+    color: #d5dee7;
+    font-size: 14px;
+    line-height: 1.35;
+    text-decoration: none;
+    transition: background-color 140ms ease, color 140ms ease;
+}
+
+.sidebar .admin-ai-submenu__item > i {
+    flex: 0 0 18px;
+    width: 18px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.sidebar .admin-ai-submenu__item:hover {
+    background: #34495e;
+    color: #11caa0;
+}
+
+.sidebar .admin-ai-submenu[hidden] {
+    display: none;
+}
+
+/* A few Admin routes use full-width storefront-based templates. */
+.admin-standalone-page .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    width: 260px;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--admin-sidebar, #2c3e50);
+    color: var(--admin-sidebar-text, #ecf0f1);
+    box-shadow: 2px 0 5px #0002;
+}
+
+.admin-standalone-page .sidebar-header {
+    padding: 25px 10px;
+    border-bottom: 1px solid var(--admin-border, #34495e);
+    background: var(--admin-sidebar-header, #1a252f);
+    color: var(--admin-sidebar-brand, #11caa0);
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-align: center;
+}
+
+.admin-standalone-page .sidebar .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 25px;
+    color: var(--admin-sidebar-text, #ecf0f1);
+    font-size: 15px;
+    text-decoration: none;
+}
+
+.admin-standalone-page .sidebar .menu-item > i:first-child {
+    flex: 0 0 24px;
+    width: 24px;
+    text-align: center;
+}
+
+.admin-standalone-page .sidebar .menu-item:is(:hover, :focus-visible) {
+    background: var(--admin-nav-hover, #34495e);
+    color: var(--admin-nav-text, #56e1bf);
+}
+
+.admin-standalone-page > main.container {
+    width: calc(100% - 260px);
+    max-width: none;
+    margin-inline: 260px 0;
+}
+
+@media (max-width: 760px) {
+    .admin-standalone-page .sidebar {
+        position: static;
+        flex-direction: row;
+        width: 100%;
+        height: auto;
+        overflow-x: auto;
+        overflow-y: visible;
+    }
+
+    .admin-standalone-page .sidebar-header {
+        flex: 0 0 auto;
+        padding: 13px;
+        font-size: .9rem;
+        align-content: center;
+    }
+
+    .admin-standalone-page .sidebar .menu-item {
+        flex: 0 0 auto;
+        padding: 14px;
+        font-size: .83rem;
+        white-space: nowrap;
+    }
+
+    .admin-standalone-page > main.container {
+        width: 100%;
+        margin-inline: 0;
+    }
+}
+
+@media (max-width: 760px) {
+    /* Use the shared mobile shell on the older pages that only had desktop CSS. */
+    html[data-admin-theme] .sidebar {
+        position: static;
+        flex-direction: row;
+        width: 100%;
+        height: auto;
+        overflow-x: auto;
+    }
+    html[data-admin-theme] .sidebar > :is(.sidebar-header, .menu-item) { flex: 0 0 auto; white-space: nowrap; }
+    html[data-admin-theme] .sidebar-header { padding: 13px; font-size: .9rem; align-content: center; }
+    html[data-admin-theme] .sidebar > .menu-item { min-height: 48px; padding: 12px 14px; font-size: .83rem; }
+    html[data-admin-theme] .sidebar > .admin-exit { margin-top: 0 !important; padding-top: 12px !important; border-top: 0 !important; }
+    html[data-admin-theme] .main-content { margin-left: 0; width: 100%; padding: 16px; }
+    .sidebar .admin-ai-navigation {
+        position: relative;
+        width: auto;
+    }
+
+    .sidebar .admin-ai-toggle {
+        width: auto;
+        min-height: 48px;
+        gap: 8px;
+        padding: 12px 14px;
+        white-space: nowrap;
+        font-size: .83rem;
+    }
+
+    .sidebar .admin-ai-toggle > i:first-child {
+        flex: 0 0 18px;
+        width: 18px;
+        font-size: 15px;
+    }
+
+    .sidebar .admin-ai-toggle__chevron {
+        flex: 0 0 14px;
+        width: 14px;
+    }
+
+    .sidebar .admin-ai-submenu {
+        /* Fixed positioning lets the submenu escape the horizontal scroller. */
+        position: fixed;
+        top: var(--admin-ai-submenu-top, 128px);
+        left: 12px;
+        z-index: 1100;
+        width: min(320px, calc(100vw - 24px));
+        max-height: calc(100dvh - var(--admin-ai-submenu-top, 128px) - 12px);
+        overflow-y: auto;
+        border: 1px solid #506174;
+        border-radius: 0 0 8px 8px;
+        background: #2c3e50;
+        box-shadow: 0 8px 20px #0003;
+    }
+
+    .sidebar .admin-ai-submenu__inner {
+        margin-inline-start: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebar .admin-ai-toggle__chevron,
+    .sidebar .admin-ai-submenu,
+    .sidebar .admin-ai-submenu__inner,
+    .sidebar .admin-ai-submenu__item {
+        transition: none;
+    }
+}

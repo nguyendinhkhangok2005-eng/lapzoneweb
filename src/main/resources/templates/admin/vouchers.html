@@ -5,7 +5,7 @@
     <title>Quản lý mã giảm giá - LAPZONE</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <style>
         .voucher-admin { padding: 32px 24px; }
         .voucher-admin h1, .voucher-admin h2 { margin-bottom: 16px; }
@@ -24,8 +24,10 @@
         .voucher-success { color: var(--accent-green); }
         .voucher-errors { grid-column: 1 / -1; color: var(--accent-red); }
     </style>
+    <th:block th:replace="~{admin/theme :: head}"></th:block>
 </head>
-<body>
+<body class="admin-standalone-page">
+<div th:replace="~{admin/sidebar :: adminSidebar}"></div>
 <main class="container voucher-admin">
     <a th:href="@{/admin/dashboard}">← Trang quản trị</a>
     <h1>Quản lý mã giảm giá</h1>

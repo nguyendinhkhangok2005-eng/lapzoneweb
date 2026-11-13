@@ -4,10 +4,13 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý trả hàng và hoàn tiền - LAPZONE</title>
     <link rel="stylesheet" th:href="@{/css/app.css}">
-    <th:block th:replace="~{fragments/theme :: head}"></th:block>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
     <link rel="stylesheet" th:href="@{/css/orders.css}">
+    <th:block th:replace="~{admin/theme :: head}"></th:block>
 </head>
-<body>
+<body class="admin-standalone-page">
+<div th:replace="~{admin/sidebar :: adminSidebar}"></div>
 <main class="container orders-page">
     <a class="orders-back" th:href="@{/admin/dashboard}">← Trang quản trị</a>
     <header class="orders-heading"><div><p class="orders-eyebrow">LAPZONE · QUẢN TRỊ</p><h1>Trả hàng và hoàn tiền</h1>

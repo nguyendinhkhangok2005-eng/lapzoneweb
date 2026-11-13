@@ -1,0 +1,37 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="head">
+    <!-- Synchronous bootstrap prevents a light flash. Admin storage is independent of the storefront. -->
+    <script th:src="@{/js/admin-theme.js}"></script>
+    <link rel="stylesheet" th:href="@{/css/admin-themes.css}">
+</th:block>
+
+<header xmlns:th="http://www.thymeleaf.org" th:fragment="toolbar" class="admin-theme-toolbar" data-admin-theme-toolbar aria-label="Giao diện quản trị">
+    <details class="admin-theme-picker" data-admin-theme-picker>
+        <summary aria-label="Chọn giao diện quản trị">
+            <span class="admin-theme-preview" data-admin-theme-current-preview data-theme-preview="classic" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span>Giao diện: <strong data-admin-theme-current-label>Cổ điển</strong></span>
+            <span class="admin-theme-caret" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="admin-theme-options" role="group" aria-label="Chọn giao diện Admin">
+            <button type="button" data-admin-theme-choice="classic" aria-pressed="true">
+                <span class="admin-theme-preview" data-theme-preview="classic" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <span><span data-admin-theme-name>Cổ điển</span><small>Classic</small></span>
+                <span class="admin-theme-option-check" aria-hidden="true">✓</span>
+            </button>
+            <button type="button" data-admin-theme-choice="dark" aria-pressed="false">
+                <span class="admin-theme-preview" data-theme-preview="dark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <span><span data-admin-theme-name>Tối</span><small>Dark</small></span>
+                <span class="admin-theme-option-check" aria-hidden="true">✓</span>
+            </button>
+            <button type="button" data-admin-theme-choice="gaming" aria-pressed="false">
+                <span class="admin-theme-preview" data-theme-preview="gaming" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <span data-admin-theme-name>Gaming</span>
+                <span class="admin-theme-option-check" aria-hidden="true">✓</span>
+            </button>
+            <button type="button" data-admin-theme-choice="aurora" aria-pressed="false">
+                <span class="admin-theme-preview" data-theme-preview="aurora" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                <span><span data-admin-theme-name>Cực Quang</span><small>Aurora Prism</small></span>
+                <span class="admin-theme-option-check" aria-hidden="true">✓</span>
+            </button>
+        </div>
+    </details>
+</header>

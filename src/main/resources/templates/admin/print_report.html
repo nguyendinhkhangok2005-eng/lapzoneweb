@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>In Báo Cáo Doanh Thu</title>
     <style>
         body { font-family: 'Times New Roman', Times, serif; font-size: 14pt; color: #000; background: #f4f7f6; margin: 0; padding: 20px; }
@@ -40,8 +41,10 @@
             @page { size: A4 portrait; margin: 20mm; }
         }
     </style>
+    <th:block th:replace="~{admin/theme :: head}"></th:block>
 </head>
-<body>
+<body class="admin-print-report">
+    <header th:replace="~{admin/theme :: toolbar}"></header>
 
     <button class="no-print-btn" onclick="window.print()">🖨️ IN BÁO CÁO</button>
 

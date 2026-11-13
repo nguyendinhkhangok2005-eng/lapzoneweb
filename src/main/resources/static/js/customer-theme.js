@@ -5,12 +5,13 @@
         { id: 'classic', name: 'Cổ điển', color: '#2563eb' },
         { id: 'dark', name: 'Tối', color: '#374151' },
         { id: 'gaming', name: 'Gaming', color: '#a855f7' },
-        { id: 'ocean', name: 'Đại dương', color: '#0369a1' }
+        { id: 'aurora', name: 'Cực Quang', color: 'linear-gradient(120deg, #7c3aed, #ec4899 55%, #fb923c)' }
     ];
     const validThemes = new Set(themes.map(theme => theme.id));
     let transitionTimer;
 
     function setTheme(themeId) {
+        if (themeId === 'ocean') themeId = 'aurora';
         if (!validThemes.has(themeId)) return;
 
         const root = document.documentElement;
@@ -49,7 +50,7 @@
             option.setAttribute('role', 'menuitemradio');
             option.dataset.themeChoice = theme.id;
             option.innerHTML = '<span class="theme-choice__swatch" aria-hidden="true"></span><span class="theme-choice__name"></span><span class="theme-choice__check" aria-hidden="true"></span>';
-            option.querySelector('.theme-choice__swatch').style.backgroundColor = theme.color;
+            option.querySelector('.theme-choice__swatch').style.background = theme.color;
             option.querySelector('.theme-choice__name').textContent = theme.name;
             menu.appendChild(option);
         });

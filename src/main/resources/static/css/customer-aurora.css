@@ -1,0 +1,167 @@
+/* Aurora Prism details. The shared storefront styles and tokens handle layout. */
+html[data-theme="aurora"]:not([data-theme="classic"]) {
+    .nav-main {
+        border-top: 2px solid transparent;
+        border-image: var(--aurora-prism) 1;
+    }
+
+    .navbar.bg-dark {
+        background: var(--theme-header) !important;
+        border-bottom: 2px solid var(--aurora-violet);
+    }
+
+    .nav-item:hover > .nav-link,
+    .nav-item:focus-within > .nav-link {
+        color: var(--aurora-cyan);
+        box-shadow: inset 0 -3px var(--aurora-pink);
+    }
+
+    :is(.nav-dropdown, .nav-dropdown-submenu) {
+        backdrop-filter: none;
+    }
+
+    .home-slider {
+        border-color: #51496d;
+        box-shadow: var(--shadow-md);
+    }
+
+    .home-slider__surface {
+        background: var(--aurora-highlight);
+    }
+
+    .home-slider__surface::before {
+        background: radial-gradient(ellipse at center, rgba(34, 211, 238, .13), transparent 70%);
+    }
+
+    .home-slide__image {
+        filter: drop-shadow(0 16px 18px rgba(0, 0, 0, .28));
+        -webkit-box-reflect: unset;
+    }
+
+    .home-slide__shadow {
+        background: none;
+    }
+
+    .home-slide__specs dt {
+        color: var(--text-secondary);
+    }
+
+    .home-slide__stock {
+        background: #423317;
+        border-color: #7a582d;
+        color: var(--accent-orange);
+    }
+
+    .home-slide__cart-button,
+    :is(.btn-primary, .btn-order, .btn-register, .buy_now, .button_comparation) {
+        background: var(--accent-button);
+        border-color: var(--accent-button);
+        color: var(--aurora-on-accent);
+        box-shadow: none;
+    }
+
+    .home-slide__cart-button:hover,
+    :is(.btn-primary, .btn-order, .btn-register, .buy_now, .button_comparation):hover {
+        background: var(--accent-button-secondary);
+        border-color: var(--accent-button-secondary);
+        color: var(--aurora-on-accent);
+        box-shadow: none;
+    }
+
+    .home-deal__cart,
+    .btn-save {
+        background: var(--accent-button);
+        border-color: var(--accent-button);
+        color: var(--aurora-on-accent);
+    }
+
+    .home-deals__header {
+        background: var(--aurora-highlight);
+        border-top: 2px solid var(--aurora-pink);
+    }
+
+    .home-deals__header :is(h2, p) {
+        color: var(--text-primary);
+    }
+
+    .home-deal__cart:hover,
+    .btn-save:hover {
+        background: var(--accent-button-secondary);
+        color: var(--aurora-on-accent);
+    }
+
+    :is(.store-card__action:not(.store-card__action--disabled), .orders-primary, .support-button:not(.support-button--secondary)) {
+        background: var(--accent-button);
+        color: var(--aurora-on-accent);
+    }
+
+    :is(.store-card__action:not(.store-card__action--disabled), .orders-primary, .support-button:not(.support-button--secondary)):hover {
+        background: var(--accent-button-secondary);
+        color: var(--aurora-on-accent);
+    }
+
+    :is(.product-card, .home-product-card, .product_items, .product_item3, .product_items2, .product_item4) {
+        border-color: var(--border-glass);
+        box-shadow: var(--shadow-sm);
+    }
+
+    :is(.product-card, .home-product-card):hover {
+        border-color: var(--aurora-violet);
+        box-shadow: var(--shadow-sm);
+    }
+
+    :is(.product-price, .product-price-large, .product_price, .price-text, .home-deal__sale-price, .checkout-container .total-section) {
+        color: var(--accent-orange);
+    }
+
+    :is(.cart-header, .checkout-container .card-header) {
+        border-top: 2px solid var(--aurora-violet);
+    }
+
+    :is(.cart-footer, .checkout-container .card, .cart-container) {
+        border-color: var(--border-glass);
+    }
+
+    :is(.qty-btn, .btn-back, .btn-outline-secondary):hover {
+        background: var(--bg-card-hover);
+        border-color: var(--aurora-cyan);
+        color: var(--aurora-cyan);
+    }
+
+    .btn-delete:hover {
+        background: var(--accent-danger-button);
+        color: #ffffff;
+    }
+
+    :is(.checkout-voucher__choose, .checkout-voucher .btn-outline-primary):is(:hover, :focus-visible, [aria-pressed="true"]) {
+        background: var(--accent-button);
+        color: var(--aurora-on-accent);
+    }
+
+    :is(a, button, input, select, textarea):focus-visible {
+        outline: 2px solid var(--aurora-cyan);
+        outline-offset: 3px;
+    }
+
+    .theme-choice[data-theme-choice="aurora"] .theme-choice__swatch {
+        background: var(--aurora-prism);
+    }
+
+    /* The website chatbot inherits page colors; its explicit palettes stay independent. */
+    :is(#chatbot-window, #chatbot-btn, .chatbot-background-preview)[data-chatbot-theme="theme"] {
+        --chatbot-on-accent: var(--aurora-on-accent);
+        --chatbot-accent: var(--aurora-cyan);
+        --chatbot-accent-hover: #67e8f9;
+        --chatbot-link: var(--accent-neon);
+        --chatbot-focus: var(--aurora-cyan);
+    }
+
+    #chatbot-window[data-chatbot-theme="theme"] #chatbot-messages > .chatbot-message--user {
+        background: var(--aurora-cyan) !important;
+        color: var(--aurora-on-accent) !important;
+    }
+
+    #chatbot-window[data-chatbot-theme="theme"] #chatbot-messages > .chatbot-message--user :is(p, a, strong) {
+        color: var(--aurora-on-accent) !important;
+    }
+}

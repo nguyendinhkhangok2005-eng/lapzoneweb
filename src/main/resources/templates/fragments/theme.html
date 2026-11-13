@@ -4,7 +4,14 @@
             var theme = 'classic';
             try {
                 var storedTheme = window.localStorage.getItem('lapzone-theme');
-                if (['classic', 'dark', 'gaming', 'ocean'].indexOf(storedTheme) !== -1) {
+                if (storedTheme === 'ocean') {
+                    theme = 'aurora';
+                    try {
+                        window.localStorage.setItem('lapzone-theme', theme);
+                    } catch (error) {
+                        // The migrated theme still applies to this page.
+                    }
+                } else if (['classic', 'dark', 'gaming', 'aurora'].indexOf(storedTheme) !== -1) {
                     theme = storedTheme;
                 }
             } catch (error) {
@@ -14,5 +21,6 @@
         })();
     </script>
     <link rel="stylesheet" th:href="@{/css/dark-theme.css}">
+    <link rel="stylesheet" th:href="@{/css/customer-aurora.css}">
     <script defer th:src="@{/js/customer-theme.js}"></script>
 </th:block>

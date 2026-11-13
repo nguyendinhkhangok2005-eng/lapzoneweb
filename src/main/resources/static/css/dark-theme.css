@@ -138,39 +138,47 @@ html[data-theme="gaming"] {
     --theme-footer: #0b0810;
 }
 
-html[data-theme="ocean"] {
-    --bg-dark: #eaf4f7;
-    --bg-secondary: #dcecf1;
-    --bg-card: #ffffff;
-    --bg-card-hover: #f0f8fa;
-    --bg-glass: rgba(255, 255, 255, 0.94);
-    --text-primary: #102a38;
-    --text-secondary: #365568;
-    --accent-blue: #0369a1;
-    --accent-indigo: #0e7490;
-    --accent-neon: #075985;
-    --accent-red: #b91c1c;
-    --accent-orange: #c2410c;
-    --accent-green: #047857;
-    --accent-button: #0369a1;
-    --accent-button-secondary: #0e7490;
-    --accent-danger-button: #b91c1c;
-    --accent-danger-button-secondary: #c2410c;
-    --accent-badge: #b91c1c;
+html[data-theme="aurora"] {
+    color-scheme: dark;
+    --bg-dark: #0b1020;
+    --bg-secondary: #16152b;
+    --bg-card: #1c1935;
+    --bg-card-hover: #2a2543;
+    --bg-glass: rgba(28, 25, 53, 0.96);
+    --text-primary: #f8fafc;
+    --text-secondary: #c4c7de;
+    --accent-blue: #22d3ee;
+    --accent-indigo: #a78bfa;
+    --accent-neon: #67e8f9;
+    --accent-red: #fda4af;
+    --accent-orange: #fdba74;
+    --accent-green: #6ee7b7;
+    --accent-button: #22d3ee;
+    --accent-button-secondary: #67e8f9;
+    --accent-danger-button: #9f1239;
+    --accent-danger-button-secondary: #881337;
+    --accent-badge: #9f1239;
     --accent-success-button: #047857;
-    --border-glass: rgba(16, 73, 94, 0.2);
-    --shadow-sm: 0 4px 12px rgba(16, 73, 94, 0.08);
-    --shadow-md: 0 12px 28px rgba(16, 73, 94, 0.14);
-    --shadow-neon: 0 4px 16px rgba(3, 105, 161, 0.2);
-    --shadow-neon-hover: 0 8px 26px rgba(3, 105, 161, 0.29);
-    --theme-input: #ffffff;
-    --media-bg-1: #f7fbfc;
-    --media-bg-2: #eaf3f6;
+    --border-glass: rgba(196, 199, 222, 0.27);
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.26);
+    --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.34);
+    --shadow-neon: 0 4px 16px rgba(124, 58, 237, 0.16);
+    --shadow-neon-hover: 0 8px 22px rgba(124, 58, 237, 0.2);
+    --theme-input: #12182a;
+    --media-bg-1: #f7f8fc;
+    --media-bg-2: #e9ecf3;
     --media-bg: linear-gradient(145deg, var(--media-bg-1), var(--media-bg-2));
-    --media-border: #c9dfe6;
+    --media-border: #dfe4ed;
     --theme-image-surface: var(--media-bg);
-    --theme-header: rgba(234, 244, 247, 0.97);
-    --theme-footer: #dcecf1;
+    --theme-header: #121529;
+    --theme-footer: #0a0d19;
+    --aurora-violet: #7c3aed;
+    --aurora-pink: #ec4899;
+    --aurora-orange: #fb923c;
+    --aurora-cyan: #22d3ee;
+    --aurora-on-accent: #0b1020;
+    --aurora-prism: linear-gradient(120deg, var(--aurora-violet) 0%, var(--aurora-pink) 55%, var(--aurora-orange) 100%);
+    --aurora-highlight: linear-gradient(120deg, #34205c 0%, #4a203e 55%, #472b25 100%);
 }
 
 html[data-theme]:not([data-theme="classic"]) body {
@@ -405,7 +413,7 @@ html[data-theme]:not([data-theme="classic"]) :is(.cart-count, .badge, .badge_pro
 
 html[data-theme="dark"] .home-showcase,
 html[data-theme="gaming"] .home-showcase,
-html[data-theme="ocean"] .home-showcase {
+html[data-theme="aurora"] .home-showcase {
     --hero-bg-1: var(--bg-card);
     --hero-bg-2: var(--bg-secondary);
     --hero-accent: var(--accent-blue);
